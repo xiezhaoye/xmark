@@ -76,6 +76,23 @@ pub(crate) const PROVIDERS: &[ProviderConfig] = &[
         relative_path: ".config/opencode/opencode.json",
         legacy: false,
     },
+    // pi (earendil-works) reads user-level MCP servers from this file, in the
+    // same `mcpServers` JSON shape as Claude.
+    ProviderConfig {
+        name: "Pi",
+        id: "pi",
+        relative_path: ".pi/agent/mcp.json",
+        legacy: false,
+    },
+    // DeepSeek Harness's home-level patch layer, applied over every profile,
+    // so the server reaches all of them without editing a profile's own file.
+    // See dsh_entry.rs for why XMark owns a marked block there.
+    ProviderConfig {
+        name: "DeepSeek Harness",
+        id: "dsh",
+        relative_path: ".dsh/cordis.patch.yml",
+        legacy: false,
+    },
     // Gemini CLI is discontinued (replaced by Antigravity). Kept only so a
     // machine that still carries a vmark entry from an earlier install gets a
     // removal path in the Integrations panel.

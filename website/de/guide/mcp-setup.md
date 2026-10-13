@@ -199,6 +199,34 @@ Binärpfad) verwendet. Löschen Sie den handgeschriebenen `mcp.vmark`-Block aus
 `opencode.jsonc` und überlassen Sie ihn dem Bereich Integrationen.
 :::
 
+### Pi
+
+Bearbeiten Sie `~/.pi/agent/mcp.json`, pis Serverliste auf Benutzerebene (die `.pi/mcp.json` eines Projekts kann sie überschreiben). Führen Sie in einer offenen pi-Sitzung `/reload` aus, um die Änderung zu übernehmen:
+
+```json
+{
+  "mcpServers": {
+    "vmark": {
+      "command": "/Applications/VMark.app/Contents/MacOS/vmark-mcp-server"
+    }
+  }
+}
+```
+
+### DeepSeek Harness
+
+Bearbeiten Sie `~/.dsh/cordis.patch.yml`, die Patch-Ebene im Home-Verzeichnis, die für jedes dsh-Profil gilt. Das Integrationen-Panel fügt den Server als markierten Block am Ende dieser Liste hinzu und lässt den Rest der Datei unverändert. Starten Sie dsh neu, um ihn zu laden:
+
+```yaml
+- insert:
+    - id: mcp-vmark
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: vmark
+        transport: stdio
+        command: /Applications/VMark.app/Contents/MacOS/vmark-mcp-server
+```
+
 ::: tip Binary-Pfad finden
 Auf macOS befindet sich der MCP-Server-Binary innerhalb von VMark.app:
 - `VMark.app/Contents/MacOS/vmark-mcp-server`

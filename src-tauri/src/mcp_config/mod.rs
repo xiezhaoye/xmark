@@ -15,6 +15,7 @@ pub(crate) mod client_tokens;
 pub mod commands;
 mod config_io;
 mod create_io;
+mod dsh_entry;
 mod install_io;
 mod opencode_entry;
 mod parsed_config;

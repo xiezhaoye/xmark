@@ -186,6 +186,34 @@ command = "/Applications/VMark.app/Contents/MacOS/vmark-mcp-server"
 opencode 會依序合併 `config.json`、`opencode.json`、`opencode.jsonc`，最後讀取的檔案優先。因此，如果你先前曾手動在 `opencode.jsonc` 中加入 `vmark` 條目，它會覆蓋 VMark 所管理的條目——VMark 會回報該供應商有效，而 opencode 卻繼續使用你較舊的條目（以及其過時的執行檔路徑）。請從 `opencode.jsonc` 中刪除手寫的 `mcp.vmark` 區塊，交由整合面板管理。
 :::
 
+### Pi
+
+編輯 `~/.pi/agent/mcp.json`，即 pi 的使用者層級伺服器清單（專案中的 `.pi/mcp.json` 可以覆寫它）。在已開啟的 pi 工作階段中執行 `/reload` 即可生效：
+
+```json
+{
+  "mcpServers": {
+    "vmark": {
+      "command": "/Applications/VMark.app/Contents/MacOS/vmark-mcp-server"
+    }
+  }
+}
+```
+
+### DeepSeek Harness
+
+編輯 `~/.dsh/cordis.patch.yml`，這是套用到所有 dsh 設定檔的主目錄層級修補層。整合面板會把伺服器作為一個帶標記的設定區塊附加到清單末尾，不會更動檔案的其他部分。重新啟動 dsh 後生效：
+
+```yaml
+- insert:
+    - id: mcp-vmark
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: vmark
+        transport: stdio
+        command: /Applications/VMark.app/Contents/MacOS/vmark-mcp-server
+```
+
 ::: tip 尋找執行檔路徑
 在 macOS 上，MCP 伺服器執行檔位於 VMark.app 內：
 - `VMark.app/Contents/MacOS/vmark-mcp-server`

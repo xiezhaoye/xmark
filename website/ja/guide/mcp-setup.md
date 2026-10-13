@@ -186,6 +186,34 @@ command = "/Applications/VMark.app/Contents/MacOS/vmark-mcp-server"
 opencode は `config.json`、`opencode.json`、`opencode.jsonc` の順にマージし、最後に読み込んだものが優先されます。そのため、以前に `opencode.jsonc` に手動で `vmark` エントリを追加していた場合、それが VMark の管理するエントリを上書きします——VMark はプロバイダーを有効と報告しますが、opencode は古いエントリ（とその古いバイナリパス）を使い続けます。手書きの `mcp.vmark` ブロックを `opencode.jsonc` から削除し、インテグレーションパネルに管理を任せてください。
 :::
 
+### Pi
+
+pi のユーザーレベルのサーバー一覧である `~/.pi/agent/mcp.json` を編集します（プロジェクトの `.pi/mcp.json` で上書きできます）。開いている pi セッションで `/reload` を実行すると反映されます：
+
+```json
+{
+  "mcpServers": {
+    "vmark": {
+      "command": "/Applications/VMark.app/Contents/MacOS/vmark-mcp-server"
+    }
+  }
+}
+```
+
+### DeepSeek Harness
+
+すべての dsh プロファイルに適用されるホームレベルのパッチレイヤー `~/.dsh/cordis.patch.yml` を編集します。連携パネルはこの一覧の末尾にマーク付きのブロックとしてサーバーを追加し、ファイルの他の部分には触れません。dsh を再起動すると読み込まれます：
+
+```yaml
+- insert:
+    - id: mcp-vmark
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: vmark
+        transport: stdio
+        command: /Applications/VMark.app/Contents/MacOS/vmark-mcp-server
+```
+
 ::: tip バイナリパスの確認
 macOS では、MCP サーバーバイナリは VMark.app 内にあります：
 - `VMark.app/Contents/MacOS/vmark-mcp-server`

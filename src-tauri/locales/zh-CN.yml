@@ -393,6 +393,8 @@ errors:
   mcp.vmarkEntryNotTable: "mcp_servers.xmark 不是表"
   mcp.envNotObject: "%{key} 不是对象"
   mcp.envNotTable: "mcp_servers.xmark.env 不是表"
+  mcp.dshBlockBroken: "DeepSeek Harness 补丁文件中 XMark 的配置块已损坏（%{detail}）。请删除 xmark 标记之间的内容后重新安装。"
+  mcp.dshNotList: "DeepSeek Harness 补丁文件不是 YAML 补丁列表，XMark 不会修改它。"
 
   # MCP 桥接 —— 授权主体所绑定的客户端凭据
   mcp.principalMissing: "该 AI 客户端未提供 XMark 凭据，因此已拒绝其委派操作。请打开“设置 > 集成”，为它执行“安装”，然后重启该客户端。"

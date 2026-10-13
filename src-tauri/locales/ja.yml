@@ -393,6 +393,8 @@ errors:
   mcp.vmarkEntryNotTable: "mcp_servers.xmark がテーブルではありません"
   mcp.envNotObject: "%{key} がオブジェクトではありません"
   mcp.envNotTable: "mcp_servers.xmark.env がテーブルではありません"
+  mcp.dshBlockBroken: "DeepSeek Harness のパッチファイル内の XMark のブロックが壊れています（%{detail}）。xmark マーカーの間の行を削除してから、もう一度インストールしてください。"
+  mcp.dshNotList: "DeepSeek Harness のパッチファイルが YAML のパッチ一覧ではないため、XMark は変更しません。"
 
   # MCP ブリッジ — 認可プリンシパルが結び付くクライアント資格情報
   mcp.principalMissing: "この AI クライアントは XMark の資格情報を提示しなかったため、委任された操作を拒否しました。「設定 > 連携」を開いてインストールを実行し、クライアントを再起動してください。"

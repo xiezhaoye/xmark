@@ -186,6 +186,34 @@ command = "/Applications/VMark.app/Contents/MacOS/vmark-mcp-server"
 opencode 依次合并 `config.json`、`opencode.json`、`opencode.jsonc`，最后读取的那个优先。因此，如果你之前在 `opencode.jsonc` 中手动添加过 `vmark` 条目，它会覆盖 VMark 管理的那一个——VMark 会报告该提供商有效，而 opencode 仍在使用你那个较旧的条目（及其过时的二进制路径）。请从 `opencode.jsonc` 中删除手写的 `mcp.vmark` 块，交给集成面板来管理。
 :::
 
+### Pi
+
+编辑 `~/.pi/agent/mcp.json`，即 pi 的用户级服务器列表（项目里的 `.pi/mcp.json` 可以覆盖它）。在已打开的 pi 会话中执行 `/reload` 即可生效：
+
+```json
+{
+  "mcpServers": {
+    "vmark": {
+      "command": "/Applications/VMark.app/Contents/MacOS/vmark-mcp-server"
+    }
+  }
+}
+```
+
+### DeepSeek Harness
+
+编辑 `~/.dsh/cordis.patch.yml`，这是作用于所有 dsh 配置档的主目录级补丁层。集成面板会把服务器作为一个带标记的配置块追加到列表末尾，不会改动文件的其他部分。重启 dsh 后生效：
+
+```yaml
+- insert:
+    - id: mcp-vmark
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: vmark
+        transport: stdio
+        command: /Applications/VMark.app/Contents/MacOS/vmark-mcp-server
+```
+
 ::: tip 查找二进制文件路径
 在 macOS 上，MCP 服务器二进制文件位于 VMark.app 内部：
 - `VMark.app/Contents/MacOS/vmark-mcp-server`

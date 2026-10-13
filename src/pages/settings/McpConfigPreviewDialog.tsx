@@ -37,6 +37,8 @@ const PROVIDER_NAMES: Record<string, string> = {
   antigravity: "Antigravity CLI",
   grok: "Grok CLI",
   opencode: "opencode",
+  pi: "Pi",
+  dsh: "DeepSeek Harness",
 };
 
 export function McpConfigPreviewDialog({

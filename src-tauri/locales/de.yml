@@ -393,6 +393,8 @@ errors:
   mcp.vmarkEntryNotTable: "mcp_servers.xmark ist keine Tabelle"
   mcp.envNotObject: "%{key} ist kein Objekt"
   mcp.envNotTable: "mcp_servers.xmark.env ist keine Tabelle"
+  mcp.dshBlockBroken: "Der XMark-Block in der DeepSeek-Harness-Patchdatei ist beschädigt (%{detail}). Entfernen Sie die Zeilen zwischen den xmark-Markierungen und installieren Sie erneut."
+  mcp.dshNotList: "Die DeepSeek-Harness-Patchdatei ist keine YAML-Liste von Patch-Einträgen, daher ändert XMark sie nicht."
 
   # MCP-Bridge — die Client-Anmeldedaten, an die der Autorisierungsprincipal gebunden ist
   mcp.principalMissing: "Dieser KI-Client hat keine XMark-Anmeldedaten vorgelegt, daher werden delegierte Aktionen abgelehnt. Öffnen Sie Einstellungen > Integrationen, führen Sie dort Installieren aus und starten Sie den Client neu."

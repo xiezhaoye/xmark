@@ -56,7 +56,7 @@ These come from VMark and work the same way in XMark.
 
 - **Multi-Format** — Edit Markdown visually or as source, plus JSON / JSONL, YAML, TOML, Mermaid, SVG, sandboxed HTML and plain text. Code files (.ts, .py, .rs, .go, .css, …) open highlighted and read-only; switch to editing with one click or hand them to your `$EDITOR`.
 - **Smart previews for config files** — A GitHub Actions workflow shows up as a job graph; `Cargo.toml`, `package.json` and `pyproject.toml` show their dependencies as a tree; any other JSON, YAML or TOML gets a tree you can browse.
-- **AI-Native** — Connect Claude Desktop, Claude Code, Codex CLI, Antigravity CLI, Grok CLI, and opencode over MCP so they can work in the same files you do. Built-in AI Genies help with writing right where you type.
+- **AI-Native** — Connect Claude Desktop, Claude Code, Codex CLI, Antigravity CLI, Grok CLI, opencode, Pi, and DeepSeek Harness over MCP so they can work in the same files you do. Built-in AI Genies help with writing right where you type.
 - **Three ways to write Markdown** — Visual editing, a quick look at the source with `F5`, or a full source editor with `F6`.
 - **Multi-Cursor** — `Mod + D` adds the next match, `Alt + Click` places extra cursors, `Mod + Alt + ↑↓` adds cursors above or below.
 - **Smart brackets** — Brackets and quotes close themselves; Tab jumps past the closing one.
@@ -93,7 +93,7 @@ can be installed next to VMark: the two keep separate settings and updates.
 XMark connects to AI assistants through [MCP](https://modelcontextprotocol.io/).
 Open **Settings → Integrations** and click **Install** next to an assistant.
 
-Supported: Claude Desktop, Claude Code, Codex CLI, Antigravity CLI, Grok CLI, opencode.
+Supported: Claude Desktop, Claude Code, Codex CLI, Antigravity CLI, Grok CLI, opencode, Pi, DeepSeek Harness.
 
 XMark adds itself to each assistant's settings as `xmark`, so it does not
 clash with an installed VMark.

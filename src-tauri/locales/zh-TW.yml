@@ -393,6 +393,8 @@ errors:
   mcp.vmarkEntryNotTable: "mcp_servers.xmark 不是表"
   mcp.envNotObject: "%{key} 不是物件"
   mcp.envNotTable: "mcp_servers.xmark.env 不是資料表"
+  mcp.dshBlockBroken: "DeepSeek Harness 修補檔中 XMark 的設定區塊已損壞（%{detail}）。請刪除 xmark 標記之間的內容後重新安裝。"
+  mcp.dshNotList: "DeepSeek Harness 修補檔不是 YAML 修補清單，XMark 不會修改它。"
 
   # MCP 橋接 —— 授權主體所綁定的用戶端憑證
   mcp.principalMissing: "此 AI 用戶端未提供 XMark 憑證，因此已拒絕其委派操作。請開啟「設定 > 整合」，為它執行「安裝」，然後重新啟動該用戶端。"

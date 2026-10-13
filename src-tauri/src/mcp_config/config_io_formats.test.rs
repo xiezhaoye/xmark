@@ -23,6 +23,7 @@ fn every_shipped_provider_classifies_to_exactly_one_format() {
         let expected = match provider.id {
             "codex" | "grok" => ConfigFormat::Toml,
             "opencode" => ConfigFormat::OpenCode,
+            "dsh" => ConfigFormat::Dsh,
             _ => ConfigFormat::Json,
         };
         assert_eq!(format, expected, "provider {}", provider.id);
@@ -35,6 +36,7 @@ fn each_format_names_its_own_server_map_key() {
     assert_eq!(ConfigFormat::Json.servers_key(), "mcpServers");
     assert_eq!(ConfigFormat::OpenCode.servers_key(), "mcp");
     assert_eq!(ConfigFormat::Toml.servers_key(), "mcp_servers");
+    assert_eq!(ConfigFormat::Dsh.servers_key(), "insert");
 }
 
 // -- antigravity and grok reuse the proven machinery ------------------------
@@ -184,4 +186,60 @@ fn opencode_uninstall_reports_nothing_to_remove() {
         remove_vmark_from_config("opencode", r#"{"mcp": {"other": {}}}"#).unwrap(),
         None
     );
+}
+
+// -- pi and DeepSeek Harness -------------------------------------------------
+
+#[test]
+fn pi_and_dsh_are_shipped_providers() {
+    let ids: Vec<&str> = super::super::providers::PROVIDERS
+        .iter()
+        .filter(|p| !p.legacy)
+        .map(|p| p.id)
+        .collect();
+    assert!(ids.contains(&"pi"), "{ids:?}");
+    assert!(ids.contains(&"dsh"), "{ids:?}");
+}
+
+#[test]
+fn pi_writes_the_mcp_servers_json_shape_and_keeps_other_servers() {
+    let existing = r#"{"mcpServers":{"iphone_use":{"command":"python3","args":["x.py"]}}}"#;
+    let out = generate_config_content("pi", BIN, TOK, Some(existing)).expect("pi merges");
+    let json: serde_json::Value = serde_json::from_str(&out).unwrap();
+    assert_eq!(json["mcpServers"]["iphone_use"]["command"], "python3");
+    assert_eq!(json["mcpServers"]["xmark"]["command"], BIN);
+    assert_eq!(json["mcpServers"]["xmark"]["env"]["VMARK_MCP_TOKEN"], TOK);
+}
+
+#[test]
+fn dsh_round_trips_through_the_provider_pipeline() {
+    let user = "# local\n- id: agent-default-model\n  config:\n    model: x\n";
+    let out = generate_config_content("dsh", BIN, TOK, Some(user)).expect("dsh merges");
+    assert!(out.starts_with(user), "user layer untouched:\n{out}");
+
+    assert_eq!(client_token_in("dsh", Some(&out)).unwrap().as_deref(), Some(TOK));
+
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("cordis.patch.yml");
+    std::fs::write(&path, &out).unwrap();
+    match read_existing_config(&path, "dsh").unwrap() {
+        ExistingConfig::Parsed { has_vmark, binary_path } => {
+            assert!(has_vmark);
+            assert_eq!(binary_path.as_deref(), Some(BIN));
+        }
+        other => panic!("expected Parsed, got {other:?}"),
+    }
+
+    let removed = remove_vmark_from_config("dsh", &out).unwrap().expect("entry removed");
+    assert_eq!(removed, user);
+    assert!(remove_vmark_from_config("dsh", user).unwrap().is_none());
+}
+
+#[test]
+fn dsh_fresh_install_and_unreadable_file() {
+    let out = generate_config_content("dsh", BIN, TOK, None).expect("fresh dsh install");
+    assert!(out.contains("serverName: xmark"), "{out}");
+
+    generate_config_content("dsh", BIN, TOK, Some("not: a list\n"))
+        .expect_err("a mapping is refused, never rewritten");
 }

@@ -74,7 +74,7 @@ fn handles_an_empty_string() {
 }
 
 // -- The provider set itself (Gemini CLI replaced by Antigravity; -----------
-// -- opencode and Grok added) -----------------------------------------------
+// -- opencode, Grok, pi and DeepSeek Harness added) -------------------------
 
 #[test]
 fn the_active_provider_set_names_the_tools_vmark_targets() {
@@ -91,7 +91,9 @@ fn the_active_provider_set_names_the_tools_vmark_targets() {
             "codex",
             "antigravity",
             "grok",
-            "opencode"
+            "opencode",
+            "pi",
+            "dsh"
         ]
     );
 }

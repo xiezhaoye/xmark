@@ -41,7 +41,7 @@ XMark 是一款免费、数据只存在本机的 macOS 编辑器。你和 AI 助
 
 - **多种格式**：Markdown 可以所见即所得编辑，也可以看源码；另外支持 JSON / JSONL、YAML、TOML、Mermaid、SVG、安全隔离的 HTML 和纯文本。代码文件（.ts、.py、.rs、.go、.css 等）默认高亮只读，点一下即可编辑，也可以交给你自己的编辑器打开。
 - **配置文件智能预览**：GitHub Actions 工作流显示为任务关系图；`Cargo.toml`、`package.json`、`pyproject.toml` 以树状显示依赖；其他 JSON、YAML、TOML 显示为可展开浏览的树。
-- **为 AI 而生**：通过 MCP 连接 Claude Desktop、Claude Code、Codex CLI、Antigravity CLI、Grok CLI 和 opencode，让 AI 和你在同一批文件上工作；内置的 AI 精灵可以在你写作的地方直接帮忙。
+- **为 AI 而生**：通过 MCP 连接 Claude Desktop、Claude Code、Codex CLI、Antigravity CLI、Grok CLI、opencode、Pi 和 DeepSeek Harness，让 AI 和你在同一批文件上工作；内置的 AI 精灵可以在你写作的地方直接帮忙。
 - **三种 Markdown 写法**：可视化编辑、`F5` 快速查看源码、`F6` 完整源码编辑。
 - **多光标**：`Mod + D` 选中下一个相同内容，`Alt + 点击` 添加光标，`Mod + Alt + ↑↓` 在上下行添加光标。
 - **智能括号**：括号和引号自动补全，按 Tab 跳到右括号之后。
@@ -71,7 +71,7 @@ xattr -dr com.apple.quarantine /Applications/XMark.app
 
 XMark 通过 [MCP](https://modelcontextprotocol.io/) 连接 AI 助手。打开 **设置 → 集成**，在对应的助手旁点 **安装** 即可。
 
-支持：Claude Desktop、Claude Code、Codex CLI、Antigravity CLI、Grok CLI、opencode。
+支持：Claude Desktop、Claude Code、Codex CLI、Antigravity CLI、Grok CLI、opencode、Pi、DeepSeek Harness。
 
 XMark 在 AI 助手配置里的名字是 `xmark`，不会和已安装的 VMark 冲突。
 

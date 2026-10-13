@@ -393,6 +393,8 @@ errors:
   mcp.vmarkEntryNotTable: "mcp_servers.xmark가 테이블이 아닙니다"
   mcp.envNotObject: "%{key}가 객체가 아닙니다"
   mcp.envNotTable: "mcp_servers.xmark.env가 테이블이 아닙니다"
+  mcp.dshBlockBroken: "DeepSeek Harness 패치 파일의 XMark 블록이 손상되었습니다(%{detail}). xmark 표시 사이의 줄을 삭제한 뒤 다시 설치하세요."
+  mcp.dshNotList: "DeepSeek Harness 패치 파일이 YAML 패치 목록이 아니므로 XMark가 변경하지 않습니다."
 
   # MCP 브리지 — 권한 주체가 연결되는 클라이언트 자격 증명
   mcp.principalMissing: "이 AI 클라이언트가 XMark 자격 증명을 제시하지 않아 위임된 작업을 거부했습니다. 설정 > 연동을 열어 설치를 실행한 다음 클라이언트를 다시 시작하세요."

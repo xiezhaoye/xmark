@@ -393,6 +393,8 @@ errors:
   mcp.vmarkEntryNotTable: "mcp_servers.xmark não é uma tabela"
   mcp.envNotObject: "%{key} não é um objeto"
   mcp.envNotTable: "mcp_servers.xmark.env não é uma tabela"
+  mcp.dshBlockBroken: "O bloco do XMark no arquivo de patches do DeepSeek Harness está danificado (%{detail}). Remova as linhas entre os marcadores xmark e instale novamente."
+  mcp.dshNotList: "O arquivo de patches do DeepSeek Harness não é uma lista YAML de entradas de patch, então o XMark não vai alterá-lo."
 
   # Ponte MCP: as credenciais de cliente às quais o principal de autorização é vinculado
   mcp.principalMissing: "Este cliente de IA não apresentou nenhuma credencial do XMark, portanto as ações delegadas foram recusadas. Abra Configurações > Integrações, execute Instalar para esse cliente e reinicie-o."

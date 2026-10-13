@@ -393,6 +393,8 @@ errors:
   mcp.vmarkEntryNotTable: "mcp_servers.xmark n'est pas une table"
   mcp.envNotObject: "%{key} n'est pas un objet"
   mcp.envNotTable: "mcp_servers.xmark.env n'est pas une table"
+  mcp.dshBlockBroken: "Le bloc XMark du fichier de correctifs de DeepSeek Harness est endommagé (%{detail}). Supprimez les lignes entre les marqueurs xmark puis réinstallez."
+  mcp.dshNotList: "Le fichier de correctifs de DeepSeek Harness n’est pas une liste YAML d’entrées de correctif ; XMark ne le modifiera pas."
 
   # Passerelle MCP — les identifiants client auxquels le principal d'autorisation est lié
   mcp.principalMissing: "Ce client IA n'a présenté aucun identifiant XMark ; les actions déléguées sont donc refusées. Ouvrez Réglages > Intégrations, lancez Installer pour ce client, puis redémarrez-le."

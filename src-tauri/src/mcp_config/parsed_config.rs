@@ -3,7 +3,7 @@
 //!
 //! Split out of `config_io.rs`, which kept growing because it held both the
 //! *representation* (parse, navigate, serialize) and the *operations* (read,
-//! generate, remove). This file is the representation only: two formats behind
+//! generate, remove). This file is the representation only: the formats behind
 //! one shape, so every operation navigates them identically and none of them
 //! can invent its own idea of where the vmark entry lives.
 //!
@@ -13,6 +13,7 @@
 
 use super::client_token_field;
 use super::config_io::ConfigFormat;
+use super::dsh_entry::{self, DshBlock, DshDoc};
 use serde_json::Value as JsonValue;
 use toml_edit::{DocumentMut, Item as TomlItem};
 
@@ -31,6 +32,7 @@ pub(crate) fn parse(format: ConfigFormat, content: &str) -> Result<Parsed, Strin
             .map_err(|e| {
                 rust_i18n::t!("errors.mcp.invalidToml", detail = e.to_string()).to_string()
             }),
+        ConfigFormat::Dsh => dsh_entry::parse(content).map(Parsed::Dsh),
     }
 }
 
@@ -53,6 +55,8 @@ pub(crate) fn merge_base(existing_content: Option<&str>) -> Option<&str> {
 pub(crate) enum Parsed {
     Json(JsonValue),
     Toml(DocumentMut),
+    /// DeepSeek Harness's patch file: raw text plus XMark's marked block.
+    Dsh(DshDoc),
 }
 
 impl Parsed {
@@ -77,6 +81,7 @@ impl Parsed {
                 .and_then(TomlItem::as_table_like)
                 .and_then(|s| s.get(super::MCP_ENTRY_NAME))
                 .map(VmarkEntry::Toml),
+            Parsed::Dsh(doc) => doc.block().map(VmarkEntry::Dsh),
         }
     }
 
@@ -87,6 +92,7 @@ impl Parsed {
             }),
             // Infallible: the document already holds every byte it will emit.
             Parsed::Toml(doc) => Ok(doc.to_string()),
+            Parsed::Dsh(doc) => Ok(doc.text().to_string()),
         }
     }
 }
@@ -97,6 +103,7 @@ pub(crate) enum VmarkEntry<'a> {
     /// program, and env vars live under `environment`.
     OpenCode(&'a JsonValue),
     Toml(&'a TomlItem),
+    Dsh(&'a DshBlock),
 }
 
 impl VmarkEntry<'_> {
@@ -109,6 +116,7 @@ impl VmarkEntry<'_> {
                 .and_then(|c| c.first())
                 .and_then(JsonValue::as_str),
             VmarkEntry::Toml(v) => v.as_table_like()?.get("command").and_then(TomlItem::as_str),
+            VmarkEntry::Dsh(b) => b.command(),
         }
     }
 
@@ -118,6 +126,7 @@ impl VmarkEntry<'_> {
             VmarkEntry::Json(v) => client_token_field::read_json(v),
             VmarkEntry::OpenCode(v) => client_token_field::read_json_under(v, "environment"),
             VmarkEntry::Toml(v) => client_token_field::read_toml(v),
+            VmarkEntry::Dsh(b) => client_token_field::usable(b.token()),
         }
     }
 }

@@ -197,6 +197,34 @@ opencode는 계속 예전 항목 (과 그 오래된 바이너리 경로) 을 사
 `mcp.vmark` 블록을 `opencode.jsonc`에서 삭제하고 통합 패널이 관리하도록 하세요.
 :::
 
+### Pi
+
+pi의 사용자 수준 서버 목록인 `~/.pi/agent/mcp.json`을 편집합니다(프로젝트의 `.pi/mcp.json`으로 덮어쓸 수 있습니다). 열려 있는 pi 세션에서 `/reload`를 실행하면 반영됩니다:
+
+```json
+{
+  "mcpServers": {
+    "vmark": {
+      "command": "/Applications/VMark.app/Contents/MacOS/vmark-mcp-server"
+    }
+  }
+}
+```
+
+### DeepSeek Harness
+
+모든 dsh 프로필에 적용되는 홈 수준 패치 레이어 `~/.dsh/cordis.patch.yml`을 편집합니다. 통합 패널은 이 목록 끝에 표시된 블록으로 서버를 추가하며 파일의 나머지 부분은 건드리지 않습니다. dsh를 다시 시작하면 불러옵니다:
+
+```yaml
+- insert:
+    - id: mcp-vmark
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: vmark
+        transport: stdio
+        command: /Applications/VMark.app/Contents/MacOS/vmark-mcp-server
+```
+
 ::: tip 바이너리 경로 찾기
 macOS에서 MCP 서버 바이너리는 VMark.app 내부에 있습니다:
 - `VMark.app/Contents/MacOS/vmark-mcp-server`

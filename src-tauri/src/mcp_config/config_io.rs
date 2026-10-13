@@ -1,7 +1,8 @@
 //! Config *content* — reading, generating, and removing MCP entries.
 //!
-//! Handles the JSON (Claude Desktop, Claude Code, Antigravity), opencode-JSON
-//! (`opencode.json`) and TOML (Codex, Grok) config formats for adding/removing
+//! Handles the JSON (Claude Desktop, Claude Code, Antigravity, pi), opencode-JSON
+//! (`opencode.json`), TOML (Codex, Grok) and DeepSeek Harness patch-YAML
+//! (`~/.dsh/cordis.patch.yml`, see `dsh_entry.rs`) config formats for adding/removing
 //! the vmark MCP server entry. Filesystem side effects live in `install_io.rs`
 //! and `backup_io.rs`; the parsed-document representation lives in
 //! `parsed_config.rs`; the vmark entry's own field-level upsert lives in
@@ -11,6 +12,7 @@
 //! `parsed_config.rs`. Only the bytes VMark owns may change.
 
 use super::install_io::read_config_for_merge;
+use super::dsh_entry::DshDoc;
 use super::opencode_entry::upsert_opencode_vmark;
 use super::parsed_config::{merge_base, parse, Parsed};
 use super::vmark_entry::{upsert_json_vmark, upsert_toml_vmark, TomlEntryStyle};
@@ -27,11 +29,15 @@ use toml_edit::{DocumentMut, Item as TomlItem, Table as TomlTable};
 /// under `mcp`, an entry's `command` is one array holding the program and its
 /// arguments, env vars live under `environment`, and entries carry
 /// `type`/`enabled` fields. See `opencode_entry.rs`.
+///
+/// `Dsh` is DeepSeek Harness's YAML patch list, where XMark owns a marked
+/// block instead of a key in a server map. See `dsh_entry.rs`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum ConfigFormat {
     Json,
     OpenCode,
     Toml,
+    Dsh,
 }
 
 impl ConfigFormat {
@@ -42,6 +48,8 @@ impl ConfigFormat {
             ConfigFormat::Json => "mcpServers",
             ConfigFormat::OpenCode => "mcp",
             ConfigFormat::Toml => "mcp_servers",
+            // dsh has no server map: the entry is a plugin row under `insert`.
+            ConfigFormat::Dsh => "insert",
         }
     }
 }
@@ -49,9 +57,10 @@ impl ConfigFormat {
 /// Map a provider id to its config format, or reject an unknown provider.
 pub(crate) fn config_format(provider_id: &str) -> Result<ConfigFormat, String> {
     match provider_id {
-        "claude-desktop" | "claude" | "gemini" | "antigravity" => Ok(ConfigFormat::Json),
+        "claude-desktop" | "claude" | "gemini" | "antigravity" | "pi" => Ok(ConfigFormat::Json),
         "opencode" => Ok(ConfigFormat::OpenCode),
         "codex" | "grok" => Ok(ConfigFormat::Toml),
+        "dsh" => Ok(ConfigFormat::Dsh),
         _ => Err(rust_i18n::t!("errors.mcp.unknownProvider", provider = provider_id).to_string()),
     }
 }
@@ -172,7 +181,7 @@ pub(crate) fn generate_config_content(
             let mut json: serde_json::Value = match merge_base(existing_content) {
                 Some(c) => match parse(format, c)? {
                     Parsed::Json(v) => v,
-                    Parsed::Toml(_) => unreachable!("JSON syntax parses to Parsed::Json"),
+                    _ => unreachable!("JSON syntax parses to Parsed::Json"),
                 },
                 None => serde_json::json!({}),
             };
@@ -199,7 +208,7 @@ pub(crate) fn generate_config_content(
             let mut doc: DocumentMut = match merge_base(existing_content) {
                 Some(c) => match parse(format, c)? {
                     Parsed::Toml(t) => t,
-                    Parsed::Json(_) => unreachable!("TOML format parses to Parsed::Toml"),
+                    _ => unreachable!("TOML format parses to Parsed::Toml"),
                 },
                 None => DocumentMut::new(),
             };
@@ -224,6 +233,16 @@ pub(crate) fn generate_config_content(
 
             upsert_toml_vmark(servers, style, binary_path, client_token)?;
             Parsed::Toml(doc).serialize()
+        }
+        ConfigFormat::Dsh => {
+            let doc = match merge_base(existing_content) {
+                Some(c) => match parse(format, c)? {
+                    Parsed::Dsh(d) => d,
+                    _ => unreachable!("dsh format parses to Parsed::Dsh"),
+                },
+                None => DshDoc::empty(),
+            };
+            Ok(doc.with_entry(binary_path, client_token))
         }
     }
 }
@@ -259,6 +278,8 @@ pub(crate) fn remove_vmark_from_config(
             .and_then(TomlItem::as_table_like_mut)
             .and_then(|servers| servers.remove(super::MCP_ENTRY_NAME))
             .is_some(),
+        // The block is removed textually; nothing else is re-serialized.
+        Parsed::Dsh(doc) => return Ok(doc.without_entry()),
     };
 
     if !removed {

@@ -198,6 +198,34 @@ il suo percorso del binario non aggiornato). Elimina il blocco `mcp.vmark` scrit
 `opencode.jsonc` e lascia che sia il pannello Integrazioni a gestirlo.
 :::
 
+### Pi
+
+Modifica `~/.pi/agent/mcp.json`, l’elenco dei server a livello utente di pi (il `.pi/mcp.json` di un progetto può sovrascriverlo). Esegui `/reload` in una sessione pi aperta per applicare la modifica:
+
+```json
+{
+  "mcpServers": {
+    "vmark": {
+      "command": "/Applications/VMark.app/Contents/MacOS/vmark-mcp-server"
+    }
+  }
+}
+```
+
+### DeepSeek Harness
+
+Modifica `~/.dsh/cordis.patch.yml`, il livello di patch della cartella home che si applica a ogni profilo dsh. Il pannello Integrazioni aggiunge il server come blocco contrassegnato alla fine di questo elenco e non tocca mai il resto del file. Riavvia dsh per caricarlo:
+
+```yaml
+- insert:
+    - id: mcp-vmark
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: vmark
+        transport: stdio
+        command: /Applications/VMark.app/Contents/MacOS/vmark-mcp-server
+```
+
 ::: tip Trovare il Percorso del Binario
 Su macOS, il binario del server MCP è all'interno di VMark.app:
 - `VMark.app/Contents/MacOS/vmark-mcp-server`
