@@ -4,7 +4,7 @@
 # on the given commit before a release tag is allowed to leave this machine.
 #
 # Called by the `.githooks/pre-push` tag leg. Queries
-#   gh api repos/xiaolai/vmark/commits/<sha>/check-runs
+#   gh api repos/xiezhaoye/xmark/commits/<sha>/check-runs
 # and requires BOTH required branch-protection checks — `frontend` and `rust`
 # (the same two `main` requires) — to be `completed` + `success` on the exact
 # SHA the tag names.
@@ -38,7 +38,7 @@
 
 set -euo pipefail
 
-REPO_SLUG="xiaolai/vmark"
+REPO_SLUG="xiezhaoye/xmark"
 sha="${1:-}"
 
 if [ -z "$sha" ]; then
