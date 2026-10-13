@@ -11,6 +11,16 @@ section as part of the version bump (`.claude/rules/40-version-bump.md`).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-13
+
+### Changed
+
+- New app icon: an M built from two columns and a chevron, echoing XMark's
+  three-column layout. It replaces VMark's icon in the Dock, Finder and the
+  About page, with the Liquid Glass look on macOS 26.
+- Downloads and in-app updates are served from xmark.xiezhaoye.site, so they
+  work without reaching GitHub.
+
 ## [0.1.0] - 2026-10-13
 
 First XMark release: an unofficial fork of VMark 0.9.99 by Xiaolai Li.
@@ -304,7 +314,8 @@ First XMark release: an unofficial fork of VMark 0.9.99 by Xiaolai Li.
 
 - Raised the `markdown-it` version floor past GHSA-253c-mchw-3w2r.
 
-[Unreleased]: https://github.com/xiezhaoye/xmark/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/xiezhaoye/xmark/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/xiezhaoye/xmark/releases/tag/v0.1.1
 [0.1.0]: https://github.com/xiezhaoye/xmark/releases/tag/v0.1.0
 [0.9.99]: https://github.com/xiaolai/vmark/releases/tag/v0.9.99
 [0.9.98]: https://github.com/xiaolai/vmark/releases/tag/v0.9.98
