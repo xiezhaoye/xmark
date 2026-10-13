@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>XMark · 你和 AI 共用的纯文本工作台</title>
+<meta name="description" content="XMark 是一款免费、本地优先的 macOS 编辑器：工作区、文件树、文档三栏布局，支持工作区分组，你和 AI 读写同一批文件。">
+<link rel="icon" type="image/svg+xml" href="logo.svg">
+<meta property="og:title" content="XMark">
+<meta property="og:description" content="你和 AI 共用的纯文本工作台，围绕文件夹来组织。">
+<style>
+:root {
+  --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --muted: #475569;
+  --line: #e2e8f0; --accent: #f59e0b; --btn: #1e293b; --btn-text: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b1220; --card: #111a2e; --text: #e2e8f0; --muted: #94a3b8;
+    --line: #1f2a44; --btn: #f59e0b; --btn-text: #111827;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 16px/1.7 -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+}
+main { max-width: 720px; margin: 0 auto; padding: 56px 16px 40px; }
+.hero { text-align: center; }
+.hero img { width: 96px; height: 96px; }
+h1 { font-size: 40px; line-height: 1.2; margin: 16px 0 8px; letter-spacing: -0.5px; }
+.tagline { font-size: 20px; margin: 0 0 8px; }
+.sub { color: var(--muted); margin: 0 auto 28px; max-width: 520px; }
+.download {
+  display: inline-flex; align-items: center; gap: 10px; padding: 14px 28px;
+  background: var(--btn); color: var(--btn-text); border-radius: 12px;
+  font-size: 18px; font-weight: 600; text-decoration: none;
+}
+.download:hover { opacity: .9; }
+.download:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.meta { color: var(--muted); font-size: 14px; margin: 12px 0 0; }
+.links { margin: 16px 0 0; font-size: 15px; }
+.links a { color: var(--text); }
+.features { display: grid; gap: 12px; margin: 48px 0 0; padding: 0; list-style: none; }
+@media (min-width: 640px) { .features { grid-template-columns: repeat(3, 1fr); } }
+.features li { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+.features h2 { font-size: 17px; margin: 0 0 4px; }
+.features p { margin: 0; color: var(--muted); font-size: 15px; }
+.notice { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; margin: 32px 0 0; }
+.notice h2 { font-size: 17px; margin: 0 0 6px; }
+.notice ol { margin: 0; padding-left: 20px; color: var(--muted); font-size: 15px; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: var(--line); padding: 2px 6px; border-radius: 6px; word-break: break-all; }
+footer { color: var(--muted); font-size: 13px; text-align: center; margin: 40px 0 0; }
+footer a { color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <section class="hero">
+    <img src="logo.svg" alt="XMark 标志">
+    <h1>XMark</h1>
+    <p class="tagline">你和 AI 共用的纯文本工作台</p>
+    <p class="sub">免费、数据只存在本机的 macOS 编辑器。工作区 · 文件树 · 文档三栏布局，多个项目文件夹随手切换。</p>
+    <a class="download" href="{{DMG_URL}}" download>下载 XMark {{VERSION}}</a>
+    <p class="meta">适用于 Apple 芯片（M1 及更新）的 Mac · macOS 13.4 或更新 · {{DMG_SIZE}} MB</p>
+    <p class="links"><a href="https://github.com/xiezhaoye/xmark">GitHub</a> · <a href="https://github.com/xiezhaoye/xmark/blob/main/CHANGELOG.md">更新日志</a> · <a href="https://github.com/xiezhaoye/xmark/issues">反馈问题</a></p>
+  </section>
+
+  <ul class="features">
+    <li><h2>三栏布局</h2><p>工作区、文件树、文档并排显示；两侧栏都能收起成一条细条。</p></li>
+    <li><h2>工作区分组</h2><p>把常用文件夹归进分组，重启后依然保留，点一下就能打开。</p></li>
+    <li><h2>为 AI 而生</h2><p>通过 MCP 连接 Claude、Codex 等助手，和你在同一批文件上协作。</p></li>
+  </ul>
+
+  <section class="notice">
+    <h2>第一次打开</h2>
+    <ol>
+      <li>打开下载的 <code>.dmg</code>，把 XMark 拖进「应用程序」。</li>
+      <li>双击打开一次。macOS 提示无法验证开发者时，到「系统设置 → 隐私与安全性」，点「仍要打开」。</li>
+      <li>也可以在终端执行：<code>xattr -dr com.apple.quarantine /Applications/XMark.app</code></li>
+    </ol>
+  </section>
+
+  <footer>
+    <p>XMark 是 <a href="https://github.com/xiaolai/vmark">VMark</a>（作者 Xiaolai Li）的非官方分支版本，基于 ISC 协议开源。</p>
+  </footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  // XMark landing page: static assets on Cloudflare Workers, served at
+  // xmark.xiezhaoye.site. Build with `node build.mjs` first.
+  "name": "xmark-site",
+  "compatibility_date": "2026-10-01",
+  "assets": { "directory": "./dist" },
+  "routes": [{ "pattern": "xmark.xiezhaoye.site", "custom_domain": true }],
+  "workers_dev": false
+}
