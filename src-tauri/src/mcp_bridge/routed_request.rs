@@ -127,6 +127,7 @@ pub(super) async fn run<R: tauri::Runtime>(
     let event = McpRequestEvent {
         id: request_id.clone(),
         request_type: request.request_type.clone(),
+        client_id: client_id.to_string(),
         args_json,
     };
 

@@ -31,6 +31,7 @@ fn request(id: &str) -> McpRequestEvent {
     McpRequestEvent {
         id: id.to_string(),
         request_type: "document.read".to_string(),
+        client_id: "1".to_string(),
         args_json: "{}".to_string(),
     }
 }
@@ -99,6 +100,7 @@ async fn the_same_request_is_re_sent_and_its_late_response_is_returned() {
         json!("req-ok"),
         "the SAME id, so it is deduplicated"
     );
+    assert_eq!(resent["client_id"], json!("1"));
     // The webview answers through the channel the retry installed.
     let pending = bridge(app.handle())
         .lock()

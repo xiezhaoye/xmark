@@ -68,7 +68,7 @@ let seq = 0;
 async function request(type: string, args: Record<string, unknown>, id = `req-${++seq}`) {
   const deliver = bus.listeners.get("mcp-bridge:request");
   if (!deliver) throw new Error("the MCP bridge listener was never registered");
-  deliver({ payload: { id, type, args_json: JSON.stringify(args) } });
+  deliver({ payload: { id, type, client_id: "tier0-client", args_json: JSON.stringify(args) } });
   return vi.waitFor(() => responseTo(id));
 }
 

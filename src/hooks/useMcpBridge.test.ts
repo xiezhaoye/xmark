@@ -1,4 +1,5 @@
 // Behavior coverage for the MCP bridge entry hook. Specifically:
+// WI-PRDY3.1 — forward Rust's connection id without reading it from tool args.
 //   - listener registration on mount, teardown on unmount (unlisten + heartbeat)
 //   - Strict Mode guard: unmount before listen() resolves still cleans up
 //   - heartbeat cadence (5s) and swallowed heartbeat failures
@@ -214,6 +215,7 @@ describe("useMcpBridge — request dispatch", () => {
     deliver({
       id: "req-1",
       type: "vmark.document.read",
+      client_id: "77",
       args_json: '{"path":"a.md","limit":2}',
     });
     await flushMicrotasks();
@@ -223,6 +225,21 @@ describe("useMcpBridge — request dispatch", () => {
       id: "req-1",
       type: "vmark.document.read",
       args: { path: "a.md", limit: 2 },
+      clientId: "77",
+    });
+  });
+
+  it("forwards the camelCase authenticated client id", async () => {
+    await mountBridge();
+
+    deliver({ id: "req-client", type: "vmark.workspace.open_workspace", clientId: "88" });
+    await flushMicrotasks();
+
+    expect(mockHandleRequest).toHaveBeenCalledWith({
+      id: "req-client",
+      type: "vmark.workspace.open_workspace",
+      args: {},
+      clientId: "88",
     });
   });
 

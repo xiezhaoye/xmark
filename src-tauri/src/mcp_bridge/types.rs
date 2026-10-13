@@ -63,6 +63,9 @@ pub struct McpRequestEvent {
     pub id: String,
     #[serde(rename = "type")]
     pub request_type: String,
+    /// Rust-assigned id of the WebSocket connection. This field is only emitted
+    /// for requests from authenticated connections and never comes from args.
+    pub client_id: String,
     /// JSON-serialized args string (frontend must JSON.parse this)
     pub args_json: String,
 }
@@ -92,6 +95,10 @@ pub(crate) struct ClientIdentity {
     #[serde(default)]
     pub version: Option<String>,
 }
+
+#[cfg(test)]
+#[path = "types.test.rs"]
+mod tests;
 
 impl ClientIdentity {
     /// Get display name for logging.
