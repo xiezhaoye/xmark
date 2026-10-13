@@ -498,7 +498,7 @@ describe("live tree", () => {
     expect((source.match(/defaultKey/g) ?? []).length).toBeGreaterThan(DEFAULT_SHORTCUTS.length);
   });
 
-  it("reports zero findings against README.md", async () => {
+  it("reports zero findings against README.en.md", async () => {
     const { findings, info } = await run({ root: REPO });
     expect(findings).toEqual([]);
     expect(info.length).toBeGreaterThan(0);

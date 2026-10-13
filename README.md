@@ -1,6 +1,6 @@
 # XMark
 
-[English](README.md) · **简体中文**
+**简体中文** · [English](README.en.md)
 
 **一个你和 AI 共用的纯文本工作台，围绕你的文件夹来组织。**
 

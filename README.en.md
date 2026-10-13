@@ -1,6 +1,6 @@
 # XMark
 
-**English** · [简体中文](README.zh-CN.md)
+[简体中文](README.md) · **English**
 
 **A plain-text workspace for you and your AI, organized around your folders.**
 

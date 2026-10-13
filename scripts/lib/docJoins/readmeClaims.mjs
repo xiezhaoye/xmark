@@ -1,5 +1,5 @@
 /**
- * Purpose: join README.md's feature claims to the registries they restate, so
+ * Purpose: join README.en.md's feature claims to the registries they restate, so
  *   the README cannot drift from the code without a gate going red.
  *
  * Four claims, four registries:
@@ -39,7 +39,9 @@
  *   `id`, `DEFAULT_PATHS`, `run({ root, paths }) → { findings, info }`.
  *
  * @coordinates-with scripts/lib/docJoins/readmeRegistries.mjs — reads the four registries
- * @coordinates-with README.md — the claims
+ * @coordinates-with README.en.md — the claims (the English README; README.md is
+ *   the Chinese default page and states the same features in prose this join
+ *   does not parse)
  * @module scripts/lib/docJoins/readmeClaims
  */
 import { readFileSync } from "node:fs";
@@ -58,7 +60,7 @@ export { countShortcutDefinitions, parseLanguages, parseNonMacThemeIds, parsePro
 export const id = "readme-claims";
 
 export const DEFAULT_PATHS = {
-  readme: "README.md",
+  readme: "README.en.md",
   providers: "src-tauri/src/mcp_config/providers.rs",
   shortcuts: "src/stores/settingsStore/shortcutDefinitions.ts",
   languages: "src/pages/settings/LanguageSettings.tsx",
@@ -109,7 +111,7 @@ function claimBullet(lines, noun) {
  * (`{ providers, languages, themeIds, nonMacThemeIds, shortcutCount }`).
  * Pure: takes text, returns `{ findings, info }`; `label` prefixes each line.
  */
-export function checkReadme(readme, registries, label = "README.md") {
+export function checkReadme(readme, registries, label = "README.en.md") {
   const { providers, languages, themeIds, nonMacThemeIds, shortcutCount } = registries;
   const lines = readme.split("\n");
   const at = (index) => `${label}:${index + 1}`;

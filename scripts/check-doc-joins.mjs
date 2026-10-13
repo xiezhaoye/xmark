@@ -18,7 +18,7 @@
  *   settings-defaults  website/guide/settings.md + website/guide/terminal.md
  *                      Default columns ↔ src/stores/settingsStore/defaults.ts,
  *                      both directions; an unmapped Default row fails closed
- *   readme-claims      README.md ↔ src-tauri/src/mcp_config/providers.rs (the
+ *   readme-claims      README.en.md ↔ src-tauri/src/mcp_config/providers.rs (the
  *                      non-legacy MCP targets), shortcutDefinitions.ts (a numeric
  *                      shortcut claim must equal the count), LanguageSettings.tsx
  *                      (the language list), themes + themeAvailability (a
