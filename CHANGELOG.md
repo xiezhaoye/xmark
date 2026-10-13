@@ -13,6 +13,11 @@ section as part of the version bump (`.claude/rules/40-version-bump.md`).
 
 ## [0.1.1] - 2026-10-13
 
+### Fixed
+
+- MCP `open_workspace` one-shot approvals are bound to the authenticated
+  bridge connection, so another client cannot consume them.
+
 ### Changed
 
 - New app icon: an M built from two columns and a chevron, echoing XMark's
