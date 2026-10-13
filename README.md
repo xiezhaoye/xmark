@@ -1,3 +1,78 @@
+# XMark
+
+**English** · [简体中文](README.zh-CN.md)
+
+> **XMark is an unofficial fork of [VMark](https://github.com/xiaolai/vmark) by Xiaolai Li.**
+> It is not affiliated with or endorsed by the original author, and all credit
+> for VMark itself goes to him. Please report problems with this fork in
+> **this** repository, not upstream.
+
+XMark keeps everything VMark does and reworks how folders and workspaces are
+laid out — mainly the column layout, workspace **groups**, and collapsing.
+
+## What XMark changes
+
+**Three-column layout** — workspaces · file tree · document
+
+- The first column lists open workspaces by their **full folder name** (two
+  folders called `wiki` both read `wiki`; hover for the full path) and can be
+  resized by dragging its edge.
+- The hover "Duplicate" badge that sat on every workspace is gone; duplicate,
+  move to a new window and close are in the right-click menu.
+
+**Workspace groups**
+
+- Create named groups (**New Group** at the foot of the first column) and add
+  folders to them from a workspace's right-click menu or a group's **+**
+  button. A folder can belong to several groups.
+- Click a group's name to expand or collapse it. Groups are saved and survive
+  restarts; a folder in a group that is not open is shown outlined and opens
+  on click.
+- Open workspaces that no group contains are listed under **Ungrouped**.
+
+**Collapsible columns**
+
+- Both side columns fold into a thin strip instead of disappearing. Hovering
+  the strip highlights it; clicking anywhere on it expands the column again.
+  `Cmd+\` folds and unfolds the file column.
+
+**Smaller refinements**
+
+- **Settings → Appearance → Sidebar text size** (13–16 px) for the first two
+  columns; rows grow with the text.
+- Clicking a folder row in the file tree opens or closes it, and rows are no
+  longer draggable, so trackpad clicks register the first time.
+- File-tree toolbar: tree controls on the left, new file / new folder on the
+  right, view switcher (Files / Outline / History) at the bottom; "show all
+  files" is an eye / eye-off toggle whose tooltip says what a click will do.
+
+## Building XMark
+
+There are no pre-built XMark binaries yet — build from source as described in
+[Building from Source](#building-from-source) below. Two notes from practice:
+
+- Use Node.js 22 or 24 (Node 25 is rejected by some dependencies' engine
+  checks).
+- Build the MCP sidecar once before the first run:
+  `pnpm --dir server/mcp build:sidecar`, then `pnpm tauri:dev`.
+
+Inside the app, XMark still calls itself **VMark** and uses VMark's app
+identifier for now; renaming the app bundle is planned.
+
+## License
+
+XMark is distributed under the same [ISC License](LICENSE) as VMark. The
+original copyright notice is kept; XMark's changes are
+Copyright (c) 2026 xiezhaoye.
+
+---
+
+*Everything below is the original VMark README, kept as-is. Its Install
+section installs the official VMark, and its contribution policy applies to
+the upstream project.*
+
+---
+
 # VMark
 
 **The Plain-Text Workspace Where Humans and AI Collaborate**

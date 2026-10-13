@@ -11,6 +11,24 @@ section as part of the version bump (`.claude/rules/40-version-bump.md`).
 
 ## [Unreleased]
 
+### Added (XMark fork)
+
+- Three-column layout: the workspace column lists workspaces by their full
+  folder name and is resizable.
+- Workspace groups: named, collapsible, persisted groups of folders, filled
+  from a workspace's context menu or a group's "+"; a folder may belong to
+  several groups; ungrouped open workspaces are listed separately.
+- Both side columns fold into a thin strip that expands on click.
+- Settings > Appearance > Sidebar text size (13-16 px).
+
+### Changed (XMark fork)
+
+- Clicking a folder row in the file tree opens or closes it; file-tree and
+  workspace rows are no longer draggable, so trackpad clicks register.
+- The workspace column's hover "Duplicate" badge moved into the context menu.
+- File-tree toolbar rearranged; "show all files" is an eye toggle with a
+  state-aware tooltip; the status bar no longer has an "open sidebar" button.
+
 ## [0.9.99] - 2026-10-13
 
 ### Changed
