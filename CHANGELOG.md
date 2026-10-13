@@ -11,6 +11,25 @@ section as part of the version bump (`.claude/rules/40-version-bump.md`).
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-13
+
+### Added
+
+- Settings > Integrations can install XMark's MCP server into Pi
+  (`~/.pi/agent/mcp.json`) and DeepSeek Harness. For DeepSeek Harness it
+  writes a marked block into the home-level patch file
+  `~/.dsh/cordis.patch.yml`, which applies to every profile, and never
+  touches the rest of that file.
+
+### Changed
+
+- Terminals you are not looking at, including those of other workspaces,
+  release their GPU renderer and take it back when shown again. Their
+  output and running commands are unaffected.
+- One window holds at most 12 terminals across all its workspaces. At the
+  limit the + button explains why it is disabled; no terminal is ever
+  closed for you.
+
 ## [0.1.1] - 2026-10-13
 
 ### Fixed
@@ -321,7 +340,8 @@ First XMark release: an unofficial fork of VMark 0.9.99 by Xiaolai Li.
 
 - Raised the `markdown-it` version floor past GHSA-253c-mchw-3w2r.
 
-[Unreleased]: https://github.com/xiezhaoye/xmark/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/xiezhaoye/xmark/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/xiezhaoye/xmark/releases/tag/v0.1.2
 [0.1.1]: https://github.com/xiezhaoye/xmark/releases/tag/v0.1.1
 [0.1.0]: https://github.com/xiezhaoye/xmark/releases/tag/v0.1.0
 [0.9.99]: https://github.com/xiaolai/vmark/releases/tag/v0.9.99
