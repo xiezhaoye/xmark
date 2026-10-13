@@ -94,8 +94,9 @@
 }
 
 .app-sidebar-stack__rail {
-  width: var(--workspace-rail-width, 30px);
-  flex: 0 0 var(--workspace-rail-width, 30px);
+  position: relative;
+  width: var(--workspace-rail-width, 160px);
+  flex: 0 0 var(--workspace-rail-width, 160px);
 }
 
 .app-sidebar-stack__sidebar {

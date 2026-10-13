@@ -29,6 +29,7 @@ export const CLAMP_RANGES: Partial<Record<ObjectSections, Record<string, [number
     lineHeight: [1, 3],
     blockSpacing: [0, 3],
     editorWidth: [0, 200],
+    sidebarFontSize: [12, 18],
   },
   terminal: {
     fontSize: [8, 32],
@@ -50,6 +51,9 @@ export const CLAMP_RANGES: Partial<Record<ObjectSections, Record<string, [number
     // A tau outside (0,1] is not a threshold: <=0 makes every verdict
     // determinate, >1 makes every verdict unknown. Both are silently wrong.
     coherenceCheckTau: [0.5, 1],
+    // The rail shows workspace NAMES, so it needs room for a word; past 320 it
+    // starts eating the file tree and the editor.
+    workspaceRailWidth: [120, 320],
   },
 };
 

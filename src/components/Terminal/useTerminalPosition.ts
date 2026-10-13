@@ -28,7 +28,7 @@
 
 import { useEffect, useRef } from "react";
 import { useSettingsStore } from "@/stores/settingsStore";
-import { BAR_HEIGHT, shellSideWidth } from "@/shell/shellChrome";
+import { BAR_HEIGHT, railColumnWidth, shellSideWidth } from "@/shell/shellChrome";
 import { usesOverlayTitleBar } from "@/utils/platform";
 import {
   useUIStore,
@@ -134,8 +134,11 @@ export function getAvailableDimension(
  */
 export function currentShellSideWidth(): number {
   const ui = useUIStore.getState();
+  const general = useSettingsStore.getState().general;
   return shellSideWidth({
-    workspaceRailVisible: useSettingsStore.getState().general.workspaceRailMode,
+    workspaceRailVisible: general.workspaceRailMode,
+    workspaceRailWidth: railColumnWidth(general.workspaceRailWidth, general.workspaceRailCollapsed),
+    sidebarStrip: true,
     sidebarVisible: ui.sidebarVisible,
     sidebarWidth: ui.sidebarWidth,
   });
@@ -174,6 +177,9 @@ export function useTerminalPosition() {
   // Subscribed, not read via getState(): the panel must re-size when the rail
   // is toggled, exactly as it does for the sidebar.
   const railVisible = useSettingsStore((s) => s.general.workspaceRailMode);
+  const railWidth = useSettingsStore((s) =>
+    railColumnWidth(s.general.workspaceRailWidth, s.general.workspaceRailCollapsed),
+  );
   const currentRef = useRef<EffectiveTerminalPosition>(
     useUIStore.getState().effectiveTerminalPosition
   );
@@ -200,7 +206,7 @@ export function useTerminalPosition() {
         pos,
         window.innerWidth,
         window.innerHeight,
-        shellSideWidth({ workspaceRailVisible: railVisible, sidebarVisible, sidebarWidth }),
+        shellSideWidth({ workspaceRailVisible: railVisible, workspaceRailWidth: railWidth, sidebarVisible, sidebarWidth, sidebarStrip: true }),
       );
       const height = ratioToPixels(panelRatio, available, TERMINAL_MIN_HEIGHT);
       const width = ratioToPixels(panelRatio, available, TERMINAL_MIN_WIDTH);
@@ -222,5 +228,5 @@ export function useTerminalPosition() {
 
     window.addEventListener("resize", updateAll);
     return () => window.removeEventListener("resize", updateAll);
-  }, [position, panelRatio, sidebarVisible, sidebarWidth, railVisible]);
+  }, [position, panelRatio, sidebarVisible, sidebarWidth, railVisible, railWidth]);
 }

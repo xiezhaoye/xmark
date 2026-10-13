@@ -8,6 +8,8 @@ import { describe, it, expect } from "vitest";
 import {
   shellSideWidth,
   shellChromeVars,
+  railColumnWidth,
+  COLLAPSED_STRIP_WIDTH,
   WORKSPACE_RAIL_WIDTH,
   BAR_HEIGHT,
   SHELL_TOP_INSET,
@@ -40,6 +42,29 @@ describe("shellSideWidth", () => {
     expect(
       shellSideWidth({ workspaceRailVisible: true, sidebarVisible: true, sidebarWidth: 260 }),
     ).toBe(WORKSPACE_RAIL_WIDTH + 260 + SHELL_CARD_INSET * 2);
+  });
+
+  it("uses the user's rail width when one is given", () => {
+    expect(
+      shellSideWidth({ workspaceRailVisible: true, workspaceRailWidth: 220, sidebarVisible: true, sidebarWidth: 260 }),
+    ).toBe(220 + 260 + SHELL_CARD_INSET * 2);
+  });
+
+  it("ignores the rail width while the rail is hidden", () => {
+    expect(
+      shellSideWidth({ workspaceRailVisible: false, workspaceRailWidth: 220, sidebarVisible: true, sidebarWidth: 260 }),
+    ).toBe(260 + SHELL_CARD_INSET * 2);
+  });
+
+  it("counts the folded sidebar strip when the sidebar is hidden", () => {
+    expect(
+      shellSideWidth({ workspaceRailVisible: false, sidebarVisible: false, sidebarWidth: 260, sidebarStrip: true }),
+    ).toBe(COLLAPSED_STRIP_WIDTH + SHELL_CARD_INSET * 2);
+  });
+
+  it("a folded rail is a strip", () => {
+    expect(railColumnWidth(200, true)).toBe(COLLAPSED_STRIP_WIDTH);
+    expect(railColumnWidth(200, false)).toBe(200);
   });
 
   it("ignores the sidebar width while the sidebar is hidden", () => {
@@ -86,6 +111,10 @@ describe("the leading card", () => {
 // tells horizontally: one TS definition, published as a CSS var so the sidebar
 // and the rail stop hardcoding a number each.
 describe("shellChromeVars", () => {
+  it("publishes the live rail width when one is given", () => {
+    expect(shellChromeVars(true, 200)["--workspace-rail-width"]).toBe("200px");
+  });
+
   it("publishes the rail width so descendants inherit the TS value", () => {
     expect(shellChromeVars(true)["--workspace-rail-width"]).toBe(
       `${WORKSPACE_RAIL_WIDTH}px`,

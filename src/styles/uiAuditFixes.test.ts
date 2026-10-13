@@ -95,7 +95,9 @@ describe("ui audit fixes (20260901)", () => {
   });
 
   it("WI-UA16: the rail item's full name rides the native title tooltip", () => {
-    expect(read("src/components/WorkspaceRail/WorkspaceRail.tsx")).toContain("title={displayLabel}");
+    // The row moved to WorkspaceRailEntry; its tooltip is the folder's full
+    // path (the name is already visible), or the name when there is no path.
+    expect(read("src/components/WorkspaceRail/WorkspaceRailEntry.tsx")).toContain("title={entry.path ?? entry.label}");
   });
 
   it("WI-UB1: the .vm-btn BASE is the elevated recipe — raised face, ink hairline, lift", () => {

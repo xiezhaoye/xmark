@@ -1,7 +1,7 @@
 // WI-3R — rail click performs the full context switch (tests)
 // WI-TS5.1 — stable data-rail-action/data-instance-id automation attributes
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { act, createEvent, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useTabStore } from "@/stores/tabStore";
@@ -36,7 +36,7 @@ vi.mock("@tauri-apps/api/core", () => ({
 
 function setRailMode(enabled: boolean): void {
   useSettingsStore.setState({
-    general: { ...useSettingsStore.getState().general, workspaceRailMode: enabled },
+    general: { ...useSettingsStore.getState().general, workspaceRailMode: enabled, workspaceRailCollapsed: false },
   });
 }
 
@@ -77,8 +77,40 @@ beforeEach(() => {
 });
 
 describe("WorkspaceRail", () => {
-  it("uses a compact width without changing icon button sizing", () => {
-    expect(WORKSPACE_RAIL_WIDTH).toBe(30);
+  it("defaults to a column wide enough for workspace names", () => {
+    expect(WORKSPACE_RAIL_WIDTH).toBe(160);
+  });
+
+  it("shows each workspace's full name, not just its glyph", () => {
+    setRailMode(true);
+    addInstance("main", "wsi-a", "/Users/xiaolai/muse");
+    addInstance("main", "wsi-b", "/Users/xiaolai/project");
+
+    render(<WorkspaceRail windowLabel="main" />);
+
+    expect(screen.getByRole("button", { name: "Activate muse" })).toHaveTextContent("muse");
+    expect(screen.getByRole("button", { name: "Activate project" })).toHaveTextContent("project");
+  });
+
+  it("has no per-entry duplicate button (duplicate lives in the context menu)", () => {
+    setRailMode(true);
+    addInstance("main", "wsi-a", "/Users/xiaolai/muse");
+
+    const { container } = render(<WorkspaceRail windowLabel="main" />);
+
+    expect(screen.queryByRole("button", { name: /duplicate/i })).toBeNull();
+    expect(container.querySelector('[data-rail-action="duplicate"]')).toBeNull();
+  });
+
+  it("has no Open Folder button; New Group and collapse share the footer", () => {
+    setRailMode(true);
+    render(<WorkspaceRail windowLabel="main" />);
+    expect(screen.queryByRole("button", { name: /open folder/i })).toBeNull();
+    const newGroup = screen.getByRole("button", { name: "New Group" });
+    const collapse = screen.getByRole("button", { name: "Collapse Workspaces" });
+    // Same footer row, collapse last (the bottom-right corner).
+    expect(newGroup.parentElement).toBe(collapse.parentElement);
+    expect(collapse.parentElement?.lastElementChild).toBe(collapse);
   });
 
   it("renders nothing while workspace rail mode is disabled", () => {
@@ -144,7 +176,9 @@ describe("WorkspaceRail", () => {
     // Query by accessible name, so the assertion survives a CSS-class rename
     // and states the real contract: THIS workspace shows THIS glyph.
     const glyphOf = (name: string) =>
-      screen.getByRole("button", { name: `Activate ${name}` }).textContent;
+      screen
+        .getByRole("button", { name: `Activate ${name}` })
+        .querySelector(".workspace-rail__glyph")?.textContent;
 
     expect(glyphOf("alpha")).toBe("A");
     expect(glyphOf("beta")).toBe("B");
@@ -257,177 +291,81 @@ describe("WorkspaceRail", () => {
     expect(useWorkspaceInstancesStore.getState().instances).toEqual(before);
   });
 
-  it("moves a workspace when its icon is dragged outside the viewport", () => {
+  // Rows are not draggable: a trackpad press that drifted a few pixels used
+  // to start a drag and swallow the click. Moving lives in the context menu.
+  it("rail rows are not draggable", () => {
     setRailMode(true);
     addInstance("main", "wsi-a", "/Users/xiaolai/a");
-
     render(<WorkspaceRail windowLabel="main" />);
-    const button = screen.getByRole("button", { name: "Activate a" });
-    const event = createEvent.dragEnd(button);
-    Object.defineProperties(event, {
-      clientX: { value: -12 },
-      clientY: { value: 20 },
-    });
-    fireEvent(button, event);
+    expect(screen.getByRole("button", { name: "Activate a" })).not.toHaveAttribute("draggable", "true");
+  });
+
+  it("moves a workspace to a new window from the context menu", async () => {
+    const user = userEvent.setup();
+    setRailMode(true);
+    addInstance("main", "wsi-a", "/Users/xiaolai/a");
+    render(<WorkspaceRail windowLabel="main" />);
+
+    await user.pointer({ keys: "[MouseRight]", target: screen.getByRole("button", { name: "Activate a" }) });
+    await user.click(screen.getByRole("menuitem", { name: "Move to New Window" }));
 
     expect(mockMoveWorkspace).toHaveBeenCalledWith("main", "wsi-a");
   });
 
-  it("does not move a workspace when drag ends inside the viewport", () => {
-    setRailMode(true);
-    addInstance("main", "wsi-a", "/Users/xiaolai/a");
-
-    render(<WorkspaceRail windowLabel="main" />);
-    const button = screen.getByRole("button", { name: "Activate a" });
-    const event = createEvent.dragEnd(button);
-    Object.defineProperties(event, {
-      clientX: { value: 12 },
-      clientY: { value: 20 },
-    });
-    fireEvent(button, event);
-
-    expect(mockMoveWorkspace).not.toHaveBeenCalled();
-  });
-
-  it("does not move a workspace when drag coordinates are unavailable", () => {
-    setRailMode(true);
-    addInstance("main", "wsi-a", "/Users/xiaolai/a");
-
-    render(<WorkspaceRail windowLabel="main" />);
-    const button = screen.getByRole("button", { name: "Activate a" });
-    const event = createEvent.dragEnd(button);
-    Object.defineProperties(event, {
-      clientX: { value: Number.NaN },
-      clientY: { value: 20 },
-    });
-    fireEvent(button, event);
-
-    expect(mockMoveWorkspace).not.toHaveBeenCalled();
-  });
-
-  it("does not move when dragend reports the 0,0 cancellation sentinel", () => {
-    // A cancelled drag (Esc) or invalid-target drop reports clientX/Y of 0,0
-    // in several browsers. The old `<= 0` check treated this as outside and
-    // wrongly moved the workspace to a new window.
-    setRailMode(true);
-    addInstance("main", "wsi-a", "/Users/xiaolai/a");
-
-    render(<WorkspaceRail windowLabel="main" />);
-    const button = screen.getByRole("button", { name: "Activate a" });
-    const event = createEvent.dragEnd(button);
-    Object.defineProperties(event, {
-      clientX: { value: 0 },
-      clientY: { value: 0 },
-    });
-    fireEvent(button, event);
-
-    expect(mockMoveWorkspace).not.toHaveBeenCalled();
-  });
-
-  it("does not move when dragend reports dropEffect 'none' (cancelled drag)", () => {
-    setRailMode(true);
-    addInstance("main", "wsi-a", "/Users/xiaolai/a");
-
-    render(<WorkspaceRail windowLabel="main" />);
-    const button = screen.getByRole("button", { name: "Activate a" });
-    const event = createEvent.dragEnd(button);
-    Object.defineProperties(event, {
-      // Outside coords, but dropEffect "none" means the drag was cancelled.
-      clientX: { value: -50 },
-      clientY: { value: 20 },
-      dataTransfer: { value: { dropEffect: "none" } },
-    });
-    fireEvent(button, event);
-
-    expect(mockMoveWorkspace).not.toHaveBeenCalled();
-  });
-
-  it("does not move to a new window after an internal reorder drop", () => {
-    setRailMode(true);
-    addInstance("main", "wsi-a", "/Users/xiaolai/a");
-    addInstance("main", "wsi-b", "/Users/xiaolai/b");
-
-    render(<WorkspaceRail windowLabel="main" />);
-    const source = screen.getByRole("button", { name: "Activate b" });
-    const target = screen.getByRole("button", { name: "Activate a" });
-
-    fireEvent.dragStart(source, {
-      dataTransfer: { effectAllowed: "", setData: vi.fn(), getData: vi.fn(() => "wsi-b") },
-    });
-    fireEvent.dragOver(target);
-    fireEvent.drop(target, { dataTransfer: { getData: vi.fn(() => "wsi-b") } });
-
-    // The trailing dragend fires at 0,0 (or outside) after an internal drop;
-    // the internal-drop flag must suppress the move.
-    const endEvent = createEvent.dragEnd(source);
-    Object.defineProperties(endEvent, {
-      clientX: { value: -10 },
-      clientY: { value: 20 },
-    });
-    fireEvent(source, endEvent);
-
-    expect(mockMoveWorkspace).not.toHaveBeenCalled();
-    // The reorder still happened.
-    expect(
-      selectWindowWorkspaceState(useWorkspaceInstancesStore.getState(), "main")
-        ?.workspaceInstanceIds,
-    ).toEqual(["wsi-b", "wsi-a"]);
-  });
-
-  it("reorders workspace entries when a rail icon is dropped on another entry", () => {
-    setRailMode(true);
-    addInstance("main", "wsi-a", "/Users/xiaolai/a");
-    addInstance("main", "wsi-b", "/Users/xiaolai/b");
-
-    render(<WorkspaceRail windowLabel="main" />);
-    const source = screen.getByRole("button", { name: "Activate b" });
-    const target = screen.getByRole("button", { name: "Activate a" });
-    fireEvent.dragStart(source, {
-      dataTransfer: {
-        effectAllowed: "",
-        setData: vi.fn(),
-        getData: vi.fn(() => "wsi-b"),
-      },
-    });
-    fireEvent.dragOver(target);
-    fireEvent.drop(target, {
-      dataTransfer: {
-        getData: vi.fn(() => "wsi-b"),
-      },
-    });
-
-    expect(
-      selectWindowWorkspaceState(useWorkspaceInstancesStore.getState(), "main")
-        ?.workspaceInstanceIds,
-    ).toEqual(["wsi-b", "wsi-a"]);
-  });
-
   it("shows an error toast when moving a workspace fails", async () => {
+    const user = userEvent.setup();
     setRailMode(true);
     addInstance("main", "wsi-a", "/Users/xiaolai/a");
-    mockMoveWorkspace.mockResolvedValueOnce({ ok: false, reason: "timeout" });
-
+    mockMoveWorkspace.mockResolvedValueOnce({ ok: false, reason: "invokeFailed" });
     render(<WorkspaceRail windowLabel="main" />);
-    const button = screen.getByRole("button", { name: "Activate a" });
-    const event = createEvent.dragEnd(button);
-    Object.defineProperties(event, {
-      clientX: { value: globalThis.innerWidth },
-      clientY: { value: 20 },
-    });
-    fireEvent(button, event);
+
+    await user.pointer({ keys: "[MouseRight]", target: screen.getByRole("button", { name: "Activate a" }) });
+    await user.click(screen.getByRole("menuitem", { name: "Move to New Window" }));
 
     await waitFor(() =>
       expect(mockToastError).toHaveBeenCalledWith("Failed to move workspace to a new window"),
     );
   });
 
-  it("duplicates a workspace from the duplicate icon", async () => {
+  it("shows two folders with the same name by their own name, without numbering", () => {
+    setRailMode(true);
+    addInstance("main", "wsi-a", "/Users/xiaolai/one/wiki");
+    addInstance("main", "wsi-b", "/Users/xiaolai/two/wiki");
+    render(<WorkspaceRail windowLabel="main" />);
+
+    const rows = screen.getAllByRole("button", { name: "Activate wiki" });
+    expect(rows).toHaveLength(2);
+    expect(rows.map((row) => row.getAttribute("title"))).toEqual([
+      "/Users/xiaolai/one/wiki",
+      "/Users/xiaolai/two/wiki",
+    ]);
+  });
+
+  it("folds to a strip and back", async () => {
+    setRailMode(true);
+    addInstance("main", "wsi-a", "/Users/xiaolai/a");
+    render(<WorkspaceRail windowLabel="main" />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Collapse Workspaces" }));
+    expect(useSettingsStore.getState().general.workspaceRailCollapsed).toBe(true);
+    expect(screen.queryByRole("button", { name: "Activate a" })).toBeNull();
+
+    await userEvent.click(screen.getByRole("button", { name: "Expand Workspaces" }));
+    expect(useSettingsStore.getState().general.workspaceRailCollapsed).toBe(false);
+    expect(screen.getByRole("button", { name: "Activate a" })).toBeInTheDocument();
+  });
+
+  it("duplicates a workspace from the context menu", async () => {
     const user = userEvent.setup();
     setRailMode(true);
     addInstance("main", "wsi-a", "/Users/xiaolai/a");
 
     render(<WorkspaceRail windowLabel="main" />);
-    await user.click(screen.getByRole("button", { name: "Duplicate a" }));
+    await user.pointer({
+      keys: "[MouseRight]",
+      target: screen.getByRole("button", { name: "Activate a" }),
+    });
+    await user.click(screen.getByRole("menuitem", { name: "Duplicate in New Window" }));
 
     expect(mockDuplicateWorkspace).toHaveBeenCalledWith("main", "wsi-a");
   });
@@ -439,7 +377,11 @@ describe("WorkspaceRail", () => {
     mockDuplicateWorkspace.mockResolvedValueOnce({ ok: false, reason: "invokeFailed" });
 
     render(<WorkspaceRail windowLabel="main" />);
-    await user.click(screen.getByRole("button", { name: "Duplicate a" }));
+    await user.pointer({
+      keys: "[MouseRight]",
+      target: screen.getByRole("button", { name: "Activate a" }),
+    });
+    await user.click(screen.getByRole("menuitem", { name: "Duplicate in New Window" }));
 
     expect(mockToastError).toHaveBeenCalledWith("Failed to duplicate workspace");
   });
@@ -457,7 +399,11 @@ describe("WorkspaceRail", () => {
     });
 
     render(<WorkspaceRail windowLabel="main" />);
-    await user.click(screen.getByRole("button", { name: "Duplicate a" }));
+    await user.pointer({
+      keys: "[MouseRight]",
+      target: screen.getByRole("button", { name: "Activate a" }),
+    });
+    await user.click(screen.getByRole("menuitem", { name: "Duplicate in New Window" }));
 
     expect(mockToastMessage).toHaveBeenCalledWith(
       "Duplicated workspace and skipped 3 dirty, untitled, or missing tabs.",
@@ -474,7 +420,11 @@ describe("WorkspaceRail", () => {
     });
 
     render(<WorkspaceRail windowLabel="main" />);
-    await user.click(screen.getByRole("button", { name: "Duplicate a" }));
+    await user.pointer({
+      keys: "[MouseRight]",
+      target: screen.getByRole("button", { name: "Activate a" }),
+    });
+    await user.click(screen.getByRole("menuitem", { name: "Duplicate in New Window" }));
 
     expect(mockToastMessage).not.toHaveBeenCalled();
   });
@@ -518,7 +468,7 @@ describe("WorkspaceRail", () => {
       // the window — undiscoverable and easy to trigger by accident.
       expect(menu).toHaveAccessibleName("alpha");
       expect(screen.getByRole("menuitem", { name: "Close" })).toBeInTheDocument();
-      expect(screen.getByRole("menuitem", { name: "Duplicate" })).toBeInTheDocument();
+      expect(screen.getByRole("menuitem", { name: "Duplicate in New Window" })).toBeInTheDocument();
       expect(screen.getByRole("menuitem", { name: "Move to New Window" })).toBeInTheDocument();
     });
 
@@ -543,7 +493,7 @@ describe("WorkspaceRail", () => {
       render(<WorkspaceRail windowLabel="main" />);
 
       await openMenu("alpha");
-      await userEvent.click(screen.getByRole("menuitem", { name: "Duplicate" }));
+      await userEvent.click(screen.getByRole("menuitem", { name: "Duplicate in New Window" }));
       expect(mockDuplicateWorkspace).toHaveBeenCalledWith("main", "wsi-a");
 
       await openMenu("alpha");
@@ -559,14 +509,15 @@ describe("WorkspaceRail", () => {
 
       // Focus lands on an ITEM, not the container — the container's outline is
       // suppressed, so focusing it would show nothing.
-      expect(screen.getByRole("menuitem", { name: "Close" })).toHaveFocus();
+      // Group membership comes first, then the window actions.
+      expect(screen.getByRole("menuitem", { name: "Add to New Group" })).toHaveFocus();
 
       await userEvent.keyboard("{ArrowDown}");
-      expect(screen.getByRole("menuitem", { name: "Duplicate" })).toHaveFocus();
+      expect(screen.getByRole("menuitem", { name: "Close" })).toHaveFocus();
       await userEvent.keyboard("{End}");
       expect(screen.getByRole("menuitem", { name: "Move to New Window" })).toHaveFocus();
       await userEvent.keyboard("{ArrowDown}");
-      expect(screen.getByRole("menuitem", { name: "Close" })).toHaveFocus();
+      expect(screen.getByRole("menuitem", { name: "Add to New Group" })).toHaveFocus();
     });
 
     it("returns focus to the rail entry when dismissed", async () => {
@@ -620,11 +571,6 @@ describe("stable rail automation hooks (WI-TS5.1)", () => {
 
     const activate = [...container.querySelectorAll('[data-rail-action="activate"]')];
     expect(activate.map((el) => el.getAttribute("data-instance-id"))).toEqual([
-      "wsi-a",
-      "wsi-b",
-    ]);
-    const duplicate = [...container.querySelectorAll('[data-rail-action="duplicate"]')];
-    expect(duplicate.map((el) => el.getAttribute("data-instance-id"))).toEqual([
       "wsi-a",
       "wsi-b",
     ]);

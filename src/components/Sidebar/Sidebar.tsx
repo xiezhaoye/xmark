@@ -1,7 +1,8 @@
 /**
  * Sidebar Component
  *
- * Purpose: navigation sidebar. Follows the ACTIVE TAB'S KIND (ADR-2):
+ * Purpose: navigation sidebar. When hidden it folds to a thin strip with an
+ * expand button (CollapsedColumnStrip). Follows the ACTIVE TAB'S KIND (ADR-2):
  * a document tab gets Files / Outline / History, a browser tab gets Browsing
  * History / Bookmarks / Site Permissions.
  *
@@ -22,7 +23,7 @@
 
 import { useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { FolderTree, TableOfContents, History, FilePlus, FolderPlus, PanelLeftClose, Trash2, ChevronsDownUp, ChevronsUpDown, Files, Bookmark, ShieldCheck } from "lucide-react";
+import { FolderTree, TableOfContents, History, FilePlus, FolderPlus, PanelLeftClose, Trash2, ChevronsDownUp, ChevronsUpDown, Eye, EyeOff, Bookmark, ShieldCheck } from "lucide-react";
 import { deleteDocumentHistory } from "@/services/history/historyRecovery";
 import { emitHistoryCleared } from "@/utils/historyTypes";
 import { useUIStore, type SidebarViewMode } from "@/stores/uiStore";
@@ -45,6 +46,9 @@ import { useWindowLabel } from "@/contexts/WindowContext";
 import { useSidebarInstanceSync } from "./useSidebarInstanceSync";
 import { SidebarActionButton } from "./SidebarActionButton";
 import { confirmAction } from "@/services/dialogs/confirmAction";
+import { useSettingsStore } from "@/stores/settingsStore";
+import { sidebarTextVars } from "@/utils/sidebarTextSize";
+import { CollapsedColumnStrip } from "@/components/shared/CollapsedColumnStrip";
 import i18n from "@/i18n";
 
 // View mode configuration - single source of truth (icon and next only; titles come from t())
@@ -98,6 +102,7 @@ export function Sidebar() {
   // is open, but binding to the store keeps maintainers honest if rendering
   // conditions change.
   const sidebarVisible = useUIStore((state) => state.sidebarVisible);
+  const sidebarFontSize = useSettingsStore((state) => state.appearance.sidebarFontSize ?? 14);
   const filePath = useDocumentFilePath();
   const fileExplorerRef = useRef<FileExplorerHandle>(null);
   const isClearingRef = useRef(false);
@@ -158,22 +163,32 @@ export function Sidebar() {
     setSidebarViewMode(VIEW_CONFIG[sidebarViewMode].next);
   };
 
+  // Hidden = FOLDED, not gone: the column stays as a strip whose foot holds
+  // the way back (App renders this column in document windows either way).
+  if (!sidebarVisible) {
+    const toggle = tooltipWithShortcut(t("expandSidebar"), formatKeyForDisplay(sidebarShortcut));
+    return (
+      <CollapsedColumnStrip
+        expandLabel={toggle}
+        onExpand={() => useUIStore.getState().toggleSidebar()}
+      />
+    );
+  }
+
   return (
-    <div className="sidebar" style={{ width: "100%", height: "100%" }}>
+    <div className="sidebar" style={{ width: "100%", height: "100%", ...sidebarTextVars(sidebarFontSize) }}>
       {/* Clears the chrome strip painted over this column, and the traffic
           lights in it; collapses to nothing where the OS draws its own title
           bar (shellChrome.ts publishes the inset). */}
       <div className="sidebar-top-spacer" />
       <div className="sidebar-header">
-        <SidebarActionButton
-          label={nextShowLabel}
-          icon={Icon}
-          onClick={handleToggleView}
-        />
-        <span className="sidebar-title">{currentTitle}</span>
-        {/* Action buttons - files view */}
+        {/* No title in the default Files view: the tree says what it is, and
+            the label looked like a control that did nothing when clicked.
+            Outline / History (and browser views) keep theirs. */}
+        {(isBrowser || viewMode !== "files") && <span className="sidebar-title">{currentTitle}</span>}
+        {/* Files view: tree-view controls on the LEFT, create actions on the RIGHT. */}
         {!isBrowser && viewMode === "files" && (
-          <div className="sidebar-header-actions">
+          <div className="sidebar-header-actions sidebar-header-actions--start">
             <SidebarActionButton
               label={t("expandAllFolders")}
               icon={ChevronsUpDown}
@@ -184,14 +199,21 @@ export function Sidebar() {
               icon={ChevronsDownUp}
               onClick={() => fileExplorerRef.current?.collapseAll()}
             />
+            {/* Eye open = every file is listed; crossed out = only the formats
+                VMark opens. (It used to be a stacked-files glyph that read
+                as "copy".) The tooltip names what a click does NEXT. */}
             <SidebarActionButton
-              label={t("showAllFiles")}
-              icon={Files}
+              label={t(showAllFiles ? "showSupportedFilesOnly" : "showAllFiles")}
+              icon={showAllFiles ? Eye : EyeOff}
               shortcut={allFilesShortcut}
               onClick={() => void toggleShowAllFiles()}
               pressed={showAllFiles}
               disabled={!isWorkspaceMode}
             />
+          </div>
+        )}
+        {!isBrowser && viewMode === "files" && (
+          <div className="sidebar-header-actions">
             <SidebarActionButton
               label={t("newFile")}
               icon={FilePlus}
@@ -251,6 +273,12 @@ export function Sidebar() {
       </div>
 
       <div className="sidebar-footer">
+        {/* View switcher (Files → Outline → History) at the foot's left. */}
+        <SidebarActionButton
+          label={nextShowLabel}
+          icon={Icon}
+          onClick={handleToggleView}
+        />
         <button
           className="vm-icon-btn vm-icon-btn--lg"
           onClick={() => useUIStore.getState().toggleSidebar()}

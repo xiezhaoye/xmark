@@ -48,7 +48,7 @@
   padding: var(--space-6) var(--space-4);
   text-align: center;
   color: var(--text-secondary);
-  font-size: var(--font-size-base);
+  font-size: var(--sidebar-font-size, var(--font-size-base));
 }
 
 /* Tree node styles */
@@ -145,7 +145,7 @@
 
 .file-node-name {
   flex: 1;
-  font-size: var(--font-size-base);
+  font-size: var(--sidebar-font-size, var(--font-size-base));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -154,7 +154,7 @@
 /* One rename treatment: `.vm-input`. */
 .file-node-input {
   flex: 1;
-  font-size: var(--font-size-base);
+  font-size: var(--sidebar-font-size, var(--font-size-base));
   padding: var(--space-px) var(--space-1);
 }
 

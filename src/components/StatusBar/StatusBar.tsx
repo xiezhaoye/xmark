@@ -33,7 +33,6 @@
  */
 import { useCallback, useRef, useState, type MouseEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { PanelLeft } from "lucide-react";
 import { useUIStore } from "@/stores/uiStore";
 import { useWindowLabel, useIsDocumentWindow } from "@/contexts/WindowContext";
 import { useTabStore, type Tab as TabType } from "@/stores/tabStore";
@@ -51,8 +50,7 @@ import { FileLoadIndicator } from "./FileLoadIndicator";
 import { StatusBarTabStrip } from "./StatusBarTabStrip";
 import { useAutoSaveDisplay } from "./useAutoSaveDisplay";
 import { looksLikeWorkflowPath } from "@/lib/ghaWorkflow/detection";
-import { useSettingsStore, useShortcutsStore, formatKeyForDisplay } from "@/stores/settingsStore";
-import { tooltipWithShortcut } from "@/utils/tooltipWithShortcut";
+import { useSettingsStore, useShortcutsStore } from "@/stores/settingsStore";
 import { formatFileDisplayName } from "@/utils/displayFileName";
 import { useMcpServer } from "@/hooks/useMcpServer";
 import { useMcpClients } from "@/hooks/useMcpClients";
@@ -76,12 +74,10 @@ export function StatusBar() {
   const autoSaveEnabled = useSettingsStore((state) => state.general.autoSaveEnabled);
   const globalSourceMode = useUIStore((state) => state.sourceMode);
   const statusBarVisible = useUIStore((state) => state.statusBarVisible);
-  const sidebarVisible = useUIStore((state) => state.sidebarVisible);
   const terminalVisible = useUIStore((state) => state.terminalVisible);
   const sourceModeShortcut = useShortcutsStore((state) => state.getShortcut("sourceMode"));
   const readOnlyShortcut = useShortcutsStore((state) => state.getShortcut("readOnly"));
   const terminalShortcut = useShortcutsStore((state) => state.getShortcut("toggleTerminal"));
-  const sidebarShortcut = useShortcutsStore((state) => state.getShortcut("toggleSidebar"));
   const aiRunning = useAiInvocationStore((state) => state.isRunning);
   const aiElapsed = useAiInvocationStore((state) => state.elapsedSeconds);
   const aiError = useAiInvocationStore((state) => state.error);
@@ -197,20 +193,6 @@ export function StatusBar() {
       >
         <div className={`status-bar${activeBrowserTabId ? " status-bar--browser" : ""}`}>
           <div className="status-bar-left" ref={tabDragScopeRef}>
-            {!sidebarVisible && isDocumentWindow && (
-              <button
-                type="button"
-                className="vm-icon-btn vm-icon-btn--sm status-sidebar-toggle"
-                onClick={() => useUIStore.getState().toggleSidebar()}
-                // Bind aria-expanded to live state, not a literal
-                // (the button only renders while the sidebar is hidden).
-                aria-expanded={sidebarVisible}
-                aria-label={tooltipWithShortcut(t("openSidebar"), formatKeyForDisplay(sidebarShortcut))}
-                title={tooltipWithShortcut(t("openSidebar"), formatKeyForDisplay(sidebarShortcut))}
-              >
-                <PanelLeft size={14} />
-              </button>
-            )}
             <FileLoadIndicator />
             <SourceModeUpgrade />
             <StatusBarTabStrip

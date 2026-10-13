@@ -1,7 +1,7 @@
 /**
  * StatusBar — accessibility regression tests.
  *
- * Focused coverage for the sidebar-toggle button's ARIA state.
+ * Focused coverage: the status bar no longer carries a sidebar toggle.
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -79,7 +79,7 @@ vi.mock("@/components/Tabs/TabContextMenu", () => ({
 
 import { StatusBar } from "./StatusBar";
 import { useUIStore } from "@/stores/uiStore";
-import { useShortcutsStore, formatKeyForDisplay } from "@/stores/settingsStore";
+import { useShortcutsStore } from "@/stores/settingsStore";
 import { useTabStore } from "@/stores/tabStore";
 
 // Local ResizeObserver shim — `src/test/setup.ts` deliberately defines no
@@ -111,29 +111,18 @@ describe("StatusBar accessibility", () => {
     expect(screen.getAllByRole("contentinfo")).toHaveLength(1);
   });
 
-  it("exposes aria-expanded=false on the sidebar-toggle button when the sidebar is collapsed", () => {
-    render(<StatusBar />);
-    const toggle = screen.getByLabelText(/open sidebar/i);
-    expect(toggle).toHaveAttribute("aria-expanded", "false");
-  });
-
-  // WI-2.3 — the toggle button should disappear entirely when the sidebar
-  // is already open. This and the test above together fully cover the
-  // `aria-expanded={sidebarVisible}` binding (the button never renders
-  // with `aria-expanded="true"` because of the surrounding conditional).
-  it("does not render the toggle when the sidebar is already open", () => {
-    useUIStore.setState({ sidebarVisible: true, statusBarVisible: true });
+  // The expand button lives on the sidebar's folded strip now (Sidebar.tsx),
+  // so the status bar never carries one — open or hidden.
+  it("never renders an open-sidebar button, even with the sidebar hidden", () => {
+    useUIStore.setState({ sidebarVisible: false, statusBarVisible: true });
     render(<StatusBar />);
     expect(screen.queryByLabelText(/open sidebar/i)).toBeNull();
   });
 
-  it("open-sidebar tooltip surfaces the shortcut, with title/aria-label parity", () => {
+  it("does not render the toggle when the sidebar is already open", () => {
+    useUIStore.setState({ sidebarVisible: true, statusBarVisible: true });
     render(<StatusBar />);
-    const toggle = screen.getByLabelText(/open sidebar/i);
-    const display = formatKeyForDisplay(useShortcutsStore.getState().getShortcut("toggleSidebar"));
-    expect(display).not.toBe("");
-    expect(toggle.getAttribute("title")).toContain(display);
-    expect(toggle.getAttribute("title")).toBe(toggle.getAttribute("aria-label"));
+    expect(screen.queryByLabelText(/open sidebar/i)).toBeNull();
   });
 });
 

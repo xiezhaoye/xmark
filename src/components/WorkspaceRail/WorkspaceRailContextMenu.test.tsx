@@ -6,19 +6,26 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { WorkspaceRailContextMenu } from "./WorkspaceRailContextMenu";
 
-function renderMenu(overrides: Partial<React.ComponentProps<typeof WorkspaceRailContextMenu>> = {}) {
-  const props = {
+type MenuProps = React.ComponentProps<typeof WorkspaceRailContextMenu>;
+
+function renderMenu(overrides: Partial<MenuProps> = {}) {
+  const onCloseWorkspace = vi.fn();
+  const onDuplicate = vi.fn();
+  const onMoveToNewWindow = vi.fn();
+  const props: MenuProps = {
     position: { x: 10, y: 10 },
     workspaceName: "foo",
     invoker: null,
     onClose: vi.fn(),
-    onCloseWorkspace: vi.fn(),
-    onDuplicate: vi.fn(),
-    onMoveToNewWindow: vi.fn(),
+    items: [
+      { action: "close", label: "Close", run: onCloseWorkspace },
+      { action: "duplicate", label: "Duplicate in New Window", run: onDuplicate },
+      { action: "move-to-new-window", label: "Move to New Window", run: onMoveToNewWindow },
+    ],
     ...overrides,
   };
   const view = render(<WorkspaceRailContextMenu {...props} />);
-  return { ...props, view };
+  return { ...props, onCloseWorkspace, onDuplicate, onMoveToNewWindow, view };
 }
 
 describe("WorkspaceRailContextMenu action hooks", () => {
@@ -92,7 +99,7 @@ describe("WorkspaceRailContextMenu — reopening and keyboard exits", () => {
   it("catches an action that rejects, rather than leaving an unhandled rejection", async () => {
     // `() => void` accepts an async function, so the type cannot forbid this.
     const onCloseWorkspace = vi.fn(() => Promise.reject(new Error("boom")));
-    renderMenu({ onCloseWorkspace });
+    renderMenu({ items: [{ action: "close", label: "Close", run: onCloseWorkspace }] });
     const closeItem = screen
       .getAllByRole("menuitem")
       .find((el) => el.getAttribute("data-menu-action") === "close")!;
@@ -104,7 +111,9 @@ describe("WorkspaceRailContextMenu — reopening and keyboard exits", () => {
   it("keys items by their stable action, so a locale change does not remount them", () => {
     const { view, ...props } = renderMenu();
     const before = screen.getAllByRole("menuitem");
-    view.rerender(<WorkspaceRailContextMenu {...props} workspaceName="renamed" />);
+    // Same actions, every label re-translated.
+    const relabelled = props.items.map((item) => ({ ...item, label: `${item.label} (de)` }));
+    view.rerender(<WorkspaceRailContextMenu {...props} items={relabelled} workspaceName="renamed" />);
     const after = screen.getAllByRole("menuitem");
     // Same DOM nodes: a label-based key would have replaced every one of them
     // the moment the translated labels changed, dropping keyboard focus.

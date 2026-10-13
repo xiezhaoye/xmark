@@ -54,7 +54,8 @@ const { shellSideWidth } = await import("@/shell/shellChrome");
 
 /** The shell's own derivation of the leading column's width, as a CSS length. */
 function side(workspaceRailVisible: boolean, sidebarWidth: number, sidebarVisible = true): string {
-  return `${shellSideWidth({ workspaceRailVisible, sidebarVisible, sidebarWidth })}px`;
+  // A hidden sidebar folds to a strip in a document window, which this is.
+  return `${shellSideWidth({ workspaceRailVisible, sidebarVisible, sidebarWidth, sidebarStrip: true })}px`;
 }
 
 function mouseMove(clientX: number): void {
@@ -196,7 +197,7 @@ describe("MainLayout — sidebar edge drag", () => {
 
     // The handle unmounted mid-drag: the width is committed, not lost…
     expect(useUIStore.getState().sidebarWidth).toBe(310);
-    // …and the shell is sized by React again (rail only), not by the drag.
+    // …and the shell is sized by React again (rail + folded strip), not by the drag.
     const shell = container.querySelector<HTMLElement>(".app-shell");
     const aside = container.querySelector<HTMLElement>(".app-shell__sidebar");
     const railOnly = side(true, 310, false);

@@ -482,10 +482,9 @@
   app-region: no-drag;
 }
 
-/* The sidebar toggle and the new-tab button are canonical:
-   `.vm-icon-btn--sm` and TabStripButton respectively. Residual hooks
-   `.status-sidebar-toggle` / `.status-new-tab` remain in the DOM for
-   automation, with no styling of their own. */
+/* The new-tab button is the canonical TabStripButton; the residual hook
+   `.status-new-tab` remains in the DOM for automation, with no styling of
+   its own. (The sidebar's expand button lives on its folded strip now.) */
 
 .tab-drag-ghost {
   /* ui-ok(float): transient drag feedback — the tab ghost follows the pointer during a drag */
@@ -531,7 +530,6 @@
     border-radius: var(--radius-pill);
   }
 
-  .status-sidebar-toggle,
   .status-new-tab {
     width: var(--icon-size-lg);
     height: var(--icon-size-lg);

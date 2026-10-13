@@ -45,6 +45,8 @@ export const initialState: SettingsState = {
     // Opt-in: open existing files in a new tab (off keeps the legacy "reuse untitled tab" behavior).
     openInNewTab: false,
     workspaceRailMode: false,
+    workspaceRailWidth: 160,
+    workspaceRailCollapsed: false,
     // fix(#1224) — show the name that is on disk; hiding extensions is opt-in.
     showFileExtensions: true,
     // First-run default derived from OS locale; persisted value from zustand/persist
@@ -64,6 +66,7 @@ export const initialState: SettingsState = {
     blockSpacing: 1, // 1 = one line-height of visual gap between blocks
     cjkLetterSpacing: "0", // Off by default
     editorWidth: 50, // em units, 0 = unlimited (50em ≈ 900px at 18px font)
+    sidebarFontSize: 14,
     showFilenameInTitlebar: false,
     focusModeDim: "standard", // color-only dimming by default (current behavior)
   },

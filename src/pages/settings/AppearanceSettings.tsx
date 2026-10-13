@@ -18,6 +18,7 @@ import { SettingRow, SettingsGroup, Toggle, Select } from "./components";
 import { selectableThemeIds } from "@/theme/themeAvailability";
 import { themes as themeCatalog } from "@/theme/themes";
 import { isMacPlatform, usesOverlayTitleBar } from "@/utils/platform";
+import { SIDEBAR_FONT_SIZES } from "@/utils/sidebarTextSize";
 
 /** One row of theme swatches: each swatch is a MINI PAGE from the
  *  typed catalog — an "Aa" specimen in the theme's ink on its paper, a
@@ -147,6 +148,23 @@ export function AppearanceSettings() {
           <Toggle
             checked={followSystem}
             onChange={(v) => updateSetting("followSystemAppearance", v)}
+          />
+        </SettingRow>
+      </SettingsGroup>
+
+      {/* Sidebar — text size of the workspace rail and the file tree. */}
+      <SettingsGroup title={t("appearance.group.sidebar")}>
+        <SettingRow
+          label={t("appearance.sidebarFontSize.label")}
+          description={t("appearance.sidebarFontSize.description")}
+        >
+          <Select<string>
+            value={String(appearance.sidebarFontSize ?? 14)}
+            options={SIDEBAR_FONT_SIZES.map((size, index) => ({
+              value: String(size),
+              label: t(`appearance.sidebarFontSize.option${index}`, { size }),
+            }))}
+            onChange={(v) => updateSetting("sidebarFontSize", Number(v))}
           />
         </SettingRow>
       </SettingsGroup>

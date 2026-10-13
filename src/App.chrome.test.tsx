@@ -157,9 +157,9 @@ describe("MainLayout — chrome is mounted only where the app overlays the title
   });
 
   it("publishes the rail width on both platforms", () => {
-    expect(rendered(render(<MainLayout />).container).cssVar("--workspace-rail-width")).toBe("30px");
+    expect(rendered(render(<MainLayout />).container).cssVar("--workspace-rail-width")).toBe("160px");
     platform.overlayTitleBar = false;
-    expect(rendered(render(<MainLayout />).container).cssVar("--workspace-rail-width")).toBe("30px");
+    expect(rendered(render(<MainLayout />).container).cssVar("--workspace-rail-width")).toBe("160px");
   });
 
   // The route table is the only thing between the app's entry point and the

@@ -6,7 +6,7 @@
  *
  * Why it exists: App.tsx and the terminal's layout maths both needed this
  * number and each derived it independently. The terminal's copy omitted the
- * 30 px workspace rail, so with the rail enabled every horizontal terminal
+ * workspace rail, so with the rail enabled every horizontal terminal
  * ratio (and the 50 % cap) was computed against a width 30 px larger than the
  * editor actually had. Two derivations of one quantity is the bug; this is the
  * fix.
@@ -29,14 +29,30 @@ import {
 } from "./trafficLights";
 
 /**
- * Width of the workspace rail column, in pixels. Defined HERE, with the layout
- * maths that consume it, rather than inside the rail component: importing the
- * component just to read a number dragged the whole rail (and its store
- * subscriptions) into the terminal's dependency graph. `WorkspaceRail`
- * re-exports this, and `:root`'s `--workspace-rail-width` mirrors it for
- * consumers that read the CSS var without a fallback.
+ * DEFAULT width of the workspace rail column, in pixels. The live width is the
+ * user's `general.workspaceRailWidth` setting (the rail lists workspace names
+ * and is resizable); this is the value before one is stored, and the fallback
+ * for windows that have no rail. Defined HERE, with the layout maths that
+ * consume it, rather than inside the rail component: importing the component
+ * just to read a number dragged the whole rail (and its store subscriptions)
+ * into the terminal's dependency graph. `WorkspaceRail` re-exports this, and
+ * `:root`'s `--workspace-rail-width` mirrors it for consumers that read the CSS
+ * var without a fallback.
  */
-export const WORKSPACE_RAIL_WIDTH = 30;
+export const WORKSPACE_RAIL_WIDTH = 160;
+
+/**
+ * Width of a FOLDED leading column — the workspace rail or the sidebar
+ * collapsed to a thin strip that keeps only an "expand" button at its foot.
+ * Folding never removes a column outright, so the way back stays where the
+ * column was.
+ */
+export const COLLAPSED_STRIP_WIDTH = 28;
+
+/** The rail's rendered width: its own width, or the strip when folded. */
+export function railColumnWidth(width: number, collapsed: boolean): number {
+  return collapsed ? COLLAPSED_STRIP_WIDTH : width;
+}
 
 /**
  * The window's own corner radius. NOT settable from here — there is no
@@ -69,8 +85,12 @@ export const SHELL_CARD_RADIUS = WINDOW_RADIUS - SHELL_CARD_INSET;
 export interface ShellChromeState {
   /** The workspace rail is showing (document windows with the mode on). */
   workspaceRailVisible: boolean;
+  /** The rail's width when showing; defaults to `WORKSPACE_RAIL_WIDTH`. */
+  workspaceRailWidth?: number;
   sidebarVisible: boolean;
   sidebarWidth: number;
+  /** A hidden sidebar still shows its folded strip (document windows). */
+  sidebarStrip?: boolean;
 }
 
 /**
@@ -83,8 +103,10 @@ export interface ShellChromeState {
  * inset, since `App.tsx` renders no aside at all.
  */
 export function shellSideWidth(state: ShellChromeState): number {
-  const rail = state.workspaceRailVisible ? WORKSPACE_RAIL_WIDTH : 0;
-  const sidebar = state.sidebarVisible ? state.sidebarWidth : 0;
+  const rail = state.workspaceRailVisible ? (state.workspaceRailWidth ?? WORKSPACE_RAIL_WIDTH) : 0;
+  const sidebar = state.sidebarVisible
+    ? state.sidebarWidth
+    : (state.sidebarStrip ? COLLAPSED_STRIP_WIDTH : 0);
   if (rail + sidebar === 0) return 0;
   return rail + sidebar + SHELL_CARD_INSET * 2;
 }
@@ -153,15 +175,19 @@ export interface ShellChromeVars {
  * rather than each restating a number. `index.css` declares both in `:root` as
  * static defaults, for consumers that resolve before the shell has mounted.
  *
+ * @param workspaceRailWidth the live rail width (the user's setting).
  * @param overlayTitleBar `usesOverlayTitleBar()` — true where the app's own
  *   chrome covers the native title bar. That is the only place the strip is
  *   mounted AND the only place the traffic lights sit inside the webview, which
  *   is why one flag governs every light-derived value here.
  */
-export function shellChromeVars(overlayTitleBar: boolean): ShellChromeVars {
+export function shellChromeVars(
+  overlayTitleBar: boolean,
+  workspaceRailWidth: number = WORKSPACE_RAIL_WIDTH,
+): ShellChromeVars {
   return {
     "--bar-height": `${BAR_HEIGHT}px`,
-    "--workspace-rail-width": `${WORKSPACE_RAIL_WIDTH}px`,
+    "--workspace-rail-width": `${workspaceRailWidth}px`,
     "--shell-top-inset": `${overlayTitleBar ? SHELL_TOP_INSET : 0}px`,
     // Both are the window controls' own geometry, so both collapse to zero
     // where the OS draws its own title bar and there are no controls inside the

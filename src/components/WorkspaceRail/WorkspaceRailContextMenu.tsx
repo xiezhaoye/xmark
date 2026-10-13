@@ -30,6 +30,9 @@
  *   - React keys were the TRANSLATED labels, so switching locale remounted
  *     every item and dropped keyboard focus. `action` is the stable id.
  *
+ * The items are supplied by the caller (see `workspaceRailMenus.ts`): an open
+ * workspace, a closed folder bookmark and a group header each get their own.
+ *
  * @coordinates-with closeWorkspaceInstance.ts — the close action's safe path
  * @coordinates-with workspaceWindowActions.ts — duplicate / move to new window
  * @coordinates-with ./workspaceRailMenuLayout.ts — the viewport clamp
@@ -37,7 +40,6 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { workspaceError } from "@/utils/debug";
 import {
   useMenuViewportClamp,
@@ -50,9 +52,16 @@ export type { MenuPoint as WorkspaceRailMenuPosition } from "./workspaceRailMenu
 /** An action may be async; this menu does not wait for it, but it does catch. */
 type MenuAction = () => void | Promise<void>;
 
+/** One menu entry. `action` is a stable, locale-independent id (e2e hooks). */
+export interface RailMenuItem {
+  action: string;
+  label: string;
+  run: MenuAction;
+}
+
 interface WorkspaceRailContextMenuProps {
   position: WorkspaceRailMenuPosition;
-  /** Full workspace name, used for the menu's accessible label. */
+  /** Full name of what was right-clicked (workspace or group): the menu's accessible label. */
   workspaceName: string;
   /**
    * The element focus returns to on dismiss — the rail entry that was
@@ -62,9 +71,9 @@ interface WorkspaceRailContextMenuProps {
    */
   invoker: HTMLElement | null;
   onClose: () => void;
-  onCloseWorkspace: MenuAction;
-  onDuplicate: MenuAction;
-  onMoveToNewWindow: MenuAction;
+  /** The entries, in order. The caller decides them per target (an open
+   *  workspace, a closed bookmark in a group, a group header). */
+  items: readonly RailMenuItem[];
 }
 
 export function WorkspaceRailContextMenu({
@@ -72,24 +81,13 @@ export function WorkspaceRailContextMenu({
   workspaceName,
   invoker,
   onClose,
-  onCloseWorkspace,
-  onDuplicate,
-  onMoveToNewWindow,
+  items,
 }: WorkspaceRailContextMenuProps) {
-  const { t } = useTranslation("common");
   const menuRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const [focused, setFocused] = useState(0);
   // Clamped against the viewport AND kept clamped as either changes.
   const clamped = useMenuViewportClamp(position, menuRef);
-
-  // `action` is a stable, locale-independent hook for automation (the e2e
-  // rail helper closes a workspace by it); labels are translated and reorder.
-  const items = [
-    { action: "close", label: t("workspaceRail.menu.close"), run: onCloseWorkspace },
-    { action: "duplicate", label: t("workspaceRail.menu.duplicate"), run: onDuplicate },
-    { action: "move-to-new-window", label: t("workspaceRail.menu.moveToNewWindow"), run: onMoveToNewWindow },
-  ] as const;
 
   // A new OPENING resets the roving-focus index — adjusted DURING RENDER,
   // React's own "adjust state when a prop changes" pattern, because an effect

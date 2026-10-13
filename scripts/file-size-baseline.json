@@ -22,7 +22,6 @@
     "src/components/Editor/WorkflowEditor/JobForm.tsx": 302,
     "src/components/Editor/WorkflowEditor/TriggerForm.tsx": 356,
     "src/components/Sidebar/FileExplorer/useExplorerOperations.ts": 305,
-    "src/components/StatusBar/StatusBar.tsx": 309,
     "src/components/StatusBar/useStatusBarTabDrag.ts": 329,
     "src/export/reader/vmark-reader.js": 1321,
     "src/export/resourceResolver.ts": 350,

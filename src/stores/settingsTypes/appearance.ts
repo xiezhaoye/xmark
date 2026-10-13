@@ -50,6 +50,8 @@ export interface AppearanceSettings {
   blockSpacing: number; // Visual gap between blocks in "lines" (1 = one line-height)
   cjkLetterSpacing: CJKLetterSpacingValue; // Letter spacing for CJK characters (em)
   editorWidth: number; // Max content width in em (0 = unlimited)
+  /** Text size (px) of the workspace rail and the file tree; rows scale with it. */
+  sidebarFontSize: number;
   showFilenameInTitlebar: boolean; // Show filename in window titlebar
   focusModeDim: FocusModeDim; // How strongly Focus Mode dims non-focused content
 }

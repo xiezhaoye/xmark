@@ -13,7 +13,7 @@ import { DocumentSplitContainer } from "@/components/Editor";
 import { Sidebar } from "@/components/Sidebar";
 import { SidebarResizeHandle } from "@/components/Sidebar/SidebarResizeHandle";
 import { WorkspaceRail } from "@/components/WorkspaceRail";
-import { shellSideWidth, shellChromeVars } from "@/shell/shellChrome";
+import { shellSideWidth, shellChromeVars, railColumnWidth, COLLAPSED_STRIP_WIDTH } from "@/shell/shellChrome";
 import { usesOverlayTitleBar } from "@/utils/platform";
 import { BottomBar } from "@/components/BottomBar/BottomBar";
 import { AppShell, EditorArea } from "@/shell";
@@ -170,8 +170,9 @@ export function MainLayout() {
   const browserWorkspaceActive = useBrowserWorkspaceActive();
   const workspaceRailMode = useSettingsStore((state) => state.general.workspaceRailMode);
   const showWorkspaceRail = isDocumentWindow && workspaceRailMode;
-  // One definition, shared with the terminal's layout maths (see shellChrome).
-  const sideWidth = shellSideWidth({ workspaceRailVisible: showWorkspaceRail, sidebarVisible, sidebarWidth });
+  const workspaceRailWidth = useSettingsStore((s) => railColumnWidth(s.general.workspaceRailWidth, s.general.workspaceRailCollapsed));
+  // A hidden sidebar folds to a strip in document windows; the shared maths knows (see shellChrome).
+  const sideWidth = shellSideWidth({ workspaceRailVisible: showWorkspaceRail, workspaceRailWidth, sidebarVisible, sidebarWidth, sidebarStrip: isDocumentWindow });
   const overlayTitleBar = usesOverlayTitleBar();
 
   // T03 lifecycle composites — every per-document/per-window hook now
@@ -191,23 +192,23 @@ export function MainLayout() {
       className={className}
       // Single source for the shell's chrome geometry: descendants inherit
       // these instead of restating the numbers in CSS (see shellChrome).
-      style={shellChromeVars(overlayTitleBar) as CSSProperties}
+      style={shellChromeVars(overlayTitleBar, workspaceRailWidth) as CSSProperties}
       // Only macOS overlays the native title bar, so only macOS needs the app
       // to draw one. Elsewhere the OS already did, and a second strip below the
       // menu bar is the empty band reported in #1296.
       chrome={overlayTitleBar ? <AppTitleBar /> : null}
       sidebar={
-        showWorkspaceRail || sidebarVisible ? (
+        showWorkspaceRail || sidebarVisible || isDocumentWindow ? (
           <div className="app-sidebar-stack">
             {showWorkspaceRail && (
               <div className="app-sidebar-stack__rail">
                 <WorkspaceRail windowLabel={windowLabel} />
               </div>
             )}
-            {sidebarVisible && (
-              <div className="app-sidebar-stack__sidebar" style={{ width: sidebarWidth }}>
+            {(sidebarVisible || isDocumentWindow) && (
+              <div className="app-sidebar-stack__sidebar" style={{ width: sidebarVisible ? sidebarWidth : COLLAPSED_STRIP_WIDTH }}>
                 <Sidebar />
-                <SidebarResizeHandle width={sidebarWidth} />
+                {sidebarVisible && <SidebarResizeHandle width={sidebarWidth} />}
               </div>
             )}
           </div>

@@ -16,6 +16,7 @@
  * @coordinates-with WorkspaceRail.tsx — the dispatching component
  * @coordinates-with services/workspaces/closeWorkspaceInstance.ts — close leg
  * @coordinates-with services/workspaces/workspaceWindowActions.ts — move/duplicate
+ * @coordinates-with services/workspaces/openWorkspaceByPath.ts — opening a group's folder
  * @module components/WorkspaceRail/workspaceRailHandlers
  */
 import type { useTranslation } from "react-i18next";
@@ -28,6 +29,13 @@ import {
 } from "@/services/workspaces/workspaceWindowActions";
 import type { WorkspaceWindowActionResult } from "@/types/workspaceTransfer";
 import { workspaceError } from "@/utils/debug";
+import { withReentryGuard } from "@/utils/reentryGuard";
+import {
+  openWorkspaceByPath,
+  WORKSPACE_TRANSITION_GUARD,
+} from "@/services/workspaces/openWorkspaceByPath";
+import { pickWorkspaceFolder } from "@/services/workspaces/workspaceAccess";
+import { reportCommandFailure } from "@/services/commands/commandFailure";
 
 type Translate = ReturnType<typeof useTranslation>["t"];
 
@@ -99,4 +107,33 @@ function countSkippedTabs(result: WorkspaceWindowActionResult): number {
     + (result.skippedUntitledCount ?? 0)
     + (result.skippedMissingCount ?? 0)
   );
+}
+
+/**
+ * Open a group's folder as a workspace in this window (or switch to it, when
+ * the open sequence finds it already open). Same reentry guard as File → Open
+ * Workspace, so a double click cannot race two opens.
+ */
+export async function handleOpenGroupFolder(windowLabel: string, path: string): Promise<void> {
+  await withReentryGuard(windowLabel, WORKSPACE_TRANSITION_GUARD, async () => {
+    try {
+      await openWorkspaceByPath(path, { windowLabel });
+    } catch (error) {
+      reportCommandFailure(error, { label: "Failed to open group folder:", log: workspaceError });
+    }
+  });
+}
+
+/**
+ * Show the folder picker for a group's "+" button. The Rust picker also
+ * grants and records access to the folder, so opening it later from the
+ * group works across restarts. Resolves null when cancelled or refused.
+ */
+export async function pickFolderForGroup(): Promise<string | null> {
+  try {
+    return await pickWorkspaceFolder();
+  } catch (error) {
+    reportCommandFailure(error, { label: "Failed to pick a folder:", log: workspaceError });
+    return null;
+  }
 }

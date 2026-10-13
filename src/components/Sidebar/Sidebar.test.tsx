@@ -83,14 +83,15 @@ describe("Sidebar — close button aria-expanded", () => {
     expect(closeBtn.getAttribute("aria-expanded")).toBe("true");
   });
 
-  it("reports aria-expanded='false' when sidebar state is collapsed", () => {
-    // The button only renders when the sidebar shell is mounted, but the
-    // attribute must still reflect the live store value — guards against a
-    // future regression that hardcodes the attribute to true.
+  it("folds to a strip whose expand button reports aria-expanded='false'", async () => {
+    // Hidden is folded, not gone: the column keeps a strip with the way back.
     useUIStore.setState({ sidebarVisible: false });
     render(<Sidebar />);
-    const closeBtn = screen.getByRole("button", { name: /close sidebar/i });
-    expect(closeBtn.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByRole("button", { name: /close sidebar/i })).toBeNull();
+    const expandBtn = screen.getByRole("button", { name: /expand sidebar/i });
+    expect(expandBtn.getAttribute("aria-expanded")).toBe("false");
+    await userEvent.click(expandBtn);
+    expect(useUIStore.getState().sidebarVisible).toBe(true);
   });
 });
 
@@ -150,8 +151,9 @@ describe("Sidebar — show-all-files toggle", () => {
       config: normalizeWorkspaceConfig({ showAllFiles: true }),
     });
     render(<Sidebar />);
+    // While shown, the tooltip offers the way back; the button stays pressed.
     expect(
-      screen.getByRole("button", { name: /show all files/i }),
+      screen.getByRole("button", { name: /show supported files only/i }),
     ).toHaveAttribute("aria-pressed", "true");
   });
 
@@ -244,5 +246,55 @@ describe("Sidebar — follows the active tab's kind", () => {
     useUIStore.setState({ sidebarBrowserViewMode: "bookmarks" });
     render(<Sidebar />);
     expect(screen.getByTestId("bookmarks-view")).toBeInTheDocument();
+  });
+});
+
+describe("Sidebar — header title", () => {
+  it("shows no title in the default Files view, but keeps Outline's", () => {
+    // A document tab context (an earlier test may leave a browser tab active).
+    useTabStore.setState({ tabs: {}, activeTabId: {} });
+    useUIStore.setState({ sidebarVisible: true, sidebarViewMode: "files" });
+    const { container, unmount } = render(<Sidebar />);
+    expect(container.querySelector(".sidebar-title")).toBeNull();
+    unmount();
+
+    useUIStore.setState({ sidebarVisible: true, sidebarViewMode: "outline" });
+    const outline = render(<Sidebar />);
+    expect(outline.container.querySelector(".sidebar-title")).not.toBeNull();
+  });
+});
+
+describe("Sidebar — layout of the Files view controls", () => {
+  it("puts the view switcher in the footer and splits header controls left/right", () => {
+    useTabStore.setState({ tabs: {}, activeTabId: {} });
+    useUIStore.setState({ sidebarVisible: true, sidebarViewMode: "files" });
+    const { container } = render(<Sidebar />);
+
+    const footer = container.querySelector(".sidebar-footer");
+    const switcher = screen.getByRole("button", { name: /show outline/i });
+    expect(footer?.contains(switcher)).toBe(true);
+    // Switcher first (left), close-sidebar last (right).
+    expect(footer?.firstElementChild).toBe(switcher);
+
+    const start = container.querySelector(".sidebar-header-actions--start");
+    expect(start?.contains(screen.getByRole("button", { name: /expand all/i }))).toBe(true);
+    expect(start?.contains(screen.getByRole("button", { name: /show all files/i }))).toBe(true);
+    expect(start?.contains(screen.getByRole("button", { name: /new file/i }))).toBe(false);
+  });
+});
+
+describe("Sidebar — show-all-files tooltip follows its state", () => {
+  it("offers to show all files when hidden, and to narrow back when shown", () => {
+    useTabStore.setState({ tabs: {}, activeTabId: {} });
+    useUIStore.setState({ sidebarVisible: true, sidebarViewMode: "files" });
+    useWorkspaceStore.setState({ isWorkspaceMode: true, config: normalizeWorkspaceConfig({ showAllFiles: false }) });
+    const { unmount } = render(<Sidebar />);
+    expect(screen.getByRole("button", { name: /^show all files/i })).toBeInTheDocument();
+    unmount();
+
+    useWorkspaceStore.setState({ config: normalizeWorkspaceConfig({ showAllFiles: true }) });
+    render(<Sidebar />);
+    expect(screen.getByRole("button", { name: /^show supported files only/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^show all files/i })).toBeNull();
   });
 });

@@ -18,7 +18,7 @@ import { renderHook } from "@testing-library/react";
 import { useTerminalResize } from "./useTerminalResize";
 import { useUIStore, TERMINAL_MAX_RATIO } from "@/stores/uiStore";
 import type { EffectiveTerminalPosition } from "@/stores/uiStore";
-import { BAR_HEIGHT } from "@/shell/shellChrome";
+import { BAR_HEIGHT, shellSideWidth } from "@/shell/shellChrome";
 
 // Persisting the ratio on mouseup is a side effect the drag tests don't care
 // about; the maximize tests DO need to read panelRatio, so the mock is stateful.
@@ -99,9 +99,11 @@ describe("toggleMaximize (WI-4.5 / F6)", () => {
   const WINDOW_H = 1000;
   const WINDOW_W = 1600;
   // getAvailableDimension subtracts the 40px titlebar + 40px statusbar on the
-  // vertical axis, and the sidebar width on the horizontal axis.
+  // vertical axis, and the sidebar width on the horizontal axis — here the
+  // hidden sidebar's folded strip, which still occupies the leading card.
   const AVAILABLE_V = WINDOW_H - 2 * BAR_HEIGHT;
-  const AVAILABLE_H = WINDOW_W;
+  const AVAILABLE_H =
+    WINDOW_W - shellSideWidth({ workspaceRailVisible: false, sidebarVisible: false, sidebarWidth: 0, sidebarStrip: true });
 
   beforeEach(() => {
     settingsState.terminal.panelRatio = 0.4;

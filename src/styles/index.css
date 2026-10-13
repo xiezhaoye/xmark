@@ -92,7 +92,7 @@
      rail's width also feeds layout arithmetic in TS. Declared here so consumers
      that use it WITHOUT a fallback (title-bar.css) still resolve, and so the
      value is visible to anyone reading the token file. */
-  --workspace-rail-width: 30px;
+  --workspace-rail-width: 160px;
   /* Vertical space a full-height column (sidebar, workspace rail) must leave
      clear at the top of the window: the app's own chrome strip, and the macOS
      traffic lights inside it. Static default of 0 — the shell root sets the real

@@ -1,0 +1,84 @@
+/* A folded leading column. The outer box fills the column; the bar inside is
+   inset on every side with rounded ends, so two folded columns side by side
+   show a clear gap between two separate strips. The bar is the control.
+   No frame: a hover only recolours the fill. */
+.collapsed-column-strip {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: var(--space-1);
+}
+
+/* No padding of its own: the bar is a strip, not a button face (the
+   bespoke-button gate counts padded, filled rules). Its contents are placed
+   by flex alone. */
+.collapsed-column-strip__bar {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  height: 100%;
+  /* No frame: the fill alone marks the strip, and hover only recolours it. */
+  border: 0;
+  /* button-shape-ok: a full-height folded panel, not a control face — it
+     takes the panel-row radius tier, like the column it stands in for. */
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  background: var(--subtle-bg);
+  cursor: var(--cursor-interactive, default);
+  transition:
+    background-color var(--duration-medium) ease,
+    color var(--duration-medium) ease;
+}
+
+.collapsed-column-strip__icon {
+  margin-bottom: var(--space-2);
+}
+
+/* The hover hint: a chevron that fades in at the strip's middle and nudges
+   toward where the column will open. */
+.collapsed-column-strip__hint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  opacity: 0;
+  transform: translate(-70%, -50%);
+  transition:
+    opacity var(--duration-medium) ease,
+    transform var(--duration-medium) ease;
+}
+
+.collapsed-column-strip__bar:hover,
+.collapsed-column-strip__bar:focus-visible {
+  color: var(--accent-primary);
+  background: var(--accent-bg);
+}
+
+.collapsed-column-strip__bar:hover .collapsed-column-strip__hint,
+.collapsed-column-strip__bar:focus-visible .collapsed-column-strip__hint {
+  opacity: 1;
+  transform: translate(-50%, -50%);
+}
+
+.collapsed-column-strip__bar:active {
+  background: var(--hover-bg-strong);
+}
+
+/* Focus: the accent fill above plus the bar below are the indicator, so the
+   default outline is replaced, not removed (rule 33: not colour alone). */
+.collapsed-column-strip__bar:focus-visible {
+  outline: none;
+}
+
+.collapsed-column-strip__bar:focus-visible::after {
+  content: "";
+  position: absolute;
+  right: 4px;
+  bottom: 2px;
+  left: 4px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--accent-primary);
+}

@@ -1,26 +1,58 @@
 /**
- * WorkspaceRail — the vertical rail of open workspace instances in a
- * document window, letting the user switch, reorder, duplicate, close or
- * move them through a context menu.
+ * WorkspaceRail — the first column of the window: the user's workspace GROUPS
+ * as collapsible sections, each listing its folders by name, followed by an
+ * "Ungrouped" section for open workspaces no group claims.
  *
+ * Key decisions:
+ *   - Groups are persisted folder bookmarks (workspaceGroupsStore). A folder
+ *     that is open in this window shows as that workspace (click switches to
+ *     it); one that is not shows outlined (click opens it). A folder may be in
+ *     several groups.
+ *   - Folders join groups from an entry's context menu (add to a group / a
+ *     new group) or from a group's "+" (folder picker). Group headers rename
+ *     inline and delete from their own context menu.
+ *   - Duplicate lives only in the context menu. It used to be a hover badge on
+ *     every entry, so the rail's most visible control was a rare action (open
+ *     the workspace again in a new window) that was easy to hit by accident.
+ *   - Rows always show the folder's own name (no "wiki 2" numbering) and
+ *     are not draggable; the column folds to a strip (`workspaceRailCollapsed`).
+ *   - Sections are derived by the pure `buildRailSections`; menus by
+ *     `workspaceRailMenus`. This file wires stores and actions to them.
+ *
+ * @coordinates-with workspaceRailModel.ts — sections
+ * @coordinates-with workspaceRailMenus.ts — context-menu items
+ * @coordinates-with WorkspaceRailSection.tsx / WorkspaceRailEntry.tsx — rendering
+ * @coordinates-with WorkspaceRailResizeHandle.tsx — rendered here; resizes this column
  * @module components/WorkspaceRail/WorkspaceRail
  */
 
-import { CopyPlus, FileStack } from "lucide-react";
-import { useRef, useState, type CSSProperties } from "react";
+import { ListPlus, PanelLeftClose } from "lucide-react";
+import { useState, type MouseEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useWorkspaceInstancesStore } from "@/stores/workspaceInstancesStore";
+import { useWorkspaceGroupsStore } from "@/stores/workspaceGroupsStore";
 import { switchWorkspaceInstance } from "@/services/workspaces/switchWorkspaceInstance";
-import { disambiguateWorkspaceDisplayNames } from "@/utils/workspaceIdentity";
+import { resolveLegacyRootId } from "@/services/workspaces/activeWorkspaceScope";
+import { confirmAction } from "@/services/dialogs/confirmAction";
 import { workspaceRailGlyphs } from "@/utils/workspaceRailGlyphs";
+import { sidebarTextVars } from "@/utils/sidebarTextSize";
+import { CollapsedColumnStrip } from "@/components/shared/CollapsedColumnStrip";
+import { WorkspaceRailResizeHandle } from "./WorkspaceRailResizeHandle";
+import { WorkspaceRailSection } from "./WorkspaceRailSection";
+import { WorkspaceRailEntry } from "./WorkspaceRailEntry";
+import { buildRailSections, type RailEntry, type RailInstance } from "./workspaceRailModel";
+import { buildEntryMenuItems, buildGroupMenuItems } from "./workspaceRailMenus";
 import {
   handleCloseWorkspace,
   handleDuplicateWorkspace,
   handleMoveWorkspace,
+  handleOpenGroupFolder,
+  pickFolderForGroup,
 } from "./workspaceRailHandlers";
 import {
   WorkspaceRailContextMenu,
+  type RailMenuItem,
   type WorkspaceRailMenuPosition,
 } from "./WorkspaceRailContextMenu";
 import "./WorkspaceRail.css";
@@ -30,22 +62,22 @@ import "./WorkspaceRail.css";
 export { WORKSPACE_RAIL_WIDTH } from "@/shell/shellChrome";
 
 const EMPTY_IDS: string[] = [];
-const WORKSPACE_RAIL_COLORS = [
-  "var(--accent-primary)",
-  "var(--success-color)",
-  "var(--warning-color)",
-  "var(--error-color)",
-  "var(--strong-color)",
-  "var(--emphasis-color)",
-] as const;
 
-type WorkspaceRailEntryStyle = CSSProperties & {
-  "--workspace-rail-color": string;
-};
+interface OpenMenu {
+  name: string;
+  items: RailMenuItem[];
+  position: WorkspaceRailMenuPosition;
+  /** Where focus returns on dismiss — captured per OPENING, since the menu
+   *  component is reused across openings. */
+  invoker: HTMLElement | null;
+}
 
 export function WorkspaceRail({ windowLabel }: { windowLabel: string }) {
   const { t } = useTranslation();
   const enabled = useSettingsStore((state) => state.general.workspaceRailMode);
+  const railWidth = useSettingsStore((state) => state.general.workspaceRailWidth);
+  const railCollapsed = useSettingsStore((state) => state.general.workspaceRailCollapsed);
+  const sidebarFontSize = useSettingsStore((state) => state.appearance.sidebarFontSize ?? 14);
   const workspaceInstanceIds = useWorkspaceInstancesStore(
     (state) => state.windows[windowLabel]?.workspaceInstanceIds ?? EMPTY_IDS,
   );
@@ -53,219 +85,178 @@ export function WorkspaceRail({ windowLabel }: { windowLabel: string }) {
     (state) => state.windows[windowLabel]?.activeWorkspaceInstanceId ?? null,
   );
   const instancesById = useWorkspaceInstancesStore((state) => state.instances);
-  // Set true by an internal reorder drop so the dragend that immediately
-  // follows doesn't ALSO treat the gesture as a move-to-new-window. Reset at
-  // the start of each drag and consumed in dragend.
-  const droppedInternallyRef = useRef(false);
-  const [menu, setMenu] = useState<{
-    instanceId: string;
-    name: string;
-    position: WorkspaceRailMenuPosition;
-    /** The entry that was right-clicked — where focus returns on dismiss.
-     *  Captured per OPENING: the menu component is reused across openings, so
-     *  it cannot capture this itself. */
-    invoker: HTMLElement | null;
-  } | null>(null);
+  const groups = useWorkspaceGroupsStore((state) => state.groups);
+  const collapsed = useWorkspaceGroupsStore((state) => state.collapsed);
+  const [menu, setMenu] = useState<OpenMenu | null>(null);
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
 
   // Clear a lingering context menu when the rail is disabled (R3-11) —
   // re-enabling must not resurrect a stale menu over an instance that may be
-  // gone. Render-time guarded one-way adjustment, the TerminalPanel latch
-  // pattern (an effect cannot run once we return null every render).
+  // gone. Render-time guarded one-way adjustment (an effect cannot run once
+  // we return null every render).
   if (!enabled) {
     if (menu) setMenu(null);
     return null;
   }
 
+  const setCollapsed = (collapsed: boolean) =>
+    useSettingsStore.getState().updateGeneralSetting("workspaceRailCollapsed", collapsed);
+  // Folded, not gone: a strip whose foot holds the way back.
+  if (railCollapsed) {
+    return (
+      <CollapsedColumnStrip
+        expandLabel={t("workspaceRail.expand")}
+        onExpand={() => setCollapsed(false)}
+      />
+    );
+  }
+
   const instances = workspaceInstanceIds
     .map((id) => instancesById[id])
     .filter((instance) => instance !== undefined);
-  const labels = disambiguateWorkspaceDisplayNames(instances);
-  // Identity, not position: the glyph is derived from the workspace NAME, so it
-  // survives reordering. The badge it replaces showed `index + 1`, which
-  // changed on reorder and told you only what the layout already showed.
-  const glyphs = workspaceRailGlyphs(
-    instances.map((instance) => ({
-      workspaceInstanceId: instance.workspaceInstanceId,
-      displayName: instance.displayNameKey
-        ? t(instance.displayNameKey)
-        : (labels[instance.workspaceInstanceId] ?? instance.displayName),
-      kind: instance.kind,
-    })),
-  );
+  const railInstances: RailInstance[] = instances.map((instance) => ({
+    workspaceInstanceId: instance.workspaceInstanceId,
+    kind: instance.kind,
+    rootId: instance.rootId,
+    rootPath: instance.rootPath,
+    // Always the folder's OWN name — two folders called "wiki" both read
+    // "wiki" (the tooltip shows the full path); no "wiki 2" numbering.
+    // Synthetic instances (loose/placeholder) carry a translation key.
+    label: instance.displayNameKey ? t(instance.displayNameKey) : instance.displayName,
+  }));
+  const sections = buildRailSections(groups, railInstances, resolveLegacyRootId, t("workspaceRail.ungrouped"));
+  const glyphOf = (entry: RailEntry) =>
+    workspaceRailGlyphs([{ workspaceInstanceId: "x", displayName: entry.label, kind: entry.instance?.kind ?? "workspace" }]).x;
+
+  const groupsApi = useWorkspaceGroupsStore.getState;
+  // The menu builders take a plain (key, options?) translator.
+  const tr = (key: string, options?: Record<string, unknown>) => (options ? t(key, options) : t(key));
+  const newGroupName = t("workspaceRail.newGroupName");
+
+  const openMenu = (event: MouseEvent<HTMLButtonElement>, name: string, items: RailMenuItem[]) => {
+    event.preventDefault();
+    if (items.length === 0) return;
+    setMenu({ name, items, position: { x: event.clientX, y: event.clientY }, invoker: event.currentTarget });
+  };
+
+  const entryMenu = (entry: RailEntry, groupId: string | null) =>
+    buildEntryMenuItems(
+      {
+        // Only folders can be grouped: loose files and placeholders have none.
+        path: entry.instance && entry.instance.kind !== "workspace" ? null : entry.path,
+        instanceId: entry.instance?.workspaceInstanceId ?? null,
+        groupId,
+      },
+      groups,
+      {
+        addToGroup: (id, path) => groupsApi().addFolder(id, path),
+        addToNewGroup: (path) => {
+          const id = groupsApi().createGroup("", newGroupName);
+          groupsApi().addFolder(id, path);
+          setEditingGroupId(id);
+        },
+        removeFromGroup: (id, path) => groupsApi().removeFolder(id, path),
+        closeWorkspace: (id) => handleCloseWorkspace(windowLabel, id, t),
+        duplicateWorkspace: (id) => handleDuplicateWorkspace(windowLabel, id, t),
+        moveWorkspace: (id) => handleMoveWorkspace(windowLabel, id, t),
+      },
+      tr,
+    );
+
+  const groupMenu = (groupId: string, name: string) =>
+    buildGroupMenuItems(
+      groupId,
+      {
+        renameGroup: (id) => setEditingGroupId(id),
+        deleteGroup: async (id) => {
+          const confirmed = await confirmAction({
+            title: t("workspaceRail.deleteGroupTitle", { group: name }),
+            message: t("workspaceRail.deleteGroupMessage"),
+            actionLabel: t("dialog:action.delete"),
+            kind: "warning",
+          });
+          if (confirmed) groupsApi().deleteGroup(id);
+        },
+      },
+      tr,
+    );
+
+  const addFolderToGroup = async (groupId: string) => {
+    const path = await pickFolderForGroup();
+    if (path) groupsApi().addFolder(groupId, path);
+  };
 
   return (
-    <nav className="workspace-rail" aria-label={t("workspaceRail.label")}>
-      <div className="workspace-rail__list" role="list">
-        {instances.map((instance) => {
-          const label = labels[instance.workspaceInstanceId] ?? instance.displayName;
-          // Synthetic instances (loose/placeholder) carry a translation key —
-          // prefer it over the stored English fallback so the label is localized.
-          const displayLabel = instance.displayNameKey
-            ? t(instance.displayNameKey)
-            : label;
-          const active = instance.workspaceInstanceId === activeId;
-          const instanceId = instance.workspaceInstanceId;
-          return (
-            <div
-              className="workspace-rail__entry"
-              role="listitem"
-              key={instanceId}
-              style={workspaceRailEntryStyle(instance.rootId ?? instanceId)}
-            >
-              <button
-                type="button"
-                className="workspace-rail__item"
-                // Stable automation hooks (WI-TS5.1): aria-labels are
-                // localized, so E2E selects by these instead. A CONTRACT —
-                // renaming them breaks e2e/lib/rail.mjs, not just a unit test.
-                data-rail-action="activate"
-                data-instance-id={instanceId}
-                aria-label={t("workspaceRail.activate", { name: displayLabel })}
-                aria-pressed={active}
-                title={displayLabel}
-                draggable
-                onDragStart={(event) => {
-                  droppedInternallyRef.current = false;
-                  event.dataTransfer.effectAllowed = "move";
-                  event.dataTransfer.setData("application/x-vmark-workspace-instance", instanceId);
+    <nav className="workspace-rail" aria-label={t("workspaceRail.label")} style={sidebarTextVars(sidebarFontSize)}>
+      <div className="workspace-rail__list">
+        {sections.map((section) => (
+          <WorkspaceRailSection
+            key={section.id}
+            section={section}
+            collapsed={collapsed[section.id] === true}
+            editing={section.groupId !== null && editingGroupId === section.groupId}
+            onToggle={() => groupsApi().toggleCollapsed(section.id)}
+            onAddFolder={() => void addFolderToGroup(section.id)}
+            onHeaderContextMenu={(event) => openMenu(event, section.name, groupMenu(section.id, section.name))}
+            onRenameCommit={(name) => {
+              groupsApi().renameGroup(section.id, name);
+              setEditingGroupId(null);
+            }}
+            onRenameCancel={() => setEditingGroupId(null)}
+          >
+            {section.entries.map((entry) => (
+              <WorkspaceRailEntry
+                key={entry.key}
+                entry={entry}
+                glyph={glyphOf(entry)}
+                colorSeed={entry.instance?.rootId ?? (entry.path ? resolveLegacyRootId(entry.path) : null) ?? entry.key}
+                active={entry.instance?.workspaceInstanceId === activeId}
+                onActivate={() => {
+                  // The FULL context switch (stash outgoing, restore incoming
+                  // tabs/panes, sidebar re-root) — not a raw flip.
+                  if (entry.instance) switchWorkspaceInstance(windowLabel, entry.instance.workspaceInstanceId);
+                  else if (entry.path) void handleOpenGroupFolder(windowLabel, entry.path);
                 }}
-                onDragOver={(event) => {
-                  event.preventDefault();
-                  if (event.dataTransfer) {
-                    event.dataTransfer.dropEffect = "move";
-                  }
-                }}
-                onDrop={(event) => {
-                  event.preventDefault();
-                  const sourceId = event.dataTransfer.getData("application/x-vmark-workspace-instance");
-                  if (!sourceId) return;
-                  // A drop that landed on a rail entry is an internal reorder —
-                  // never a move-to-new-window. Record it so the trailing
-                  // dragend suppresses the move even when it drops onto the same
-                  // entry (sourceId === instanceId is still an internal drop).
-                  droppedInternallyRef.current = true;
-                  if (sourceId === instanceId) return;
-                  const currentIds = useWorkspaceInstancesStore
-                    .getState()
-                    .windows[windowLabel]?.workspaceInstanceIds ?? [];
-                  const nextIds = reorderIds(currentIds, sourceId, instanceId);
-                  useWorkspaceInstancesStore
-                    .getState()
-                    .reorderWorkspaceInstances(windowLabel, nextIds);
-                }}
-                onDragEnd={(event) => {
-                  // An internal drop already handled this gesture — don't also
-                  // move the workspace to a new window.
-                  if (droppedInternallyRef.current) {
-                    droppedInternallyRef.current = false;
-                    return;
-                  }
-                  // A cancelled drag (Esc, invalid target) reports dropEffect
-                  // "none" and often clientX/clientY of 0,0. Treat that as a
-                  // no-op, not a move-out.
-                  if (event.dataTransfer?.dropEffect === "none") return;
-                  if (!isOutsideViewport(event.clientX, event.clientY)) return;
-                  void handleMoveWorkspace(windowLabel, instanceId, t);
-                }}
-                onClick={() =>
-                  // The FULL context switch (stash outgoing, restore
-                  // incoming tabs/panes, sidebar re-root) — not a raw flip.
-                  switchWorkspaceInstance(windowLabel, instanceId)
-                }
-                onContextMenu={(event) => {
-                  event.preventDefault();
-                  setMenu({
-                    instanceId,
-                    name: displayLabel,
-                    position: { x: event.clientX, y: event.clientY },
-                    invoker: event.currentTarget,
-                  });
-                }}
-              >
-                {instance.kind === "loose" ? (
-                  <span className="workspace-rail__loose" aria-hidden="true">
-                    <FileStack size={14} />
-                  </span>
-                ) : (
-                  // aria-hidden: the button's aria-label already carries the
-                  // FULL workspace name, so a screen reader must not announce
-                  // the one-letter glyph as well.
-                  <span className="workspace-rail__glyph" aria-hidden="true">
-                    {glyphs[instanceId]}
-                  </span>
-                )}
-              </button>
-              <button
-                type="button"
-                className="workspace-rail__duplicate"
-                data-rail-action="duplicate"
-                data-instance-id={instanceId}
-                aria-label={t("workspaceRail.duplicate", { name: displayLabel })}
-                title={t("workspaceRail.duplicate", { name: displayLabel })}
-                onClick={() => {
-                  void handleDuplicateWorkspace(windowLabel, instanceId, t);
-                }}
-              >
-                <CopyPlus size={12} aria-hidden="true" />
-              </button>
-            </div>
-          );
-        })}
+                onContextMenu={(event) => openMenu(event, entry.label, entryMenu(entry, section.groupId))}
+              />
+            ))}
+          </WorkspaceRailSection>
+        ))}
       </div>
+      <div className="workspace-rail__footer">
+        <button
+          type="button"
+          className="vm-btn vm-btn--plain vm-btn--compact workspace-rail__new-group"
+          title={t("workspaceRail.newGroup")}
+          onClick={() => {
+            const id = groupsApi().createGroup("", newGroupName);
+            setEditingGroupId(id);
+          }}
+        >
+          <ListPlus size={14} aria-hidden="true" />
+          <span>{t("workspaceRail.newGroup")}</span>
+        </button>
+        <button
+          type="button"
+          className="vm-icon-btn vm-icon-btn--lg workspace-rail__collapse"
+          aria-label={t("workspaceRail.collapse")}
+          aria-expanded={true}
+          title={t("workspaceRail.collapse")}
+          onClick={() => setCollapsed(true)}
+        >
+          <PanelLeftClose size={14} aria-hidden="true" />
+        </button>
+      </div>
+      <WorkspaceRailResizeHandle width={railWidth} />
       {menu && (
         <WorkspaceRailContextMenu
           position={menu.position}
           workspaceName={menu.name}
           invoker={menu.invoker}
+          items={menu.items}
           onClose={() => setMenu(null)}
-          onCloseWorkspace={() => {
-            void handleCloseWorkspace(windowLabel, menu.instanceId, t);
-          }}
-          onDuplicate={() => {
-            void handleDuplicateWorkspace(windowLabel, menu.instanceId, t);
-          }}
-          onMoveToNewWindow={() => {
-            void handleMoveWorkspace(windowLabel, menu.instanceId, t);
-          }}
         />
       )}
     </nav>
-  );
-}
-
-function reorderIds(ids: string[], sourceId: string, targetId: string): string[] {
-  const fromIndex = ids.indexOf(sourceId);
-  const toIndex = ids.indexOf(targetId);
-  if (fromIndex < 0 || toIndex < 0) return ids;
-  const next = [...ids];
-  const [moved] = next.splice(fromIndex, 1);
-  next.splice(toIndex, 0, moved);
-  return next;
-}
-
-function workspaceRailEntryStyle(seed: string): WorkspaceRailEntryStyle {
-  return { "--workspace-rail-color": workspaceRailColorForSeed(seed) };
-}
-
-function workspaceRailColorForSeed(seed: string): string {
-  let hash = 0;
-  for (const char of seed) {
-    hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
-  }
-  return WORKSPACE_RAIL_COLORS[hash % WORKSPACE_RAIL_COLORS.length];
-}
-
-function isOutsideViewport(clientX: number, clientY: number): boolean {
-  if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return false;
-  // (0,0) is the sentinel several browsers report for a cancelled or
-  // failed-internal-drop dragend — treat it as a no-op, not a move-out.
-  // (The dropEffect === "none" guard in the handler covers the common case;
-  // this is defense in depth for browsers that don't set dropEffect.)
-  if (clientX === 0 && clientY === 0) return false;
-  return (
-    clientX < 0
-    || clientY < 0
-    || clientX >= globalThis.innerWidth
-    || clientY >= globalThis.innerHeight
   );
 }

@@ -138,7 +138,12 @@ export interface GeneralSettings {
   // legacy "reuse the empty tab" behavior so existing users are unaffected.
   openInNewTab: boolean;
   // Workspace rail/window model; default false preserves the classic model.
+  // When on, the rail is the first of three columns (workspaces / files / document).
   workspaceRailMode: boolean;
+  /** Width of the workspace rail column in px; bounds in CLAMP_RANGES.general. */
+  workspaceRailWidth: number;
+  /** The rail is folded to a narrow strip (only an expand button shows). */
+  workspaceRailCollapsed: boolean;
   // File-name display
   // fix(#1224) — when true (default), the file tree and tab strip show the
   // name as it is on disk. Hiding the extension made `requirements.txt` read

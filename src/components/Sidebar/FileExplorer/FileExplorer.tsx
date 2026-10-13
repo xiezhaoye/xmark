@@ -53,6 +53,7 @@ import { ContextMenu } from "./ContextMenu";
 import { useTreeWiring } from "./useTreeWiring";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 import { useSettingsStore } from "@/stores/settingsStore";
+import { sidebarRowHeight } from "@/utils/sidebarTextSize";
 import { useWindowLabel } from "@/contexts/WindowContext";
 import { getFileName } from "@/utils/paths";
 import { fileExplorerError } from "@/utils/debug";
@@ -89,6 +90,8 @@ export const FileExplorer = forwardRef<FileExplorerHandle, FileExplorerProps>(
   const showAllFiles = useWorkspaceStore((s) => s.config?.showAllFiles ?? false);
   // Global, not workspace config: the same preference also drives tab titles.
   const showExtensions = useSettingsStore((s) => s.general.showFileExtensions ?? true);
+  // Rows scale with the sidebar text size (Settings → Appearance).
+  const rowHeight = sidebarRowHeight(useSettingsStore((s) => s.appearance.sidebarFontSize ?? 14));
   const windowLabel = useWindowLabel();
 
   const treeRef = useRef<TreeApi<FileNodeType> | null>(null);
@@ -193,7 +196,7 @@ export const FileExplorer = forwardRef<FileExplorerHandle, FileExplorerProps>(
           width="100%"
           height={treeHeight}
           indent={16}
-          rowHeight={26}
+          rowHeight={rowHeight}
           onActivate={handleActivate}
           onToggle={handleToggle}
           onRename={handleRename}
