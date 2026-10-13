@@ -34,7 +34,7 @@ describe("CcSwitchImportRow", () => {
       new TextDecoder().decode(Uint8Array.from(atob(config), (c) => c.charCodeAt(0))),
     );
     expect(decoded).toEqual({
-      mcpServers: { vmark: { command: "/usr/local/bin/vmark-mcp-server" } },
+      mcpServers: { xmark: { command: "/usr/local/bin/vmark-mcp-server" } },
     });
     expect(toastMock.success).toHaveBeenCalled();
   });

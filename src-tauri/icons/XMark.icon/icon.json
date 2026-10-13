@@ -1,13 +1,13 @@
 {
   "fill": {
-    "automatic-gradient": "extended-srgb:0.17647,0.43529,0.80392,1.00000"
+    "automatic-gradient": "extended-srgb:0.11765,0.16078,0.23137,1.00000"
   },
   "groups": [
     {
       "layers": [
         {
-          "image-name": "wedge-light.svg",
-          "name": "Light wedge"
+          "image-name": "chevron.svg",
+          "name": "Chevron"
         }
       ],
       "shadow": {
@@ -23,25 +23,8 @@
     {
       "layers": [
         {
-          "image-name": "body.svg",
-          "name": "Body"
-        }
-      ],
-      "shadow": {
-        "kind": "neutral",
-        "opacity": 0.5
-      },
-      "specular": true,
-      "translucency": {
-        "enabled": false,
-        "value": 0.5
-      }
-    },
-    {
-      "layers": [
-        {
-          "image-name": "wedge-dark.svg",
-          "name": "Dark wedge"
+          "image-name": "columns.svg",
+          "name": "Columns"
         }
       ],
       "shadow": {

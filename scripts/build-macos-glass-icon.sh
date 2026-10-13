@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Compile `src-tauri/icons/VMark.icon` into the `Assets.car` that macOS 26 needs
+# Compile `src-tauri/icons/XMark.icon` into the `Assets.car` that macOS 26 needs
 # in order to draw the Dock icon with the Liquid Glass treatment.
 #
 # Why this exists: a `.icns` is a bag of flat bitmaps. macOS 26 masks and lights
@@ -16,7 +16,7 @@
 #
 # The output is committed on purpose: compiling needs Xcode (`actool` is not in
 # the Command Line Tools) and `cargo build` must not. Re-run this whenever
-# `VMark.icon` changes, the same rule `icon.icns` and the PNG set follow.
+# `XMark.icon` changes, the same rule `icon.icns` and the PNG set follow.
 #
 # actool's failure modes (measured by Paper on Xcode 26.4.1): a bad enum, a
 # missing asset or a malformed fill colour exit 1 with errors, which `set -e`
@@ -27,7 +27,7 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-icon_src="$repo_root/src-tauri/icons/VMark.icon"
+icon_src="$repo_root/src-tauri/icons/XMark.icon"
 out_file="$repo_root/src-tauri/icons/Assets.car"
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
@@ -54,7 +54,7 @@ trap 'rm -rf "$work"' EXIT
 "$actool" "$icon_src" \
   --compile "$work" \
   --output-partial-info-plist "$work/partial.plist" \
-  --app-icon VMark \
+  --app-icon XMark \
   --enable-on-demand-resources NO \
   --development-region en \
   --target-device mac \
@@ -67,7 +67,7 @@ if [[ ! -s "$work/Assets.car" ]]; then
   echo "  actool normally exits non-zero on bad input and set -e catches it first," >&2
   echo "  so reaching here means it exited 0 and still wrote nothing — an older or" >&2
   echo "  regressed toolchain. Check icon.json against the keys actool accepts and" >&2
-  echo "  confirm every image-name resolves to a file in VMark.icon/Assets/." >&2
+  echo "  confirm every image-name resolves to a file in XMark.icon/Assets/." >&2
   exit 1
 fi
 

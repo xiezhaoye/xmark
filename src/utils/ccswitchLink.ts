@@ -7,7 +7,7 @@
  * `mcpServers.xmark` entry into whichever AI CLIs the user lists in `apps`.
  *
  * Format (CC-Switch v1):
- *   ccswitch://v1/import?resource=mcp&name=vmark&apps=<csv>&config=<urlenc base64 JSON>
+ *   ccswitch://v1/import?resource=mcp&name=xmark&apps=<csv>&config=<urlenc base64 JSON>
  *
  * Pure (no Tauri/stores) — leaf util per ADR-013. The caller opens the link
  * via the OS opener.
@@ -24,7 +24,7 @@
  *    parsing JSON, so the payload must be Base64.
  * 2. `import_mcp_from_deeplink` then requires `config.mcpServers` to be an
  *    object and takes each KEY as the server id. A bare `{command}` would
- *    import zero servers even with the Base64 fixed, and `name=vmark` cannot
+ *    import zero servers even with the Base64 fixed, and `name=xmark` cannot
  *    stand in — the MCP branch of `parse_mcp_deeplink` discards `name`.
  *
  * Standard Base64 plus `encodeURIComponent` is what CC-Switch's own generator

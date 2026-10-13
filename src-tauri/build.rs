@@ -11,7 +11,7 @@ fn main() {
     // The macOS 26 layered icon: the compiled catalogue that ships in the bundle
     // and the source it is built from (scripts/build-macos-glass-icon.sh).
     println!("cargo:rerun-if-changed=icons/Assets.car");
-    println!("cargo:rerun-if-changed=icons/VMark.icon");
+    println!("cargo:rerun-if-changed=icons/XMark.icon");
     println!("cargo:rerun-if-changed=Info.plist");
     tauri_build::build()
 }
