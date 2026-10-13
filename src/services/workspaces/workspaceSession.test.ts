@@ -2,6 +2,7 @@
 // WI-6R — ownership-scoped session persistence tests
 // WI-10.3 — per-root split persistence (write side) tests
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { setClassicWorkspaceMode } from "@/test/classicWorkspaceMode";
 import { invoke } from "@tauri-apps/api/core";
 import { useWorkspaceStore, type WorkspaceConfig } from "@/stores/workspaceStore";
 import { useTabStore } from "@/stores/tabStore";
@@ -472,4 +473,9 @@ describe("persistWorkspaceSession — rail mode (WI-6R)", () => {
       expect(write.config.excludeFolders).toEqual(["dist"]);
     });
   });
+});
+
+// These suites assert the classic (rail-off) workspace model; XMark defaults the rail on.
+beforeEach(() => {
+  setClassicWorkspaceMode();
 });

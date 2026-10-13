@@ -82,7 +82,7 @@ fn json_preserves_unrelated_keys() {
     assert_eq!(json["numStartups"], 42);
     assert_eq!(json["projects"]["/tmp/x"]["allowedTools"][0], "Read");
     assert_eq!(json["mcpServers"]["other"]["command"], "/usr/bin/other");
-    assert_eq!(json["mcpServers"]["vmark"]["command"], BIN);
+    assert_eq!(json["mcpServers"]["xmark"]["command"], BIN);
 }
 
 #[test]
@@ -104,18 +104,18 @@ command = "/usr/bin/other"
         doc["mcp_servers"]["other"]["command"].as_str(),
         Some("/usr/bin/other")
     );
-    assert_eq!(doc["mcp_servers"]["vmark"]["command"].as_str(), Some(BIN));
+    assert_eq!(doc["mcp_servers"]["xmark"]["command"].as_str(), Some(BIN));
 }
 
 #[test]
 fn absent_config_produces_a_fresh_one() {
     let json_out = generate_config_content("claude", BIN, TOK, None).expect("fresh JSON install");
     let json: serde_json::Value = serde_json::from_str(&json_out).unwrap();
-    assert_eq!(json["mcpServers"]["vmark"]["command"], BIN);
+    assert_eq!(json["mcpServers"]["xmark"]["command"], BIN);
 
     let toml_out = generate_config_content("codex", BIN, TOK, None).expect("fresh TOML install");
     let doc: toml::Table = toml_out.parse().unwrap();
-    assert_eq!(doc["mcp_servers"]["vmark"]["command"].as_str(), Some(BIN));
+    assert_eq!(doc["mcp_servers"]["xmark"]["command"].as_str(), Some(BIN));
 }
 
 #[test]
@@ -124,12 +124,12 @@ fn empty_config_file_is_treated_as_fresh() {
     // whose client created the file but never wrote to it.
     let json_out = generate_config_content("claude", BIN, TOK, Some("")).expect("empty JSON file");
     let json: serde_json::Value = serde_json::from_str(&json_out).unwrap();
-    assert_eq!(json["mcpServers"]["vmark"]["command"], BIN);
+    assert_eq!(json["mcpServers"]["xmark"]["command"], BIN);
 
     let toml_out =
         generate_config_content("codex", BIN, TOK, Some("   \n  ")).expect("blank TOML file");
     let doc: toml::Table = toml_out.parse().unwrap();
-    assert_eq!(doc["mcp_servers"]["vmark"]["command"].as_str(), Some(BIN));
+    assert_eq!(doc["mcp_servers"]["xmark"]["command"].as_str(), Some(BIN));
 }
 
 // -- upsert: we own `command`, the user owns everything else ---------------
@@ -141,17 +141,17 @@ fn empty_config_file_is_treated_as_fresh() {
 
 #[test]
 fn existing_vmark_entry_is_updated_in_place() {
-    let existing = r#"{"mcpServers": {"vmark": {"command": "/old/path"}}}"#;
+    let existing = r#"{"mcpServers": {"xmark": {"command": "/old/path"}}}"#;
     let out = generate_config_content("claude", BIN, TOK, Some(existing)).unwrap();
     let json: serde_json::Value = serde_json::from_str(&out).unwrap();
-    assert_eq!(json["mcpServers"]["vmark"]["command"], BIN);
+    assert_eq!(json["mcpServers"]["xmark"]["command"], BIN);
 }
 
 #[test]
 fn json_upsert_preserves_sibling_fields_on_our_own_entry() {
     let existing = r#"{
       "mcpServers": {
-        "vmark": {
+        "xmark": {
           "command": "/old/path",
           "env": { "VMARK_DEBUG": "1" },
           "timeout": 30000,
@@ -163,7 +163,7 @@ fn json_upsert_preserves_sibling_fields_on_our_own_entry() {
     let out =
         generate_config_content("claude", BIN, TOK, Some(existing)).expect("valid JSON merges");
     let json: serde_json::Value = serde_json::from_str(&out).unwrap();
-    let vmark = &json["mcpServers"]["vmark"];
+    let vmark = &json["mcpServers"]["xmark"];
 
     assert_eq!(vmark["command"], BIN, "we own command");
     assert_eq!(vmark["env"]["VMARK_DEBUG"], "1", "user env must survive");
@@ -181,34 +181,34 @@ fn json_upsert_drops_the_legacy_port_args_but_keeps_the_rest() {
     // pair is genuinely obsolete and ours to remove; nothing else is.
     let existing = r#"{
       "mcpServers": {
-        "vmark": { "command": "/old", "args": ["--port", "9223", "--verbose"] }
+        "xmark": { "command": "/old", "args": ["--port", "9223", "--verbose"] }
       }
     }"#;
     let out = generate_config_content("claude", BIN, TOK, Some(existing)).unwrap();
     let json: serde_json::Value = serde_json::from_str(&out).unwrap();
-    let args = json["mcpServers"]["vmark"]["args"].as_array().unwrap();
+    let args = json["mcpServers"]["xmark"]["args"].as_array().unwrap();
     assert_eq!(args.len(), 1, "only --verbose should remain: {args:?}");
     assert_eq!(args[0], "--verbose");
 }
 
 #[test]
 fn json_upsert_removes_an_args_array_that_held_only_the_legacy_port() {
-    let existing = r#"{"mcpServers": {"vmark": {"args": ["--port", "9223"]}}}"#;
+    let existing = r#"{"mcpServers": {"xmark": {"args": ["--port", "9223"]}}}"#;
     let out = generate_config_content("claude", BIN, TOK, Some(existing)).unwrap();
     let json: serde_json::Value = serde_json::from_str(&out).unwrap();
     assert!(
-        json["mcpServers"]["vmark"].get("args").is_none(),
+        json["mcpServers"]["xmark"].get("args").is_none(),
         "an emptied args array is noise, not configuration"
     );
-    assert_eq!(json["mcpServers"]["vmark"]["command"], BIN);
+    assert_eq!(json["mcpServers"]["xmark"]["command"], BIN);
 }
 
 #[test]
 fn json_non_object_vmark_entry_is_rejected() {
-    let err = generate_config_content("claude", BIN, TOK, Some(r#"{"mcpServers": {"vmark": 7}}"#))
+    let err = generate_config_content("claude", BIN, TOK, Some(r#"{"mcpServers": {"xmark": 7}}"#))
         .expect_err("a non-object vmark entry cannot be upserted into");
     assert!(
-        err.contains("mcpServers.vmark is not an object"),
+        err.contains("mcpServers.xmark is not an object"),
         "unexpected: {err}"
     );
 }
@@ -216,18 +216,18 @@ fn json_non_object_vmark_entry_is_rejected() {
 #[test]
 fn toml_upsert_preserves_sibling_fields_on_our_own_entry() {
     let existing = r#"
-[mcp_servers.vmark]
+[mcp_servers.xmark]
 command = "/old/path"
 startup_timeout_ms = 20000
 args = ["--verbose"]
 
-[mcp_servers.vmark.env]
+[mcp_servers.xmark.env]
 VMARK_DEBUG = "1"
 "#;
     let out =
         generate_config_content("codex", BIN, TOK, Some(existing)).expect("valid TOML merges");
     let doc: toml::Table = out.parse().unwrap();
-    let vmark = &doc["mcp_servers"]["vmark"];
+    let vmark = &doc["mcp_servers"]["xmark"];
 
     assert_eq!(vmark["command"].as_str(), Some(BIN));
     assert_eq!(vmark["startup_timeout_ms"].as_integer(), Some(20000));
@@ -238,32 +238,32 @@ VMARK_DEBUG = "1"
 #[test]
 fn toml_upsert_drops_the_legacy_port_args_but_keeps_the_rest() {
     let existing = r#"
-[mcp_servers.vmark]
+[mcp_servers.xmark]
 command = "/old"
 args = ["--port", "9223", "--verbose"]
 "#;
     let out = generate_config_content("codex", BIN, TOK, Some(existing)).unwrap();
     let doc: toml::Table = out.parse().unwrap();
-    let args = doc["mcp_servers"]["vmark"]["args"].as_array().unwrap();
+    let args = doc["mcp_servers"]["xmark"]["args"].as_array().unwrap();
     assert_eq!(args.len(), 1, "only --verbose should remain: {args:?}");
     assert_eq!(args[0].as_str(), Some("--verbose"));
 }
 
 #[test]
 fn toml_upsert_removes_an_args_array_that_held_only_the_legacy_port() {
-    let existing = "[mcp_servers.vmark]\nargs = [\"--port\", \"9223\"]\n";
+    let existing = "[mcp_servers.xmark]\nargs = [\"--port\", \"9223\"]\n";
     let out = generate_config_content("codex", BIN, TOK, Some(existing)).unwrap();
     let doc: toml::Table = out.parse().unwrap();
-    assert!(doc["mcp_servers"]["vmark"].get("args").is_none());
-    assert_eq!(doc["mcp_servers"]["vmark"]["command"].as_str(), Some(BIN));
+    assert!(doc["mcp_servers"]["xmark"].get("args").is_none());
+    assert_eq!(doc["mcp_servers"]["xmark"]["command"].as_str(), Some(BIN));
 }
 
 #[test]
 fn toml_non_table_vmark_entry_is_rejected() {
-    let err = generate_config_content("codex", BIN, TOK, Some("[mcp_servers]\nvmark = 7\n"))
+    let err = generate_config_content("codex", BIN, TOK, Some("[mcp_servers]\nxmark = 7\n"))
         .expect_err("a non-table vmark entry cannot be upserted into");
     assert!(
-        err.contains("mcp_servers.vmark is not a table"),
+        err.contains("mcp_servers.xmark is not a table"),
         "unexpected: {err}"
     );
 }
@@ -286,14 +286,14 @@ fn uninstall_rejects_malformed_toml() {
 
 #[test]
 fn uninstall_preserves_unrelated_keys() {
-    let existing = r#"{"numStartups": 7, "mcpServers": {"vmark": {"command": "x"}, "other": {}}}"#;
+    let existing = r#"{"numStartups": 7, "mcpServers": {"xmark": {"command": "x"}, "other": {}}}"#;
     let out = remove_vmark_from_config("claude", existing)
         .unwrap()
         .expect("vmark was present, so the document changed");
     let json: serde_json::Value = serde_json::from_str(&out).unwrap();
     assert_eq!(json["numStartups"], 7);
     assert!(json["mcpServers"]["other"].is_object());
-    assert!(json["mcpServers"].get("vmark").is_none());
+    assert!(json["mcpServers"].get("xmark").is_none());
 }
 
 #[test]
@@ -448,7 +448,7 @@ fn toml_install_keeps_every_comment() {
     assert_lines_survive(HAND_WRITTEN_CODEX, &out);
 
     let doc: toml::Table = out.parse().expect("still valid TOML");
-    assert_eq!(doc["mcp_servers"]["vmark"]["command"].as_str(), Some(BIN));
+    assert_eq!(doc["mcp_servers"]["xmark"]["command"].as_str(), Some(BIN));
 }
 
 #[test]
@@ -525,7 +525,7 @@ fn toml_reinstalling_the_same_command_leaves_the_users_quoting_alone() {
     // A literal (single-quoted) string is the user's formatting, not ours.
     // Re-writing an unchanged value would rewrite it as a basic string.
     // The credential table is appended; the command line is untouched.
-    let existing = "[mcp_servers.vmark]\ncommand = '/opt/vmark/vmark-mcp-server'\n";
+    let existing = "[mcp_servers.xmark]\ncommand = '/opt/vmark/vmark-mcp-server'\n";
     let out = generate_config_content("codex", BIN, TOK, Some(existing)).unwrap();
     assert!(
         out.starts_with(existing),
@@ -561,7 +561,7 @@ fn toml_uninstall_keeps_comments_and_sibling_entries() {
 # keep me
 model = \"gpt-5\"
 
-[mcp_servers.vmark]
+[mcp_servers.xmark]
 command = \"/opt/vmark\"
 
 # theirs
@@ -575,7 +575,7 @@ command = \"/usr/bin/other\"
     assert!(out.contains("# keep me"), "lost a comment:\n{out}");
     assert!(out.contains("# theirs"), "lost a comment:\n{out}");
     assert!(out.contains("[mcp_servers.other]"), "lost a server:\n{out}");
-    assert!(!out.contains("vmark"), "vmark should be gone:\n{out}");
+    assert!(!out.contains("xmark"), "vmark should be gone:\n{out}");
 }
 
 #[test]
@@ -590,7 +590,7 @@ fn toml_install_keeps_an_inline_mcp_servers_table_inline() {
         "an inline table must not sprout a table header:\n{out}"
     );
     let doc: toml::Table = out.parse().expect("still valid TOML");
-    assert_eq!(doc["mcp_servers"]["vmark"]["command"].as_str(), Some(BIN));
+    assert_eq!(doc["mcp_servers"]["xmark"]["command"].as_str(), Some(BIN));
     assert_eq!(
         doc["mcp_servers"]["other"]["command"].as_str(),
         Some("/usr/bin/other")
@@ -605,7 +605,7 @@ fn toml_install_into_a_dotted_mcp_servers_key_stays_valid() {
     let out = generate_config_content("codex", BIN, TOK, Some(existing)).unwrap();
 
     let doc: toml::Table = out.parse().unwrap_or_else(|e| panic!("{e}\n{out}"));
-    assert_eq!(doc["mcp_servers"]["vmark"]["command"].as_str(), Some(BIN));
+    assert_eq!(doc["mcp_servers"]["xmark"]["command"].as_str(), Some(BIN));
     assert_eq!(
         doc["mcp_servers"]["other"]["command"].as_str(),
         Some("/usr/bin/other")
@@ -616,7 +616,7 @@ fn toml_install_into_a_dotted_mcp_servers_key_stays_valid() {
 fn toml_install_keeps_comments_on_our_own_entry() {
     // We own `command`. The comment the user wrote above it is still theirs.
     let existing = "\
-[mcp_servers.vmark]
+[mcp_servers.xmark]
 # pinned by hand after the 0.9 upgrade
 command = \"/old/vmark\"
 startup_timeout_ms = 20000
@@ -629,22 +629,22 @@ startup_timeout_ms = 20000
     );
     assert!(out.contains("startup_timeout_ms = 20000"), "{out}");
     let doc: toml::Table = out.parse().unwrap();
-    assert_eq!(doc["mcp_servers"]["vmark"]["command"].as_str(), Some(BIN));
+    assert_eq!(doc["mcp_servers"]["xmark"]["command"].as_str(), Some(BIN));
 }
 
 #[test]
 fn toml_install_keeps_a_trailing_comment_on_the_command_line() {
-    let existing = "[mcp_servers.vmark]\ncommand = \"/old/vmark\"  # set by the installer\n";
+    let existing = "[mcp_servers.xmark]\ncommand = \"/old/vmark\"  # set by the installer\n";
     let out = generate_config_content("codex", BIN, TOK, Some(existing)).unwrap();
     assert!(
         out.starts_with(&format!(
-            "[mcp_servers.vmark]\ncommand = \"{BIN}\"  # set by the installer\n"
+            "[mcp_servers.xmark]\ncommand = \"{BIN}\"  # set by the installer\n"
         )),
         "only the command's value may change on that line:\n{out}"
     );
     // The credential lands in its own sub-table, after the entry's own keys.
     assert!(
-        out.contains("[mcp_servers.vmark.env]\nVMARK_MCP_TOKEN = \"tok-fixture\""),
+        out.contains("[mcp_servers.xmark.env]\nVMARK_MCP_TOKEN = \"tok-fixture\""),
         "{out}"
     );
 }
@@ -655,7 +655,7 @@ fn toml_stripping_the_legacy_port_keeps_the_rest_of_the_file() {
 # header
 model = \"gpt-5\"
 
-[mcp_servers.vmark]
+[mcp_servers.xmark]
 command = \"/old/vmark\"
 args = [\"--port\", \"9223\", \"--verbose\"]
 ";
@@ -664,7 +664,7 @@ args = [\"--port\", \"9223\", \"--verbose\"]
     assert!(out.contains("# header"), "{out}");
     assert!(out.contains("model = \"gpt-5\""), "{out}");
     let doc: toml::Table = out.parse().unwrap();
-    let args = doc["mcp_servers"]["vmark"]["args"].as_array().unwrap();
+    let args = doc["mcp_servers"]["xmark"]["args"].as_array().unwrap();
     assert_eq!(args.len(), 1, "{args:?}");
     assert_eq!(args[0].as_str(), Some("--verbose"));
 }
@@ -696,7 +696,7 @@ fn read_existing_config_finds_an_installed_vmark_entry() {
     let path = dir.path().join(".claude.json");
     fs::write(
         &path,
-        format!(r#"{{"mcpServers":{{"vmark":{{"command":"{BIN}"}}}}}}"#),
+        format!(r#"{{"mcpServers":{{"xmark":{{"command":"{BIN}"}}}}}}"#),
     )
     .unwrap();
 

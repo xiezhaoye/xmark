@@ -1,8 +1,8 @@
 /**
  * #1224 — the title bar showed the file name with its extension chopped off by
  * `getFileNameWithoutExtension`, which cuts at the last dot regardless of
- * whether VMark knows the format. `App.vue` displayed as `App`: a name that
- * exists nowhere on disk, for a file VMark cannot even open.
+ * whether XMark knows the format. `App.vue` displayed as `App`: a name that
+ * exists nowhere on disk, for a file XMark cannot even open.
  *
  * Stores are real (settings + tabs, driven via setState); only the document
  * state hook — a hook, not a store — is stubbed, since it reaches into editor
@@ -219,7 +219,7 @@ describe("TitleBar with no document open (WelcomeScreen)", () => {
 
   it("shows the product name instead of the untitled label", () => {
     render(<TitleBar />);
-    expect(screen.getByText("VMark")).toBeInTheDocument();
+    expect(screen.getByText("XMark")).toBeInTheDocument();
     expect(screen.queryByText("Untitled")).not.toBeInTheDocument();
   });
 
@@ -227,7 +227,7 @@ describe("TitleBar with no document open (WelcomeScreen)", () => {
     const user = userEvent.setup();
     render(<TitleBar />);
 
-    await user.dblClick(screen.getByText("VMark"));
+    await user.dblClick(screen.getByText("XMark"));
 
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
     expect(mockRenameFile).not.toHaveBeenCalled();
@@ -238,7 +238,7 @@ describe("TitleBar with no document open (WelcomeScreen)", () => {
   it("stays empty when the filename is not shown", () => {
     setShowFilename(false);
     render(<TitleBar />);
-    expect(screen.queryByText("VMark")).not.toBeInTheDocument();
+    expect(screen.queryByText("XMark")).not.toBeInTheDocument();
   });
 
   // Browser mode owns the whole strip and never falls through to the document
@@ -246,6 +246,6 @@ describe("TitleBar with no document open (WelcomeScreen)", () => {
   it("still yields the strip to the browser chrome", () => {
     render(<TitleBar browserChrome={<div>chrome</div>} />);
     expect(screen.getByText("chrome")).toBeInTheDocument();
-    expect(screen.queryByText("VMark")).not.toBeInTheDocument();
+    expect(screen.queryByText("XMark")).not.toBeInTheDocument();
   });
 });

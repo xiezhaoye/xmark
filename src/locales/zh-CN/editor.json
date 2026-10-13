@@ -29,7 +29,7 @@
   "preview.htmlIframeTitle": "HTML 预览",
   "preview.htmlTrustSafe": "安全预览 — 脚本已被阻止",
   "preview.htmlTrustEnable": "启用受信任预览…",
-  "preview.htmlTrustWarning": "受信任预览会在隔离的源中运行此文档的脚本，该环境既无网络访问权限，也无法访问 VMark。请仅对你自己编写或完全信任的文件启用。",
+  "preview.htmlTrustWarning": "受信任预览会在隔离的源中运行此文档的脚本，该环境既无网络访问权限，也无法访问 XMark。请仅对你自己编写或完全信任的文件启用。",
   "preview.htmlTrustConfirm": "启用脚本",
   "preview.htmlTrustActive": "受信任 — 脚本已启用",
   "preview.htmlTrustStale": "可能与当前源码不一致",

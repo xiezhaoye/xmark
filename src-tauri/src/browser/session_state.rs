@@ -87,8 +87,8 @@ impl StorageState {
 }
 
 /// Keychain namespace for storage-state blobs — distinct from `secure_store`'s
-/// `app.vmark.secrets` so a blob is never confused with an API key.
-const SERVICE: &str = "app.vmark.browser.storagestate";
+/// `app.xmark.secrets` so a blob is never confused with an API key.
+const SERVICE: &str = "app.xmark.browser.storagestate";
 
 /// A handle is the keychain account name AND appears in the AI-facing response, so
 /// it must be a safe, bounded token — never free-form text that could smuggle a

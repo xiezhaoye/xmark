@@ -6,6 +6,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { setClassicWorkspaceMode } from "@/test/classicWorkspaceMode";
 import { fileBytes } from "@/test/fileBytes";
 import { render, act } from "@testing-library/react";
 
@@ -597,4 +598,9 @@ describe("useFinderFileOpen", () => {
 
     expect(mockAddFile).toHaveBeenCalledWith("/docs/file.md");
   });
+});
+
+// These suites assert the classic (rail-off) workspace model; XMark defaults the rail on.
+beforeEach(() => {
+  setClassicWorkspaceMode();
 });

@@ -1,14 +1,14 @@
-# VMark English locale — source of truth for all Rust-side translatable strings.
+# XMark English locale — source of truth for all Rust-side translatable strings.
 # Keys follow the convention: menu.<section>.<item>
 # Dynamic menu items (recent files, genies) have their structural labels here too.
 
 menu:
   # === App menu (macOS only) ===
-  app: "VMark"
-  app.about: "About VMark"
+  app: "XMark"
+  app.about: "About XMark"
   app.settings: "Settings…"
   app.saveAllQuit: "Save All and Quit"
-  app.quit: "Quit VMark"
+  app.quit: "Quit XMark"
 
   # === File menu ===
   file: "File"
@@ -205,9 +205,9 @@ menu:
 
   # === Help menu ===
   help: "Help"
-  help.vmarkHelp: "VMark Help"
+  help.vmarkHelp: "XMark Help"
   help.keyboardShortcuts: "Keyboard Shortcuts"
-  help.installCli: "Shell Command: Install 'vmark' in PATH…"
+  help.installCli: "Shell Command: Install 'xmark' in PATH…"
   help.reportIssue: "Report an Issue…"
 
   # === Dynamic menu labels ===
@@ -229,7 +229,7 @@ errors:
   coherence.ledgerUnavailable: "The coherence history could not be read: %{detail}"
   coherence.rejectedArgument: "The request was rejected: %{detail}"
   coherence.stateConflict: "The workspace has changed since this was requested: %{detail}"
-  coherence.buildTooOld: "This version of VMark cannot read part of the coherence history. Upgrade VMark to continue: %{detail}"
+  coherence.buildTooOld: "This version of XMark cannot read part of the coherence history. Upgrade XMark to continue: %{detail}"
   # === Core (lib.rs) ===
   core.htmlTooLarge: "HTML content too large (>50 MB)"
   core.pathTraversal: "Path traversal (..) not allowed"
@@ -302,7 +302,7 @@ errors:
   workflow.snapshotFailed: "Could not snapshot the files this workflow will modify, so it was not run: %{detail}"
   workflow.snapshotNotFound: "That workflow snapshot no longer exists"
   workflow.snapshotUnreadable: "The workflow snapshot's record could not be read: %{detail}"
-  workflow.snapshotNoWorkspace: "This snapshot was taken by an older version of VMark and cannot be restored"
+  workflow.snapshotNoWorkspace: "This snapshot was taken by an older version of XMark and cannot be restored"
   workflow.snapshotWorkspaceMissing: "The folder this snapshot belongs to no longer exists: %{path}"
   workflow.snapshotListFailed: "Could not list workflow snapshots: %{detail}"
   workflow.restoreWhileRunning: "A workflow is running. Wait for it to finish, or cancel it, before restoring files."
@@ -362,7 +362,7 @@ errors:
   cli.mismatchNotRemoved: "The file at “%{path}” does not match the expected script and could not be removed. Delete it manually."
 
   # === External editor ===
-  externalEditor.unknownName: "“%{name}” is not an editor VMark knows by name — enter the full path to the editor instead"
+  externalEditor.unknownName: "“%{name}” is not an editor XMark knows by name — enter the full path to the editor instead"
   externalEditor.notAnEditor: "“%{name}” runs the files it is given instead of opening them, so it cannot be the external editor"
   externalEditor.notPlainPath: "The external editor must be an editor name or a full path, with no “..” and no trailing slash"
 
@@ -377,11 +377,11 @@ errors:
 
   # MCP client config — provider and sidecar binary resolution
   mcp.unknownProvider: "Unknown provider: %{provider}"
-  mcp.legacyProvider: "%{name} is discontinued; the leftover VMark entry can only be removed."
+  mcp.legacyProvider: "%{name} is discontinued; the leftover XMark entry can only be removed."
   mcp.noHomeDir: "Cannot determine home directory"
   mcp.exePathFailed: "Cannot get executable path: %{detail}"
   mcp.exeDirFailed: "Cannot get executable directory"
-  mcp.binaryNotFound: "MCP server binary not found: %{name}. Please reinstall VMark."
+  mcp.binaryNotFound: "MCP server binary not found: %{name}. Please reinstall XMark."
 
   # MCP client config — parsing and structure
   mcp.invalidJson: "Invalid JSON: %{detail}"
@@ -391,19 +391,19 @@ errors:
   mcp.serversNotObject: "%{key} is not an object"
   mcp.serversNotTable: "mcp_servers is not a table"
   mcp.vmarkEntryNotObject: "%{key} is not an object"
-  mcp.vmarkEntryNotTable: "mcp_servers.vmark is not a table"
+  mcp.vmarkEntryNotTable: "mcp_servers.xmark is not a table"
   mcp.envNotObject: "%{key} is not an object"
-  mcp.envNotTable: "mcp_servers.vmark.env is not a table"
+  mcp.envNotTable: "mcp_servers.xmark.env is not a table"
 
   # MCP bridge — the per-client credential the authorization principal binds to
-  mcp.principalMissing: "This AI client did not present a VMark credential, so delegated actions are refused. Open Settings → Integrations, run Install for it, then restart the client."
-  mcp.principalUnknown: "The credential this AI client presented is not one VMark has on file, so delegated actions are refused. Open Settings → Integrations, run Install for it, then restart the client."
-  mcp.principalAmbiguous: "The credential this AI client presented is configured for more than one client (%{detail}), so VMark cannot tell them apart. Open Settings → Integrations, run Install for each of them, then restart them."
+  mcp.principalMissing: "This AI client did not present a XMark credential, so delegated actions are refused. Open Settings → Integrations, run Install for it, then restart the client."
+  mcp.principalUnknown: "The credential this AI client presented is not one XMark has on file, so delegated actions are refused. Open Settings → Integrations, run Install for it, then restart the client."
+  mcp.principalAmbiguous: "The credential this AI client presented is configured for more than one client (%{detail}), so XMark cannot tell them apart. Open Settings → Integrations, run Install for each of them, then restart them."
 
   # MCP client config — reading, backing up and writing
   mcp.readFailed: "Failed to read %{path}: %{detail}"
   mcp.createDirFailed: "Failed to create directory %{path}: %{detail}"
-  mcp.configChangedOnDisk: "%{path} changed on disk while VMark was updating it. Close the client that is writing it and retry."
+  mcp.configChangedOnDisk: "%{path} changed on disk while XMark was updating it. Close the client that is writing it and retry."
   mcp.backupWriteFailed: "Failed to write backup %{path}: %{detail}"
   mcp.backupFlushFailed: "Failed to flush backup %{path}: %{detail}"
   mcp.backupSyncFailed: "Failed to sync backup %{path}: %{detail}"
@@ -417,37 +417,37 @@ errors:
   mcp.writeConfigPartialOrphaned: "Failed to write %{path}: %{detail}. The partial file could not be removed either (%{cleanup_detail}) — delete it by hand before retrying, or the next install will read it as a corrupt config."
 
   # === Secure store (secure_store.rs) ===
-  secureStore.keychainDenied: "Keychain access was denied. Allow VMark in the keychain prompt, or grant it access in Keychain Access, then try again."
+  secureStore.keychainDenied: "Keychain access was denied. Allow XMark in the keychain prompt, or grant it access in Keychain Access, then try again."
 
   # === Workspace grants (workspace/grants/commands.rs, WI-LX1.1) ===
-  workspaceAccess.notGranted: "VMark has not been given access to “%{path}”. Choose the folder with File → Open Workspace… to allow it."
+  workspaceAccess.notGranted: "XMark has not been given access to “%{path}”. Choose the folder with File → Open Workspace… to allow it."
   workspaceAccess.pickerBusy: "A folder dialog is already open"
-  workspaceAccess.checkBusy: "VMark is still checking access to that folder. Try again in a moment"
-  workspaceAccess.listProtected: "VMark's list of folders it may open can only be changed by VMark itself"
+  workspaceAccess.checkBusy: "XMark is still checking access to that folder. Try again in a moment"
+  workspaceAccess.listProtected: "XMark's list of folders it may open can only be changed by XMark itself"
 
 # WI-LX1.1 — the folder picker Rust shows for workspace access
 workspaceAccess:
   pickTitle: "Open Workspace Folder"
-  confirmTitle: "Allow VMark to Open This Folder"
+  confirmTitle: "Allow XMark to Open This Folder"
 
 window:
   settings.title: "Settings"
   pdfExport.title: "Export PDF"
-  print.title: "VMark Print"
+  print.title: "XMark Print"
 
 # #1419 — the Windows close-to-tray icon's menu. Quit reuses menu.app.quit.
 tray:
-  show: "Show VMark"
+  show: "Show XMark"
 
-# #1527 — Windows: a VMark holds the single-instance lock but cannot be reached.
+# #1527 — Windows: a XMark holds the single-instance lock but cannot be reached.
 singleInstance:
-  unreachable.title: "VMark is already running"
-  unreachable.body: "Another VMark process is still running but no longer responds, so a new VMark cannot start safely beside it.\n\nOpen Task Manager, end every “VMark” process, then start VMark again."
+  unreachable.title: "XMark is already running"
+  unreachable.body: "Another XMark process is still running but no longer responds, so a new XMark cannot start safely beside it.\n\nOpen Task Manager, end every “XMark” process, then start XMark again."
 
 cli:
   dialogTitle: "Shell Command"
-  installed: "'vmark' command installed at %{path}"
-  alreadyInstalled: "'vmark' command is already installed at %{path}"
-  removed: "'vmark' command removed from %{path}"
-  notInstalled: "'vmark' command is not installed."
-  runHint: "You can now run 'vmark' from the terminal."
+  installed: "'xmark' command installed at %{path}"
+  alreadyInstalled: "'xmark' command is already installed at %{path}"
+  removed: "'xmark' command removed from %{path}"
+  notInstalled: "'xmark' command is not installed."
+  runHint: "You can now run 'xmark' from the terminal."

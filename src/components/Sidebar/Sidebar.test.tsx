@@ -287,12 +287,12 @@ describe("Sidebar — show-all-files tooltip follows its state", () => {
   it("offers to show all files when hidden, and to narrow back when shown", () => {
     useTabStore.setState({ tabs: {}, activeTabId: {} });
     useUIStore.setState({ sidebarVisible: true, sidebarViewMode: "files" });
-    useWorkspaceStore.setState({ isWorkspaceMode: true, config: normalizeWorkspaceConfig({ showAllFiles: false }) });
+    useWorkspaceStore.setState({ isWorkspaceMode: true, config: { ...normalizeWorkspaceConfig(), showAllFiles: false } });
     const { unmount } = render(<Sidebar />);
     expect(screen.getByRole("button", { name: /^show all files/i })).toBeInTheDocument();
     unmount();
 
-    useWorkspaceStore.setState({ config: normalizeWorkspaceConfig({ showAllFiles: true }) });
+    useWorkspaceStore.setState({ config: { ...normalizeWorkspaceConfig(), showAllFiles: true } });
     render(<Sidebar />);
     expect(screen.getByRole("button", { name: /^show supported files only/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^show all files/i })).toBeNull();

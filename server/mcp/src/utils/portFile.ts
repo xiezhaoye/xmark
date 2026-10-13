@@ -22,7 +22,7 @@ import { homedir, platform } from 'os';
  * Tauri app identifier for path resolution.
  * Must match the identifier in tauri.conf.json.
  */
-const APP_IDENTIFIER = process.env.VMARK_APP_IDENTIFIER || 'app.vmark';
+const APP_IDENTIFIER = process.env.VMARK_APP_IDENTIFIER || 'app.xmark';
 
 /** Cached home directory to avoid repeated syscalls. */
 const HOME_DIR = homedir();

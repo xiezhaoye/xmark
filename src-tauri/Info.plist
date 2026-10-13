@@ -27,11 +27,11 @@
 -->
 <dict>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Allow command-line tools you run in VMark's integrated terminal to record audio from your microphone or other audio input devices.</string>
+	<string>Allow command-line tools you run in XMark's integrated terminal to record audio from your microphone or other audio input devices.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Allow command-line tools you run in VMark's integrated terminal to capture video from your camera.</string>
+	<string>Allow command-line tools you run in XMark's integrated terminal to capture video from your camera.</string>
 	<key>NSAppleEventsUsageDescription</key>
-	<string>Allow command-line tools you run in VMark's integrated terminal, such as osascript, to control other apps.</string>
+	<string>Allow command-line tools you run in XMark's integrated terminal, such as osascript, to control other apps.</string>
 	<key>CFBundleVersion</key>
 	<string></string>
 	<key>CFBundleIconName</key>

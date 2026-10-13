@@ -46,7 +46,7 @@ fn json_round_trips_a_written_token() {
 #[test]
 fn json_round_trips_under_a_custom_env_key() {
     let mut entry = Map::new();
-    write_json_under(&mut entry, "environment", "mcp.vmark.environment", "tok-oc").expect("write");
+    write_json_under(&mut entry, "environment", "mcp.xmark.environment", "tok-oc").expect("write");
     let value = JsonValue::Object(entry);
     assert_eq!(
         read_json_under(&value, "environment"),
@@ -63,9 +63,9 @@ fn json_round_trips_under_a_custom_env_key() {
 fn json_write_under_a_custom_key_names_that_key_in_its_error() {
     let mut entry: Map<String, JsonValue> =
         serde_json::from_value(serde_json::json!({ "environment": "oops" })).expect("entry");
-    let err = write_json_under(&mut entry, "environment", "mcp.vmark.environment", "tok")
+    let err = write_json_under(&mut entry, "environment", "mcp.xmark.environment", "tok")
         .expect_err("a scalar environment cannot hold the token");
-    assert!(err.contains("mcp.vmark.environment"), "unexpected: {err}");
+    assert!(err.contains("mcp.xmark.environment"), "unexpected: {err}");
 }
 
 /// The user's own `env` keys are theirs. Replacing the object wholesale is
@@ -124,8 +124,8 @@ fn toml_entry(text: &str) -> DocumentMut {
 
 #[test]
 fn toml_round_trips_a_written_token() {
-    let mut doc = toml_entry("[mcp_servers.vmark]\ncommand = \"/bin/x\"\n");
-    let entry = doc["mcp_servers"]["vmark"]
+    let mut doc = toml_entry("[mcp_servers.xmark]\ncommand = \"/bin/x\"\n");
+    let entry = doc["mcp_servers"]["xmark"]
         .as_table_like_mut()
         .expect("entry");
     write_toml(entry, TomlEntryStyle::Standard, "tok-toml").expect("write");
@@ -133,7 +133,7 @@ fn toml_round_trips_a_written_token() {
     let rendered = doc.to_string();
     assert!(rendered.contains("VMARK_MCP_TOKEN"), "{rendered}");
     assert_eq!(
-        read_toml(&doc["mcp_servers"]["vmark"]),
+        read_toml(&doc["mcp_servers"]["xmark"]),
         Some("tok-toml".to_string())
     );
 }
@@ -141,9 +141,9 @@ fn toml_round_trips_a_written_token() {
 #[test]
 fn toml_write_preserves_user_env_keys_and_comments() {
     let mut doc = toml_entry(
-        "[mcp_servers.vmark]\ncommand = \"/bin/x\"\n\n[mcp_servers.vmark.env]\n# keep me\nHTTPS_PROXY = \"http://proxy:8080\"\n",
+        "[mcp_servers.xmark]\ncommand = \"/bin/x\"\n\n[mcp_servers.xmark.env]\n# keep me\nHTTPS_PROXY = \"http://proxy:8080\"\n",
     );
-    let entry = doc["mcp_servers"]["vmark"]
+    let entry = doc["mcp_servers"]["xmark"]
         .as_table_like_mut()
         .expect("entry");
     write_toml(entry, TomlEntryStyle::Standard, "tok-toml").expect("write");
@@ -165,8 +165,8 @@ fn toml_write_preserves_user_env_keys_and_comments() {
 /// TOML — `TableLike::insert` unwraps `Item::into_value` and panics.
 #[test]
 fn toml_inline_entry_gets_an_inline_env_table() {
-    let mut doc = toml_entry("[mcp_servers]\nvmark = { command = \"/bin/x\" }\n");
-    let entry = doc["mcp_servers"]["vmark"]
+    let mut doc = toml_entry("[mcp_servers]\nxmark = { command = \"/bin/x\" }\n");
+    let entry = doc["mcp_servers"]["xmark"]
         .as_table_like_mut()
         .expect("entry");
     write_toml(entry, TomlEntryStyle::Inline, "tok-inline").expect("write");
@@ -178,15 +178,15 @@ fn toml_inline_entry_gets_an_inline_env_table() {
         "still valid TOML: {rendered}"
     );
     assert_eq!(
-        read_toml(&doc["mcp_servers"]["vmark"]),
+        read_toml(&doc["mcp_servers"]["xmark"]),
         Some("tok-inline".to_string())
     );
 }
 
 #[test]
 fn toml_write_refuses_a_non_table_env() {
-    let mut doc = toml_entry("[mcp_servers.vmark]\ncommand = \"/bin/x\"\nenv = \"nope\"\n");
-    let entry = doc["mcp_servers"]["vmark"]
+    let mut doc = toml_entry("[mcp_servers.xmark]\ncommand = \"/bin/x\"\nenv = \"nope\"\n");
+    let entry = doc["mcp_servers"]["xmark"]
         .as_table_like_mut()
         .expect("entry");
     let err = write_toml(entry, TomlEntryStyle::Standard, "tok").expect_err("must refuse");
@@ -195,6 +195,6 @@ fn toml_write_refuses_a_non_table_env() {
 
 #[test]
 fn toml_read_of_an_entry_without_env_is_none() {
-    let doc = toml_entry("[mcp_servers.vmark]\ncommand = \"/bin/x\"\n");
-    assert_eq!(read_toml(&doc["mcp_servers"]["vmark"]), None);
+    let doc = toml_entry("[mcp_servers.xmark]\ncommand = \"/bin/x\"\n");
+    assert_eq!(read_toml(&doc["mcp_servers"]["xmark"]), None);
 }

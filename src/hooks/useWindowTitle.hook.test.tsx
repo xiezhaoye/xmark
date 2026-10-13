@@ -175,14 +175,14 @@ describe("useWindowTitle — no document open (WelcomeScreen)", () => {
 
   it("shows the product name instead of the untitled label", async () => {
     renderTitle();
-    await waitFor(() => expect(setTitle).toHaveBeenCalledWith("VMark"));
+    await waitFor(() => expect(setTitle).toHaveBeenCalledWith("XMark"));
     expect(setTitle).not.toHaveBeenCalledWith("Untitled");
   });
 
   it("shows the product name off macOS too", async () => {
     platform.overlayTitleBar = false;
     renderTitle();
-    await waitFor(() => expect(setTitle).toHaveBeenCalledWith("VMark"));
+    await waitFor(() => expect(setTitle).toHaveBeenCalledWith("XMark"));
   });
 
   // The setting still speaks for the whole title on macOS: an empty native
@@ -199,6 +199,6 @@ describe("useWindowTitle — no document open (WelcomeScreen)", () => {
   it("never prefixes a dirty indicator", async () => {
     state.isDirty = true;
     renderTitle();
-    await waitFor(() => expect(setTitle).toHaveBeenCalledWith("VMark"));
+    await waitFor(() => expect(setTitle).toHaveBeenCalledWith("XMark"));
   });
 });

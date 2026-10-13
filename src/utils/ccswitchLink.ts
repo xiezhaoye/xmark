@@ -4,7 +4,7 @@
  * Builds a `ccswitch://v1/import` deep link that one-click-imports VMark's
  * MCP server into CC-Switch (the cross-CLI config manager). VMark is an MCP
  * server exposed via the sidecar binary; CC-Switch writes the resulting
- * `mcpServers.vmark` entry into whichever AI CLIs the user lists in `apps`.
+ * `mcpServers.xmark` entry into whichever AI CLIs the user lists in `apps`.
  *
  * Format (CC-Switch v1):
  *   ccswitch://v1/import?resource=mcp&name=vmark&apps=<csv>&config=<urlenc base64 JSON>
@@ -39,11 +39,11 @@
 /**
  * The id VMark's MCP entry takes in every client config, CC-Switch included.
  *
- * Matching `mcp_config`'s `mcpServers.vmark` is what makes a re-import merge
+ * Matching `mcp_config`'s `mcpServers.xmark` is what makes a re-import merge
  * onto the existing entry (CC-Switch looks the id up in its own store) instead
  * of leaving a second, differently-named copy behind.
  */
-const SERVER_ID = "vmark";
+const SERVER_ID = "xmark";
 
 /**
  * AI CLIs CC-Switch can sync VMark's MCP entry into, by default.

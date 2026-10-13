@@ -137,8 +137,8 @@ export interface GeneralSettings {
   // replacing the current clean untitled tab. Default false preserves the
   // legacy "reuse the empty tab" behavior so existing users are unaffected.
   openInNewTab: boolean;
-  // Workspace rail/window model; default false preserves the classic model.
-  // When on, the rail is the first of three columns (workspaces / files / document).
+  // Workspace rail/window model. XMark turns it on by default: the rail is the
+  // first of three columns (workspaces / files / document).
   workspaceRailMode: boolean;
   /** Width of the workspace rail column in px; bounds in CLAMP_RANGES.general. */
   workspaceRailWidth: number;

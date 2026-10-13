@@ -554,7 +554,9 @@
         "src/hooks/useFinderFileOpen.test.tsx",
         "src/stores/dropZoneStore.test.ts",
         "src/utils/openPolicy.test.ts",
-        "src/utils/dropPaths.test.ts"
+        "src/utils/dropPaths.test.ts",
+        "src/utils/sidebarTextSize.ts",
+        "src/utils/sidebarTextSize.test.ts"
       ],
       "flag": null,
       "flagDefault": null,
@@ -678,10 +680,12 @@
         "src/components/WorkspaceRail",
         "src/services/featureFlags/workspaceRailFeatureFlag.ts",
         "src/services/featureFlags/workspaceRailFeatureFlag.test.ts",
-        "src/utils/workspaceRailGlyphs.ts"
+        "src/utils/workspaceRailGlyphs.ts",
+        "src/stores/workspaceGroupsStore.ts",
+        "src/stores/workspaceGroupsStore.test.ts"
       ],
       "flag": "general.workspaceRailMode",
-      "flagDefault": false,
+      "flagDefault": true,
       "doc": "website/guide/workspace-rail.md"
     },
     {

@@ -207,7 +207,7 @@ pub(crate) fn generate_config_content(
             let root = doc.as_table_mut();
             if root.get(key).is_none() {
                 let mut created = TomlTable::new();
-                // Implicit, so the output is `[mcp_servers.vmark]` rather than
+                // Implicit, so the output is `[mcp_servers.xmark]` rather than
                 // a bare `[mcp_servers]` header the user never asked for.
                 created.set_implicit(true);
                 root.insert(key, TomlItem::Table(created));
@@ -251,13 +251,13 @@ pub(crate) fn remove_vmark_from_config(
         Parsed::Json(json) => json
             .get_mut(key)
             .and_then(|s| s.as_object_mut())
-            .and_then(|servers| servers.remove("vmark"))
+            .and_then(|servers| servers.remove(super::MCP_ENTRY_NAME))
             .is_some(),
         Parsed::Toml(doc) => doc
             .as_table_mut()
             .get_mut(key)
             .and_then(TomlItem::as_table_like_mut)
-            .and_then(|servers| servers.remove("vmark"))
+            .and_then(|servers| servers.remove(super::MCP_ENTRY_NAME))
             .is_some(),
     };
 

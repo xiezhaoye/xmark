@@ -25,7 +25,7 @@ import { createSafeStorage } from "@/services/persistence/safeStorage";
 const STORAGE_KEY = "vmark-workspace-groups";
 
 /** Bump when the persisted shape changes, and write a migration. */
-export const WORKSPACE_GROUPS_SCHEMA_VERSION = 1;
+const WORKSPACE_GROUPS_SCHEMA_VERSION = 1;
 
 /** Collapsed-state key of the derived "Ungrouped" section. */
 export const UNGROUPED_ID = "__ungrouped";

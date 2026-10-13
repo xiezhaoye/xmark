@@ -1,14 +1,14 @@
-# VMark Deutsches Locale — Übersetzung der Rust-seitigen Zeichenketten.
+# XMark Deutsches Locale — Übersetzung der Rust-seitigen Zeichenketten.
 # Keys follow the convention: menu.<section>.<item>
 # Dynamic menu items (recent files, genies) have their structural labels here too.
 
 menu:
   # === App menu (macOS only) ===
-  app: "VMark"
-  app.about: "Über VMark"
+  app: "XMark"
+  app.about: "Über XMark"
   app.settings: "Einstellungen..."
   app.saveAllQuit: "Alle speichern und beenden"
-  app.quit: "VMark beenden"
+  app.quit: "XMark beenden"
 
   # === File menu ===
   file: "Datei"
@@ -204,9 +204,9 @@ menu:
 
   # === Help menu ===
   help: "Hilfe"
-  help.vmarkHelp: "VMark-Hilfe"
+  help.vmarkHelp: "XMark-Hilfe"
   help.keyboardShortcuts: "Tastenkürzel"
-  help.installCli: "Shell-Befehl: 'vmark' in PATH installieren..."
+  help.installCli: "Shell-Befehl: 'xmark' in PATH installieren..."
   help.reportIssue: "Problem melden..."
 
   # === Dynamic menu labels ===
@@ -228,7 +228,7 @@ errors:
   coherence.ledgerUnavailable: "Der Kohärenzverlauf konnte nicht gelesen werden: %{detail}"
   coherence.rejectedArgument: "Die Anfrage wurde abgelehnt: %{detail}"
   coherence.stateConflict: "Der Arbeitsbereich hat sich seit dieser Anfrage geändert: %{detail}"
-  coherence.buildTooOld: "Diese VMark-Version kann Teile des Kohärenzverlaufs nicht lesen. Aktualisieren Sie VMark, um fortzufahren: %{detail}"
+  coherence.buildTooOld: "Diese XMark-Version kann Teile des Kohärenzverlaufs nicht lesen. Aktualisieren Sie XMark, um fortzufahren: %{detail}"
   # === Core (lib.rs) ===
   core.htmlTooLarge: "HTML-Inhalt zu groß (>50 MB)"
   core.pathTraversal: "Pfad-Traversierung (..) ist nicht erlaubt"
@@ -301,7 +301,7 @@ errors:
   workflow.snapshotFailed: "Die Dateien, die dieser Workflow ändern würde, konnten nicht gesichert werden; er wurde daher nicht ausgeführt: %{detail}"
   workflow.snapshotNotFound: "Dieser Workflow-Snapshot existiert nicht mehr"
   workflow.snapshotUnreadable: "Die Angaben zum Workflow-Snapshot konnten nicht gelesen werden: %{detail}"
-  workflow.snapshotNoWorkspace: "Dieser Snapshot wurde von einer älteren VMark-Version erstellt und kann nicht wiederhergestellt werden"
+  workflow.snapshotNoWorkspace: "Dieser Snapshot wurde von einer älteren XMark-Version erstellt und kann nicht wiederhergestellt werden"
   workflow.snapshotWorkspaceMissing: "Der Ordner, zu dem dieser Snapshot gehört, existiert nicht mehr: %{path}"
   workflow.snapshotListFailed: "Workflow-Snapshots konnten nicht aufgelistet werden: %{detail}"
   workflow.restoreWhileRunning: "Ein Workflow läuft gerade. Warten Sie, bis er fertig ist, oder brechen Sie ihn ab, bevor Sie Dateien wiederherstellen."
@@ -361,7 +361,7 @@ errors:
   cli.mismatchNotRemoved: "Die Datei „%{path}“ entspricht nicht dem erwarteten Skript und konnte nicht entfernt werden. Bitte löschen Sie sie manuell."
 
   # === External editor ===
-  externalEditor.unknownName: "„%{name}“ ist kein Editor, den VMark dem Namen nach kennt – geben Sie stattdessen den vollständigen Pfad zum Editor an"
+  externalEditor.unknownName: "„%{name}“ ist kein Editor, den XMark dem Namen nach kennt – geben Sie stattdessen den vollständigen Pfad zum Editor an"
   externalEditor.notAnEditor: "„%{name}“ führt die übergebenen Dateien aus, statt sie zu öffnen, und kann daher nicht als externer Editor verwendet werden"
   externalEditor.notPlainPath: "Der externe Editor muss ein Editorname oder ein vollständiger Pfad sein, ohne „..“ und ohne abschließenden Schrägstrich"
 
@@ -376,11 +376,11 @@ errors:
 
   # MCP client config — provider and sidecar binary resolution
   mcp.unknownProvider: "Unbekannter Anbieter: %{provider}"
-  mcp.legacyProvider: "%{name} wird nicht mehr unterstützt; der verbliebene VMark-Eintrag kann nur entfernt werden."
+  mcp.legacyProvider: "%{name} wird nicht mehr unterstützt; der verbliebene XMark-Eintrag kann nur entfernt werden."
   mcp.noHomeDir: "Home-Verzeichnis konnte nicht ermittelt werden"
   mcp.exePathFailed: "Pfad der ausführbaren Datei konnte nicht ermittelt werden: %{detail}"
   mcp.exeDirFailed: "Verzeichnis der ausführbaren Datei konnte nicht ermittelt werden"
-  mcp.binaryNotFound: "MCP-Server-Binärdatei nicht gefunden: %{name}. Bitte installieren Sie VMark neu."
+  mcp.binaryNotFound: "MCP-Server-Binärdatei nicht gefunden: %{name}. Bitte installieren Sie XMark neu."
 
   # MCP client config — parsing and structure
   mcp.invalidJson: "Ungültiges JSON: %{detail}"
@@ -390,19 +390,19 @@ errors:
   mcp.serversNotObject: "%{key} ist kein Objekt"
   mcp.serversNotTable: "mcp_servers ist keine Tabelle"
   mcp.vmarkEntryNotObject: "%{key} ist kein Objekt"
-  mcp.vmarkEntryNotTable: "mcp_servers.vmark ist keine Tabelle"
+  mcp.vmarkEntryNotTable: "mcp_servers.xmark ist keine Tabelle"
   mcp.envNotObject: "%{key} ist kein Objekt"
-  mcp.envNotTable: "mcp_servers.vmark.env ist keine Tabelle"
+  mcp.envNotTable: "mcp_servers.xmark.env ist keine Tabelle"
 
   # MCP-Bridge — die Client-Anmeldedaten, an die der Autorisierungsprincipal gebunden ist
-  mcp.principalMissing: "Dieser KI-Client hat keine VMark-Anmeldedaten vorgelegt, daher werden delegierte Aktionen abgelehnt. Öffnen Sie Einstellungen > Integrationen, führen Sie dort Installieren aus und starten Sie den Client neu."
-  mcp.principalUnknown: "Die von diesem KI-Client vorgelegten Anmeldedaten sind VMark nicht bekannt, daher werden delegierte Aktionen abgelehnt. Öffnen Sie Einstellungen > Integrationen, führen Sie dort Installieren aus und starten Sie den Client neu."
-  mcp.principalAmbiguous: "Die von diesem KI-Client vorgelegten Anmeldedaten sind für mehrere Clients (%{detail}) konfiguriert, daher kann VMark sie nicht unterscheiden. Öffnen Sie Einstellungen > Integrationen, führen Sie Installieren für jeden davon aus und starten Sie sie neu."
+  mcp.principalMissing: "Dieser KI-Client hat keine XMark-Anmeldedaten vorgelegt, daher werden delegierte Aktionen abgelehnt. Öffnen Sie Einstellungen > Integrationen, führen Sie dort Installieren aus und starten Sie den Client neu."
+  mcp.principalUnknown: "Die von diesem KI-Client vorgelegten Anmeldedaten sind XMark nicht bekannt, daher werden delegierte Aktionen abgelehnt. Öffnen Sie Einstellungen > Integrationen, führen Sie dort Installieren aus und starten Sie den Client neu."
+  mcp.principalAmbiguous: "Die von diesem KI-Client vorgelegten Anmeldedaten sind für mehrere Clients (%{detail}) konfiguriert, daher kann XMark sie nicht unterscheiden. Öffnen Sie Einstellungen > Integrationen, führen Sie Installieren für jeden davon aus und starten Sie sie neu."
 
   # MCP client config — reading, backing up and writing
   mcp.readFailed: "%{path} konnte nicht gelesen werden: %{detail}"
   mcp.createDirFailed: "Verzeichnis %{path} konnte nicht erstellt werden: %{detail}"
-  mcp.configChangedOnDisk: "%{path} wurde auf der Festplatte geändert, während VMark die Datei aktualisiert hat. Schließen Sie den Client, der sie schreibt, und versuchen Sie es erneut."
+  mcp.configChangedOnDisk: "%{path} wurde auf der Festplatte geändert, während XMark die Datei aktualisiert hat. Schließen Sie den Client, der sie schreibt, und versuchen Sie es erneut."
   mcp.backupWriteFailed: "Backup %{path} konnte nicht geschrieben werden: %{detail}"
   mcp.backupFlushFailed: "Puffer des Backups %{path} konnte nicht geleert werden: %{detail}"
   mcp.backupSyncFailed: "Backup %{path} konnte nicht synchronisiert werden: %{detail}"
@@ -416,37 +416,37 @@ errors:
   mcp.writeConfigPartialOrphaned: "%{path} konnte nicht geschrieben werden: %{detail}. Die unvollständige Datei ließ sich ebenfalls nicht entfernen (%{cleanup_detail}) — löschen Sie sie von Hand, bevor Sie es erneut versuchen, sonst liest die nächste Installation sie als beschädigte Konfiguration."
 
   # === Secure store (secure_store.rs) ===
-  secureStore.keychainDenied: "Der Zugriff auf den Schlüsselbund wurde verweigert. Erlauben Sie VMark in der Schlüsselbund-Abfrage oder gewähren Sie den Zugriff in der Schlüsselbundverwaltung, und versuchen Sie es erneut."
+  secureStore.keychainDenied: "Der Zugriff auf den Schlüsselbund wurde verweigert. Erlauben Sie XMark in der Schlüsselbund-Abfrage oder gewähren Sie den Zugriff in der Schlüsselbundverwaltung, und versuchen Sie es erneut."
 
   # === Arbeitsbereich-Freigaben (workspace/grants/commands.rs, WI-LX1.1) ===
-  workspaceAccess.notGranted: "VMark hat keinen Zugriff auf „%{path}“. Wählen Sie den Ordner über Datei → Arbeitsbereich öffnen..., um ihn freizugeben."
+  workspaceAccess.notGranted: "XMark hat keinen Zugriff auf „%{path}“. Wählen Sie den Ordner über Datei → Arbeitsbereich öffnen..., um ihn freizugeben."
   workspaceAccess.pickerBusy: "Ein Ordnerdialog ist bereits geöffnet"
-  workspaceAccess.checkBusy: "VMark prüft den Zugriff auf diesen Ordner noch. Versuche es gleich noch einmal"
-  workspaceAccess.listProtected: "Die Liste der Ordner, die VMark öffnen darf, kann nur VMark selbst ändern"
+  workspaceAccess.checkBusy: "XMark prüft den Zugriff auf diesen Ordner noch. Versuche es gleich noch einmal"
+  workspaceAccess.listProtected: "Die Liste der Ordner, die XMark öffnen darf, kann nur XMark selbst ändern"
 
 # WI-LX1.1 — the folder picker Rust shows for workspace access
 workspaceAccess:
   pickTitle: "Arbeitsbereich-Ordner öffnen"
-  confirmTitle: "VMark das Öffnen dieses Ordners erlauben"
+  confirmTitle: "XMark das Öffnen dieses Ordners erlauben"
 
 window:
   settings.title: "Einstellungen"
   pdfExport.title: "PDF exportieren"
-  print.title: "VMark – Drucken"
+  print.title: "XMark – Drucken"
 
 # #1419 — the Windows close-to-tray icon's menu. Quit reuses menu.app.quit.
 tray:
-  show: "VMark anzeigen"
+  show: "XMark anzeigen"
 
-# #1527 — Windows: a VMark holds the single-instance lock but cannot be reached.
+# #1527 — Windows: a XMark holds the single-instance lock but cannot be reached.
 singleInstance:
-  unreachable.title: "VMark läuft bereits"
-  unreachable.body: "Ein anderer VMark-Prozess läuft noch, reagiert aber nicht mehr. Daher kann daneben kein neues VMark sicher starten.\n\nÖffnen Sie den Task-Manager, beenden Sie alle „VMark“-Prozesse und starten Sie VMark erneut."
+  unreachable.title: "XMark läuft bereits"
+  unreachable.body: "Ein anderer XMark-Prozess läuft noch, reagiert aber nicht mehr. Daher kann daneben kein neues XMark sicher starten.\n\nÖffnen Sie den Task-Manager, beenden Sie alle „XMark“-Prozesse und starten Sie XMark erneut."
 
 cli:
   dialogTitle: "Shell-Befehl"
-  installed: "Befehl 'vmark' installiert unter %{path}"
-  alreadyInstalled: "Befehl 'vmark' ist bereits unter %{path} installiert"
-  removed: "Befehl 'vmark' aus %{path} entfernt"
-  notInstalled: "Befehl 'vmark' ist nicht installiert."
-  runHint: "Sie können 'vmark' jetzt im Terminal ausführen."
+  installed: "Befehl 'xmark' installiert unter %{path}"
+  alreadyInstalled: "Befehl 'xmark' ist bereits unter %{path} installiert"
+  removed: "Befehl 'xmark' aus %{path} entfernt"
+  notInstalled: "Befehl 'xmark' ist nicht installiert."
+  runHint: "Sie können 'xmark' jetzt im Terminal ausführen."

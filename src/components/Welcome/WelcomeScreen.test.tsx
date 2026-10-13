@@ -225,7 +225,7 @@ describe("WelcomeScreen — recent workspaces", () => {
 describe("front door copy and buttons (WI-UI4.7, WI-UA13)", () => {
   it("the h1 is the identity moment; the instructional sentence survives as a tagline", () => {
     render(<WelcomeScreen />);
-    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("VMark");
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("XMark");
     expect(screen.getByText(/Drop a Markdown file/)).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Welcome" })).toBeInTheDocument();
   });

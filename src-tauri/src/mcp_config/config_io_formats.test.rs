@@ -44,8 +44,8 @@ fn antigravity_writes_the_mcp_servers_json_shape() {
     let out =
         generate_config_content("antigravity", BIN, TOK, None).expect("fresh antigravity install");
     let json: serde_json::Value = serde_json::from_str(&out).unwrap();
-    assert_eq!(json["mcpServers"]["vmark"]["command"], BIN);
-    assert_eq!(json["mcpServers"]["vmark"]["env"]["VMARK_MCP_TOKEN"], TOK);
+    assert_eq!(json["mcpServers"]["xmark"]["command"], BIN);
+    assert_eq!(json["mcpServers"]["xmark"]["env"]["VMARK_MCP_TOKEN"], TOK);
 }
 
 #[test]
@@ -58,9 +58,9 @@ fn grok_writes_the_codex_toml_shape() {
     );
     let doc: toml::Table = out.parse().unwrap();
     assert_eq!(doc["cli"]["vim_mode"].as_bool(), Some(true));
-    assert_eq!(doc["mcp_servers"]["vmark"]["command"].as_str(), Some(BIN));
+    assert_eq!(doc["mcp_servers"]["xmark"]["command"].as_str(), Some(BIN));
     assert_eq!(
-        doc["mcp_servers"]["vmark"]["env"]["VMARK_MCP_TOKEN"].as_str(),
+        doc["mcp_servers"]["xmark"]["env"]["VMARK_MCP_TOKEN"].as_str(),
         Some(TOK)
     );
 }
@@ -71,7 +71,7 @@ fn grok_writes_the_codex_toml_shape() {
 fn opencode_fresh_install_writes_the_opencode_schema() {
     let out = generate_config_content("opencode", BIN, TOK, None).expect("fresh opencode install");
     let json: serde_json::Value = serde_json::from_str(&out).unwrap();
-    let vmark = &json["mcp"]["vmark"];
+    let vmark = &json["mcp"]["xmark"];
     assert_eq!(vmark["type"], "local");
     assert_eq!(vmark["command"], serde_json::json!([BIN]));
     assert_eq!(vmark["enabled"], true);
@@ -104,7 +104,7 @@ fn opencode_install_preserves_unrelated_config() {
         json["mcp"]["context7"]["url"],
         "https://mcp.context7.com/mcp"
     );
-    assert_eq!(json["mcp"]["vmark"]["command"], serde_json::json!([BIN]));
+    assert_eq!(json["mcp"]["xmark"]["command"], serde_json::json!([BIN]));
 }
 
 #[test]
@@ -165,7 +165,7 @@ fn opencode_uninstall_removes_only_the_vmark_entry() {
     let existing = r#"{
       "model": "anthropic/claude-fable-5",
       "mcp": {
-        "vmark": { "type": "local", "command": ["/opt/vmark/vmark-mcp-server"] },
+        "xmark": { "type": "local", "command": ["/opt/vmark/vmark-mcp-server"] },
         "context7": { "type": "remote", "url": "https://mcp.context7.com/mcp" }
       }
     }"#;
@@ -175,7 +175,7 @@ fn opencode_uninstall_removes_only_the_vmark_entry() {
     let json: serde_json::Value = serde_json::from_str(&out).unwrap();
     assert_eq!(json["model"], "anthropic/claude-fable-5");
     assert!(json["mcp"]["context7"].is_object());
-    assert!(json["mcp"].get("vmark").is_none());
+    assert!(json["mcp"].get("xmark").is_none());
 }
 
 #[test]

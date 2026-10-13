@@ -24,7 +24,7 @@
   "states.unpinnable": "Nicht fixierbar",
   "confidence.inferred": "Provenienz abgeleitet — die erfasste Eingabemenge unterschätzt, was der Agent tatsächlich herangezogen hat",
   "confidence.inferredShort": "abgeleitet",
-  "confidence.unknown": "Provenienz unbekannt — diese Änderung wurde außerhalb von VMark beobachtet",
+  "confidence.unknown": "Provenienz unbekannt — diese Änderung wurde außerhalb von XMark beobachtet",
   "confidence.unknownShort": "unbekannt",
   "priorWaived": "zuvor ausgesetzt ×{{count}}",
   "waiveExpiryPlaceholder": "Läuft ab (optional, YYYY-MM-DD)",

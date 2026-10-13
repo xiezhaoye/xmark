@@ -8,6 +8,7 @@
  */
 
 import { useState, useEffect } from "react";
+import { APP_NAME } from "@/utils/appName";
 import { useTranslation } from "react-i18next";
 import { getVersion } from "@tauri-apps/api/app";
 import { invoke } from "@tauri-apps/api/core";
@@ -43,10 +44,11 @@ function VersionInfo() {
 
   return (
     <div className="flex items-center gap-3">
-      <img src={appIcon} alt="VMark" className="w-12 h-12" />
+      <img src={appIcon} alt={APP_NAME} className="w-12 h-12" />
       <div>
-        <div className="text-lg font-semibold text-[var(--text-color)]">VMark</div>
+        <div className="text-lg font-semibold text-[var(--text-color)]">{APP_NAME}</div>
         <div className="text-sm text-[var(--text-secondary)]">{t("about.version", { version })}</div>
+        <div className="text-sm text-[var(--text-secondary)]">{t("about.forkNote")}</div>
       </div>
     </div>
   );

@@ -8,7 +8,7 @@
  *     affordance (fill + a nudging chevron) and a click anywhere expands.
  *     The panel icon stays at the foot, where the column's own collapse
  *     button sat.
- *   - Each strip is inset inside its column with rounded ends, so two folded
+ *   - Each strip is inset inside its column with curved ends, so two folded
  *     columns side by side read as two separate strips, not one thick bar.
  *
  * @coordinates-with components/WorkspaceRail/WorkspaceRail.tsx — the folded rail

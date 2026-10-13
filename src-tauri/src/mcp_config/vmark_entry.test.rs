@@ -13,7 +13,7 @@ const TOK: &str = "tok-fixture";
 /// A `mcp_servers` standard table holding `vmark = { … }` parsed from TOML
 /// text, so the tests exercise the same document model the app does.
 fn toml_servers(vmark_body: &str) -> DocumentMut {
-    format!("[mcp_servers.vmark]\n{vmark_body}")
+    format!("[mcp_servers.xmark]\n{vmark_body}")
         .parse::<DocumentMut>()
         .expect("fixture is valid TOML")
 }
@@ -70,11 +70,11 @@ fn non_string_args_are_preserved_rather_than_misidentified() {
     // A numeric arg stringifies to "" in the scan; it must not be dropped.
     let mut servers = serde_json::Map::new();
     servers.insert(
-        "vmark".to_string(),
+        "xmark".to_string(),
         serde_json::json!({ "args": [7, "--port", "9223"] }),
     );
     upsert_json_vmark(&mut servers, "/bin/vmark", TOK).unwrap();
-    let args = servers["vmark"]["args"].as_array().unwrap();
+    let args = servers["xmark"]["args"].as_array().unwrap();
     assert_eq!(args.len(), 1);
     assert_eq!(args[0], 7);
 }
@@ -85,7 +85,7 @@ fn an_absent_entry_is_created_with_just_our_fields() {
     // credential. Nothing else is invented on the user's behalf.
     let mut servers = serde_json::Map::new();
     upsert_json_vmark(&mut servers, "/bin/vmark", TOK).unwrap();
-    let entry = servers["vmark"].as_object().unwrap();
+    let entry = servers["xmark"].as_object().unwrap();
     assert_eq!(entry.len(), 2);
     assert_eq!(entry["command"], "/bin/vmark");
     assert_eq!(entry["env"]["VMARK_MCP_TOKEN"], TOK);
@@ -99,7 +99,7 @@ fn an_absent_entry_is_created_with_just_our_fields() {
     assert_eq!(
         doc.to_string(),
         format!(
-            "[mcp_servers.vmark]\ncommand = \"/bin/vmark\"\n\n[mcp_servers.vmark.env]\nVMARK_MCP_TOKEN = \"{TOK}\"\n"
+            "[mcp_servers.xmark]\ncommand = \"/bin/vmark\"\n\n[mcp_servers.xmark.env]\nVMARK_MCP_TOKEN = \"{TOK}\"\n"
         )
     );
 }
@@ -128,7 +128,7 @@ fn an_absent_entry_under_an_inline_parent_is_created_inline() {
 /// standard `Item::Table` into an `InlineTable` PANICS inside `toml_edit`.
 #[test]
 fn an_inline_entry_under_a_standard_parent_gets_an_inline_env() {
-    let mut doc = "[mcp_servers]\nvmark = { command = \"/old\" }\n"
+    let mut doc = "[mcp_servers]\nxmark = { command = \"/old\" }\n"
         .parse::<DocumentMut>()
         .unwrap();
     upsert_into(&mut doc, "/bin/vmark").unwrap();
@@ -152,12 +152,12 @@ fn an_args_list_the_user_left_empty_survives_json() {
     // `args: []` carries intent and is not our legacy artifact. Round 1
     // removed it because it only looked at whether the list ended up empty.
     let mut servers = serde_json::Map::new();
-    servers.insert("vmark".to_string(), serde_json::json!({ "args": [] }));
+    servers.insert("xmark".to_string(), serde_json::json!({ "args": [] }));
 
     upsert_json_vmark(&mut servers, "/bin/vmark", TOK).unwrap();
 
     assert_eq!(
-        servers["vmark"].get("args"),
+        servers["xmark"].get("args"),
         Some(&serde_json::json!([])),
         "an empty args array the user wrote must come back out"
     );
@@ -180,14 +180,14 @@ fn an_args_list_the_user_left_empty_survives_toml() {
 fn args_holding_only_the_legacy_pair_lose_the_key_entirely() {
     let mut servers = serde_json::Map::new();
     servers.insert(
-        "vmark".to_string(),
+        "xmark".to_string(),
         serde_json::json!({ "args": ["--port", "1234"] }),
     );
 
     upsert_json_vmark(&mut servers, "/bin/vmark", TOK).unwrap();
 
     assert!(
-        servers["vmark"].get("args").is_none(),
+        servers["xmark"].get("args").is_none(),
         "a list that held only our own legacy pair goes with it"
     );
 
@@ -221,13 +221,13 @@ fn a_multi_line_args_array_keeps_its_leading_trivia_when_the_pair_goes() {
 fn args_around_the_legacy_pair_are_kept() {
     let mut servers = serde_json::Map::new();
     servers.insert(
-        "vmark".to_string(),
+        "xmark".to_string(),
         serde_json::json!({ "args": ["--port", "1234", "--foo"] }),
     );
 
     upsert_json_vmark(&mut servers, "/bin/vmark", TOK).unwrap();
 
-    assert_eq!(servers["vmark"]["args"], serde_json::json!(["--foo"]));
+    assert_eq!(servers["xmark"]["args"], serde_json::json!(["--foo"]));
 }
 
 #[test]
@@ -236,11 +236,11 @@ fn a_non_array_args_value_is_left_alone_rather_than_rejected() {
     // complain if it matters.
     let mut servers = serde_json::Map::new();
     servers.insert(
-        "vmark".to_string(),
+        "xmark".to_string(),
         serde_json::json!({ "args": "--port 9223" }),
     );
     upsert_json_vmark(&mut servers, "/bin/vmark", TOK).unwrap();
-    assert_eq!(servers["vmark"]["args"], "--port 9223");
+    assert_eq!(servers["xmark"]["args"], "--port 9223");
 }
 
 #[test]
@@ -252,7 +252,7 @@ fn a_non_array_args_value_is_left_alone_in_toml_too() {
 
 #[test]
 fn a_non_table_toml_vmark_entry_is_rejected() {
-    let mut doc = "[mcp_servers]\nvmark = 7\n".parse::<DocumentMut>().unwrap();
+    let mut doc = "[mcp_servers]\nxmark = 7\n".parse::<DocumentMut>().unwrap();
     let err = upsert_into(&mut doc, "/bin/vmark").expect_err("7 is not a table");
-    assert!(err.contains("mcp_servers.vmark is not a table"), "{err}");
+    assert!(err.contains("mcp_servers.xmark is not a table"), "{err}");
 }

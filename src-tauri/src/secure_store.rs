@@ -58,9 +58,11 @@ use keyring::Entry;
 
 use crate::command_error::CommandError;
 
-/// Single keychain service namespace for every VMark secret. The per-secret
+/// Single keychain service namespace for every XMark secret. The per-secret
 /// `key` is stored as the keychain account, giving a flat key→value map.
-const SERVICE: &str = "app.vmark.secrets";
+/// Distinct from upstream VMark's `app.vmark.secrets`, so the fork and an
+/// installed VMark never read or overwrite each other's keys.
+const SERVICE: &str = "app.xmark.secrets";
 
 /// Build a keyring entry for `key` under the VMark service namespace.
 fn entry(key: &str) -> Result<Entry, CommandError> {

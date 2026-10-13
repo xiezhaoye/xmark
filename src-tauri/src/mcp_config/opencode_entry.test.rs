@@ -23,7 +23,7 @@ fn upsert(mut servers: Map<String, JsonValue>) -> Map<String, JsonValue> {
 #[test]
 fn a_fresh_entry_has_the_full_opencode_shape() {
     let servers = upsert(Map::new());
-    let entry = &servers["vmark"];
+    let entry = &servers["xmark"];
 
     assert_eq!(entry["type"], "local");
     assert_eq!(entry["command"], json!([BIN]));
@@ -36,10 +36,10 @@ fn user_added_command_arguments_survive_a_repair() {
     // opencode's `command` is program-plus-arguments in one array; only the
     // first element is VMark's.
     let servers = upsert(servers_from(json!({
-        "vmark": { "command": ["/stale/vmark-mcp-server", "--log-level", "debug"] }
+        "xmark": { "command": ["/stale/vmark-mcp-server", "--log-level", "debug"] }
     })));
     assert_eq!(
-        servers["vmark"]["command"],
+        servers["xmark"]["command"],
         json!([BIN, "--log-level", "debug"])
     );
 }
@@ -47,17 +47,17 @@ fn user_added_command_arguments_survive_a_repair() {
 #[test]
 fn a_deliberate_enabled_false_is_not_flipped_back() {
     let servers = upsert(servers_from(json!({
-        "vmark": { "command": [BIN], "enabled": false }
+        "xmark": { "command": [BIN], "enabled": false }
     })));
-    assert_eq!(servers["vmark"]["enabled"], false);
+    assert_eq!(servers["xmark"]["enabled"], false);
 }
 
 #[test]
 fn user_environment_variables_survive() {
     let servers = upsert(servers_from(json!({
-        "vmark": { "environment": { "HTTPS_PROXY": "http://127.0.0.1:7890" } }
+        "xmark": { "environment": { "HTTPS_PROXY": "http://127.0.0.1:7890" } }
     })));
-    let environment = &servers["vmark"]["environment"];
+    let environment = &servers["xmark"]["environment"];
     assert_eq!(environment["HTTPS_PROXY"], "http://127.0.0.1:7890");
     assert_eq!(environment["VMARK_MCP_TOKEN"], TOK);
 }
@@ -67,24 +67,24 @@ fn a_non_array_command_is_repaired_to_the_canonical_one() {
     // A string `command` is invalid in opencode's schema; install replaces it
     // rather than crashing or appending to it.
     let servers = upsert(servers_from(json!({
-        "vmark": { "command": "/stale/vmark-mcp-server" }
+        "xmark": { "command": "/stale/vmark-mcp-server" }
     })));
-    assert_eq!(servers["vmark"]["command"], json!([BIN]));
+    assert_eq!(servers["xmark"]["command"], json!([BIN]));
 }
 
 #[test]
 fn an_empty_command_array_is_repaired_to_the_canonical_one() {
-    let servers = upsert(servers_from(json!({ "vmark": { "command": [] } })));
-    assert_eq!(servers["vmark"]["command"], json!([BIN]));
+    let servers = upsert(servers_from(json!({ "xmark": { "command": [] } })));
+    assert_eq!(servers["xmark"]["command"], json!([BIN]));
 }
 
 #[test]
 fn a_stale_type_is_rewritten_to_local() {
     // `type` is VMark's: the sidecar is a local stdio process, never remote.
     let servers = upsert(servers_from(json!({
-        "vmark": { "type": "remote", "command": [BIN] }
+        "xmark": { "type": "remote", "command": [BIN] }
     })));
-    assert_eq!(servers["vmark"]["type"], "local");
+    assert_eq!(servers["xmark"]["type"], "local");
 }
 
 #[test]
@@ -96,13 +96,13 @@ fn other_server_entries_are_untouched() {
         servers["context7"],
         json!({ "type": "remote", "url": "https://mcp.context7.com/mcp" })
     );
-    assert!(servers.contains_key("vmark"));
+    assert!(servers.contains_key("xmark"));
 }
 
 #[test]
 fn a_non_object_vmark_entry_is_an_error() {
-    let mut servers = servers_from(json!({ "vmark": "oops" }));
+    let mut servers = servers_from(json!({ "xmark": "oops" }));
     let err = upsert_opencode_vmark(&mut servers, BIN, TOK)
         .expect_err("a scalar vmark entry cannot be upserted");
-    assert!(err.contains("mcp.vmark"), "unexpected error: {err}");
+    assert!(err.contains("mcp.xmark"), "unexpected error: {err}");
 }

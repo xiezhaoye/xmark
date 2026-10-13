@@ -65,9 +65,9 @@ and writes `{port}:{token}` to a file in its app data directory:
 
 | Platform | Port file |
 |---|---|
-| macOS | `~/Library/Application Support/app.vmark/mcp-port` |
-| Linux | `$XDG_DATA_HOME/app.vmark/mcp-port` (default `~/.local/share`) |
-| Windows | `%APPDATA%/app.vmark/mcp-port` |
+| macOS | `~/Library/Application Support/app.xmark/mcp-port` |
+| Linux | `$XDG_DATA_HOME/app.xmark/mcp-port` (default `~/.local/share`) |
+| Windows | `%APPDATA%/app.xmark/mcp-port` |
 
 The bridge connects to `ws://127.0.0.1:{port}` (IPv4 literal, not `localhost` —
 resolving to `::1` on a dual-stack host produced connection failures) and

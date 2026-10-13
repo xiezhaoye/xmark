@@ -11,6 +11,7 @@
 // opener detaches the failed tab.
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { setClassicWorkspaceMode } from "@/test/classicWorkspaceMode";
 import { render, screen, waitFor } from "@testing-library/react";
 
 const boundary = vi.hoisted(() => ({
@@ -203,4 +204,9 @@ describe("WindowProvider — the workspace a launch lands in", () => {
     await waitFor(() => expect(tabPaths("doc-ext")).toEqual(["C:\\external.md"]));
     expect(useWorkspaceStore.getState().rootPath).toBe("/kept");
   });
+});
+
+// These suites assert the classic (rail-off) workspace model; XMark defaults the rail on.
+beforeEach(() => {
+  setClassicWorkspaceMode();
 });

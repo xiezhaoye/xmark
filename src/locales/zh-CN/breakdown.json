@@ -24,7 +24,7 @@
   "states.unpinnable": "无法固定",
   "confidence.inferred": "来源为推断 — 记录的输入集可能少于智能体实际参考的内容",
   "confidence.inferredShort": "推断",
-  "confidence.unknown": "来源未知 — 此更改是在 VMark 之外被观测到的",
+  "confidence.unknown": "来源未知 — 此更改是在 XMark 之外被观测到的",
   "confidence.unknownShort": "未知",
   "priorWaived": "此前已豁免 ×{{count}}",
   "waiveExpiryPlaceholder": "到期时间（可选，YYYY-MM-DD）",

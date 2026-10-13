@@ -46,18 +46,33 @@ laid out — mainly the column layout, workspace **groups**, and collapsing.
   right, view switcher (Files / Outline / History) at the bottom; "show all
   files" is an eye / eye-off toggle whose tooltip says what a click will do.
 
+## Download
+
+Get the latest `.dmg` (macOS, Apple Silicon) from
+[Releases](https://github.com/xiezhaoye/xmark/releases/latest).
+
+The app is not notarized by Apple, so macOS blocks the **first** launch. After
+dragging XMark into Applications, open it once, then go to **System Settings →
+Privacy & Security** and click **Open Anyway** next to the XMark message.
+Alternatively, run this in Terminal:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/XMark.app
+```
+
+Later launches and in-app updates open normally. XMark installs alongside
+VMark: it has its own app identifier (`app.xmark`), settings and update
+channel.
+
 ## Building XMark
 
-There are no pre-built XMark binaries yet — build from source as described in
-[Building from Source](#building-from-source) below. Two notes from practice:
+Build from source as described in [Building from Source](#building-from-source)
+below. Two notes from practice:
 
 - Use Node.js 22 or 24 (Node 25 is rejected by some dependencies' engine
   checks).
 - Build the MCP sidecar once before the first run:
   `pnpm --dir server/mcp build:sidecar`, then `pnpm tauri:dev`.
-
-Inside the app, XMark still calls itself **VMark** and uses VMark's app
-identifier for now; renaming the app bundle is planned.
 
 ## License
 

@@ -101,7 +101,7 @@ pub(crate) fn read_toml(entry: &TomlItem) -> Option<String> {
 /// `env` holding the user's `NODE_OPTIONS` or `HTTPS_PROXY` would be discarded
 /// on every install and every Repair click.
 pub(crate) fn write_json(entry: &mut Map<String, JsonValue>, token: &str) -> Result<(), String> {
-    write_json_under(entry, "env", "mcpServers.vmark.env", token)
+    write_json_under(entry, "env", "mcpServers.xmark.env", token)
 }
 
 /// Write the credential under `env_key`, keeping the user's other variables.

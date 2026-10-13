@@ -1,14 +1,14 @@
-# VMark Italian locale — translated from en.yml
+# XMark Italian locale — translated from en.yml
 # Keys follow the convention: menu.<section>.<item>
 # Dynamic menu items (recent files, genies) have their structural labels here too.
 
 menu:
   # === App menu (macOS only) ===
-  app: "VMark"
-  app.about: "Informazioni su VMark"
+  app: "XMark"
+  app.about: "Informazioni su XMark"
   app.settings: "Impostazioni..."
   app.saveAllQuit: "Salva tutto ed esci"
-  app.quit: "Esci da VMark"
+  app.quit: "Esci da XMark"
 
   # === File menu ===
   file: "File"
@@ -204,9 +204,9 @@ menu:
 
   # === Help menu ===
   help: "Aiuto"
-  help.vmarkHelp: "Guida VMark"
+  help.vmarkHelp: "Guida XMark"
   help.keyboardShortcuts: "Scorciatoie da tastiera"
-  help.installCli: "Comando shell: installa 'vmark' nel PATH..."
+  help.installCli: "Comando shell: installa 'xmark' nel PATH..."
   help.reportIssue: "Segnala un problema..."
 
   # === Dynamic menu labels ===
@@ -228,7 +228,7 @@ errors:
   coherence.ledgerUnavailable: "Impossibile leggere la cronologia di coerenza: %{detail}"
   coherence.rejectedArgument: "La richiesta è stata rifiutata: %{detail}"
   coherence.stateConflict: "Lo spazio di lavoro è cambiato dopo questa richiesta: %{detail}"
-  coherence.buildTooOld: "Questa versione di VMark non può leggere parte della cronologia di coerenza. Aggiorna VMark per continuare: %{detail}"
+  coherence.buildTooOld: "Questa versione di XMark non può leggere parte della cronologia di coerenza. Aggiorna XMark per continuare: %{detail}"
   # === Core (lib.rs) ===
   core.htmlTooLarge: "Contenuto HTML troppo grande (>50 MB)"
   core.pathTraversal: "Traversal del percorso (..) non consentito"
@@ -301,7 +301,7 @@ errors:
   workflow.snapshotFailed: "Impossibile creare uno snapshot dei file che questo flusso di lavoro modificherà, quindi non è stato eseguito: %{detail}"
   workflow.snapshotNotFound: "Questo snapshot del flusso di lavoro non esiste più"
   workflow.snapshotUnreadable: "Impossibile leggere i dati dello snapshot del flusso di lavoro: %{detail}"
-  workflow.snapshotNoWorkspace: "Questo snapshot è stato creato da una versione precedente di VMark e non può essere ripristinato"
+  workflow.snapshotNoWorkspace: "Questo snapshot è stato creato da una versione precedente di XMark e non può essere ripristinato"
   workflow.snapshotWorkspaceMissing: "La cartella a cui appartiene questo snapshot non esiste più: %{path}"
   workflow.snapshotListFailed: "Impossibile elencare gli snapshot dei flussi di lavoro: %{detail}"
   workflow.restoreWhileRunning: "Un flusso di lavoro è in esecuzione. Attendere il completamento o annullarlo prima di ripristinare i file."
@@ -361,7 +361,7 @@ errors:
   cli.mismatchNotRemoved: "Il file «%{path}» non corrisponde allo script previsto e non è stato possibile rimuoverlo. Eliminarlo manualmente."
 
   # === External editor ===
-  externalEditor.unknownName: "«%{name}» non è un editor che VMark riconosce per nome: inserisci invece il percorso completo dell'editor"
+  externalEditor.unknownName: "«%{name}» non è un editor che XMark riconosce per nome: inserisci invece il percorso completo dell'editor"
   externalEditor.notAnEditor: "«%{name}» esegue i file che riceve invece di aprirli, quindi non può essere usato come editor esterno"
   externalEditor.notPlainPath: "L'editor esterno deve essere il nome di un editor o un percorso completo, senza «..» e senza barra finale"
 
@@ -376,11 +376,11 @@ errors:
 
   # MCP client config — provider and sidecar binary resolution
   mcp.unknownProvider: "Provider sconosciuto: %{provider}"
-  mcp.legacyProvider: "%{name} è stato dismesso; la voce VMark residua può solo essere rimossa."
+  mcp.legacyProvider: "%{name} è stato dismesso; la voce XMark residua può solo essere rimossa."
   mcp.noHomeDir: "Impossibile determinare la directory home"
   mcp.exePathFailed: "Impossibile ottenere il percorso dell'eseguibile: %{detail}"
   mcp.exeDirFailed: "Impossibile ottenere la directory dell'eseguibile"
-  mcp.binaryNotFound: "Binario del server MCP non trovato: %{name}. Reinstallare VMark."
+  mcp.binaryNotFound: "Binario del server MCP non trovato: %{name}. Reinstallare XMark."
 
   # MCP client config — parsing and structure
   mcp.invalidJson: "JSON non valido: %{detail}"
@@ -390,19 +390,19 @@ errors:
   mcp.serversNotObject: "%{key} non è un oggetto"
   mcp.serversNotTable: "mcp_servers non è una tabella"
   mcp.vmarkEntryNotObject: "%{key} non è un oggetto"
-  mcp.vmarkEntryNotTable: "mcp_servers.vmark non è una tabella"
+  mcp.vmarkEntryNotTable: "mcp_servers.xmark non è una tabella"
   mcp.envNotObject: "%{key} non è un oggetto"
-  mcp.envNotTable: "mcp_servers.vmark.env non è una tabella"
+  mcp.envNotTable: "mcp_servers.xmark.env non è una tabella"
 
   # Bridge MCP: le credenziali del client a cui è associato il principal di autorizzazione
-  mcp.principalMissing: "Questo client IA non ha presentato alcuna credenziale VMark, quindi le azioni delegate vengono rifiutate. Apri Impostazioni > Integrazioni, esegui Installa per quel client e riavvialo."
-  mcp.principalUnknown: "La credenziale presentata da questo client IA non risulta a VMark, quindi le azioni delegate vengono rifiutate. Apri Impostazioni > Integrazioni, esegui Installa per quel client e riavvialo."
-  mcp.principalAmbiguous: "La credenziale presentata da questo client IA è configurata per più client (%{detail}), quindi VMark non riesce a distinguerli. Apri Impostazioni > Integrazioni, esegui Installa per ciascuno di essi e riavviali."
+  mcp.principalMissing: "Questo client IA non ha presentato alcuna credenziale XMark, quindi le azioni delegate vengono rifiutate. Apri Impostazioni > Integrazioni, esegui Installa per quel client e riavvialo."
+  mcp.principalUnknown: "La credenziale presentata da questo client IA non risulta a XMark, quindi le azioni delegate vengono rifiutate. Apri Impostazioni > Integrazioni, esegui Installa per quel client e riavvialo."
+  mcp.principalAmbiguous: "La credenziale presentata da questo client IA è configurata per più client (%{detail}), quindi XMark non riesce a distinguerli. Apri Impostazioni > Integrazioni, esegui Installa per ciascuno di essi e riavviali."
 
   # MCP client config — reading, backing up and writing
   mcp.readFailed: "Impossibile leggere %{path}: %{detail}"
   mcp.createDirFailed: "Impossibile creare la directory %{path}: %{detail}"
-  mcp.configChangedOnDisk: "%{path} è cambiato su disco mentre VMark lo stava aggiornando. Chiudere il client che lo sta scrivendo e riprovare."
+  mcp.configChangedOnDisk: "%{path} è cambiato su disco mentre XMark lo stava aggiornando. Chiudere il client che lo sta scrivendo e riprovare."
   mcp.backupWriteFailed: "Impossibile scrivere il backup %{path}: %{detail}"
   mcp.backupFlushFailed: "Impossibile svuotare il buffer del backup %{path}: %{detail}"
   mcp.backupSyncFailed: "Impossibile sincronizzare il backup %{path}: %{detail}"
@@ -416,37 +416,37 @@ errors:
   mcp.writeConfigPartialOrphaned: "Impossibile scrivere %{path}: %{detail}. Non è stato possibile rimuovere nemmeno il file incompleto (%{cleanup_detail}): eliminarlo a mano prima di riprovare, altrimenti la prossima installazione lo leggerà come una configurazione danneggiata."
 
   # === Secure store (secure_store.rs) ===
-  secureStore.keychainDenied: "L’accesso al portachiavi è stato negato. Consenti VMark nella richiesta del portachiavi o concedigli l’accesso in Accesso Portachiavi, quindi riprova."
+  secureStore.keychainDenied: "L’accesso al portachiavi è stato negato. Consenti XMark nella richiesta del portachiavi o concedigli l’accesso in Accesso Portachiavi, quindi riprova."
 
   # === Autorizzazioni degli spazi di lavoro (workspace/grants/commands.rs, WI-LX1.1) ===
-  workspaceAccess.notGranted: "VMark non ha accesso a «%{path}». Scegli la cartella con File → Apri spazio di lavoro... per consentirlo."
+  workspaceAccess.notGranted: "XMark non ha accesso a «%{path}». Scegli la cartella con File → Apri spazio di lavoro... per consentirlo."
   workspaceAccess.pickerBusy: "Una finestra di selezione cartella è già aperta"
-  workspaceAccess.checkBusy: "VMark sta ancora verificando l’accesso a quella cartella. Riprova tra un attimo"
-  workspaceAccess.listProtected: "Solo VMark può modificare il proprio elenco delle cartelle che è autorizzato ad aprire"
+  workspaceAccess.checkBusy: "XMark sta ancora verificando l’accesso a quella cartella. Riprova tra un attimo"
+  workspaceAccess.listProtected: "Solo XMark può modificare il proprio elenco delle cartelle che è autorizzato ad aprire"
 
 # WI-LX1.1 — the folder picker Rust shows for workspace access
 workspaceAccess:
   pickTitle: "Apri cartella dello spazio di lavoro"
-  confirmTitle: "Consenti a VMark di aprire questa cartella"
+  confirmTitle: "Consenti a XMark di aprire questa cartella"
 
 window:
   settings.title: "Impostazioni"
   pdfExport.title: "Esporta PDF"
-  print.title: "VMark – Stampa"
+  print.title: "XMark – Stampa"
 
 # #1419 — the Windows close-to-tray icon's menu. Quit reuses menu.app.quit.
 tray:
-  show: "Mostra VMark"
+  show: "Mostra XMark"
 
-# #1527 — Windows: a VMark holds the single-instance lock but cannot be reached.
+# #1527 — Windows: a XMark holds the single-instance lock but cannot be reached.
 singleInstance:
-  unreachable.title: "VMark è già in esecuzione"
-  unreachable.body: "Un altro processo VMark è ancora in esecuzione ma non risponde più, quindi un nuovo VMark non può avviarsi in sicurezza accanto a esso.\n\nApri Gestione attività, termina tutti i processi “VMark”, quindi avvia di nuovo VMark."
+  unreachable.title: "XMark è già in esecuzione"
+  unreachable.body: "Un altro processo XMark è ancora in esecuzione ma non risponde più, quindi un nuovo XMark non può avviarsi in sicurezza accanto a esso.\n\nApri Gestione attività, termina tutti i processi “XMark”, quindi avvia di nuovo XMark."
 
 cli:
   dialogTitle: "Comando shell"
-  installed: "Comando 'vmark' installato in %{path}"
-  alreadyInstalled: "Il comando 'vmark' è già installato in %{path}"
-  removed: "Comando 'vmark' rimosso da %{path}"
-  notInstalled: "Il comando 'vmark' non è installato."
-  runHint: "Ora puoi eseguire 'vmark' dal terminale."
+  installed: "Comando 'xmark' installato in %{path}"
+  alreadyInstalled: "Il comando 'xmark' è già installato in %{path}"
+  removed: "Comando 'xmark' rimosso da %{path}"
+  notInstalled: "Il comando 'xmark' non è installato."
+  runHint: "Ora puoi eseguire 'xmark' dal terminale."

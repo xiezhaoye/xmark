@@ -1,9 +1,9 @@
 //! # CLI Install/Uninstall
 //!
-//! Purpose: Install/uninstall the `vmark` shell command at `/usr/local/bin/vmark`.
+//! Purpose: Install/uninstall the `xmark` shell command at `/usr/local/bin/xmark`.
 //! Uses `osascript` to request admin privileges (same pattern as VS Code's "Install 'code' command").
 //!
-//! The installed script simply delegates to `open -b app.vmark`, which lets macOS
+//! The installed script simply delegates to `open -b app.xmark`, which lets macOS
 //! handle single-instance behavior natively via the bundle identifier.
 //!
 //! Key decisions:
@@ -29,15 +29,15 @@ use script::{
 pub mod dialog;
 mod script;
 
-pub const CLI_PATH: &str = "/usr/local/bin/vmark";
+pub const CLI_PATH: &str = "/usr/local/bin/xmark";
 
-/// Shell script content installed to /usr/local/bin/vmark.
-/// Uses bundle ID (`-b app.vmark`) instead of app name for stable targeting
+/// Shell script content installed to /usr/local/bin/xmark.
+/// Uses bundle ID (`-b app.xmark`) instead of app name for stable targeting
 /// even when the .app is renamed or localized.
 const SCRIPT_CONTENT: &str = "#!/bin/bash\n\
-# VMark CLI launcher — installed by VMark.app\n\
-# Toggle via: VMark > Help > Install/Uninstall 'vmark' Command\n\
-open -b app.vmark \"$@\"\n";
+# XMark CLI launcher — installed by XMark.app\n\
+# Toggle via: XMark > Help > Install/Uninstall 'xmark' Command\n\
+open -b app.xmark \"$@\"\n";
 
 /// Structured error variants for CLI install operations.
 /// Avoids brittle string matching between module boundaries.
@@ -54,7 +54,7 @@ impl std::fmt::Display for CliInstallError {
             Self::Cancelled => write!(f, "Operation cancelled."),
             Self::ForeignFile => write!(
                 f,
-                "{} already exists and was not installed by VMark. \
+                "{} already exists and was not installed by XMark. \
                  Please remove it manually.",
                 CLI_PATH
             ),

@@ -24,7 +24,7 @@
   "states.unpinnable": "No fijable",
   "confidence.inferred": "Procedencia inferida — el conjunto de entradas registrado subestima lo que el agente consultó realmente",
   "confidence.inferredShort": "inferida",
-  "confidence.unknown": "Procedencia desconocida — este cambio se observó fuera de VMark",
+  "confidence.unknown": "Procedencia desconocida — este cambio se observó fuera de XMark",
   "confidence.unknownShort": "desconocida",
   "priorWaived": "eximida anteriormente ×{{count}}",
   "waiveExpiryPlaceholder": "Vence (opcional, YYYY-MM-DD)",

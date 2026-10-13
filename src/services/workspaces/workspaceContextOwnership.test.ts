@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it } from "vitest";
+import { setClassicWorkspaceMode } from "@/test/classicWorkspaceMode";
 import { createWorkspaceInstance, createWorkspaceRootIdentity } from "@/utils/workspaceIdentity";
 import type { WorkspaceInstanceRecord } from "@/stores/workspaceInstancesStore";
 import { useSettingsStore } from "@/stores/settingsStore";
@@ -179,6 +180,7 @@ describe("classifyWorkspaceContextForTab", () => {
 describe("workspace context tab claims", () => {
   beforeEach(() => {
     useSettingsStore.getState().resetSettings();
+    setClassicWorkspaceMode();
     useWorkspaceInstancesStore.getState().resetWorkspaceInstances();
   });
 
@@ -234,4 +236,9 @@ describe("workspace context tab claims", () => {
     );
     expect(looseId).toBeDefined();
   });
+});
+
+// These suites assert the classic (rail-off) workspace model; XMark defaults the rail on.
+beforeEach(() => {
+  setClassicWorkspaceMode();
 });

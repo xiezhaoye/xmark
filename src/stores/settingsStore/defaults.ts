@@ -44,7 +44,8 @@ export const initialState: SettingsState = {
     closeToTray: false,
     // Opt-in: open existing files in a new tab (off keeps the legacy "reuse untitled tab" behavior).
     openInNewTab: false,
-    workspaceRailMode: false,
+    // XMark: the workspace column is the first of its three columns — on by default.
+    workspaceRailMode: true,
     workspaceRailWidth: 160,
     workspaceRailCollapsed: false,
     // fix(#1224) — show the name that is on disk; hiding extensions is opt-in.

@@ -24,7 +24,7 @@
   "states.unpinnable": "Non fissabile",
   "confidence.inferred": "Provenienza dedotta — l'insieme di input registrato sottostima ciò che l'agente ha realmente consultato",
   "confidence.inferredShort": "dedotta",
-  "confidence.unknown": "Provenienza sconosciuta — questa modifica è stata osservata fuori da VMark",
+  "confidence.unknown": "Provenienza sconosciuta — questa modifica è stata osservata fuori da XMark",
   "confidence.unknownShort": "sconosciuta",
   "priorWaived": "esentata in precedenza ×{{count}}",
   "waiveExpiryPlaceholder": "Scade (opzionale, YYYY-MM-DD)",

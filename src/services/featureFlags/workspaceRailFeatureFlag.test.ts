@@ -23,19 +23,20 @@ beforeEach(() => {
 });
 
 describe("workspace rail feature flag", () => {
-  it("is disabled by default", () => {
-    expect(useSettingsStore.getState().general.workspaceRailMode).toBe(false);
-    expect(isWorkspaceRailEnabled()).toBe(false);
-  });
-
-  it("reads the persisted general setting", () => {
-    useSettingsStore.getState().updateGeneralSetting("workspaceRailMode", true);
+  // XMark: the workspace rail is the first of three columns, so it is ON by default.
+  it("is enabled by default", () => {
+    expect(useSettingsStore.getState().general.workspaceRailMode).toBe(true);
     expect(isWorkspaceRailEnabled()).toBe(true);
   });
 
-  it("resets to disabled", () => {
-    useSettingsStore.getState().updateGeneralSetting("workspaceRailMode", true);
-    useSettingsStore.getState().resetSettings();
+  it("reads the persisted general setting", () => {
+    useSettingsStore.getState().updateGeneralSetting("workspaceRailMode", false);
     expect(isWorkspaceRailEnabled()).toBe(false);
+  });
+
+  it("resets to enabled", () => {
+    useSettingsStore.getState().updateGeneralSetting("workspaceRailMode", false);
+    useSettingsStore.getState().resetSettings();
+    expect(isWorkspaceRailEnabled()).toBe(true);
   });
 });

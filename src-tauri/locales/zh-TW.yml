@@ -1,14 +1,14 @@
-# VMark 繁體中文（zh-TW）locale — 翻譯自英文原始檔。
+# XMark 繁體中文（zh-TW）locale — 翻譯自英文原始檔。
 # 鍵值遵循慣例：menu.<section>.<item>
 # 動態選單項目（最近使用的檔案、精靈）的結構標籤也在此處。
 
 menu:
   # === App 選單（僅限 macOS）===
-  app: "VMark"
-  app.about: "關於 VMark"
+  app: "XMark"
+  app.about: "關於 XMark"
   app.settings: "設定..."
   app.saveAllQuit: "全部儲存並結束"
-  app.quit: "結束 VMark"
+  app.quit: "結束 XMark"
 
   # === 檔案選單 ===
   file: "檔案"
@@ -204,7 +204,7 @@ menu:
 
   # === 輔助說明選單 ===
   help: "輔助說明"
-  help.vmarkHelp: "VMark 輔助說明"
+  help.vmarkHelp: "XMark 輔助說明"
   help.keyboardShortcuts: "鍵盤快捷鍵"
   help.installCli: "Shell 指令：在 PATH 中安裝「vmark」..."
   help.reportIssue: "回報問題..."
@@ -228,7 +228,7 @@ errors:
   coherence.ledgerUnavailable: "無法讀取一致性歷史記錄：%{detail}"
   coherence.rejectedArgument: "請求遭到拒絕：%{detail}"
   coherence.stateConflict: "自本次請求以來工作區已變更：%{detail}"
-  coherence.buildTooOld: "目前版本的 VMark 無法讀取部分一致性歷史記錄。請更新 VMark 後繼續：%{detail}"
+  coherence.buildTooOld: "目前版本的 XMark 無法讀取部分一致性歷史記錄。請更新 XMark 後繼續：%{detail}"
   # === Core (lib.rs) ===
   core.htmlTooLarge: "HTML 內容過大（超過 50 MB）"
   core.pathTraversal: "不允許使用路徑穿越（..）"
@@ -301,7 +301,7 @@ errors:
   workflow.snapshotFailed: "無法為此工作流程將修改的檔案建立快照，因此未執行：%{detail}"
   workflow.snapshotNotFound: "該工作流程快照已不存在"
   workflow.snapshotUnreadable: "無法讀取工作流程快照的記錄：%{detail}"
-  workflow.snapshotNoWorkspace: "此快照由舊版 VMark 建立，無法還原"
+  workflow.snapshotNoWorkspace: "此快照由舊版 XMark 建立，無法還原"
   workflow.snapshotWorkspaceMissing: "此快照所屬的資料夾已不存在：%{path}"
   workflow.snapshotListFailed: "無法列出工作流程快照：%{detail}"
   workflow.restoreWhileRunning: "有工作流程正在執行。請等待完成或取消後再還原檔案。"
@@ -361,7 +361,7 @@ errors:
   cli.mismatchNotRemoved: "「%{path}」的檔案與預期指令稿不符，且無法移除。請手動刪除該檔案。"
 
   # === External editor ===
-  externalEditor.unknownName: "VMark 無法依名稱辨識編輯器「%{name}」，請改為填寫該編輯器的完整路徑"
+  externalEditor.unknownName: "XMark 無法依名稱辨識編輯器「%{name}」，請改為填寫該編輯器的完整路徑"
   externalEditor.notAnEditor: "「%{name}」會直接執行傳給它的檔案，而不是開啟檔案，因此不能用作外部編輯器"
   externalEditor.notPlainPath: "外部編輯器必須是編輯器名稱或完整路徑，路徑中不能包含「..」，也不能以斜線結尾"
 
@@ -376,11 +376,11 @@ errors:
 
   # MCP client config — provider and sidecar binary resolution
   mcp.unknownProvider: "未知的服務商：%{provider}"
-  mcp.legacyProvider: "%{name} 已停止支援；殘留的 VMark 條目只能移除。"
+  mcp.legacyProvider: "%{name} 已停止支援；殘留的 XMark 條目只能移除。"
   mcp.noHomeDir: "無法確定使用者家目錄"
   mcp.exePathFailed: "無法取得可執行檔路徑：%{detail}"
   mcp.exeDirFailed: "無法取得可執行檔所在目錄"
-  mcp.binaryNotFound: "找不到 MCP 伺服器執行檔：%{name}。請重新安裝 VMark。"
+  mcp.binaryNotFound: "找不到 MCP 伺服器執行檔：%{name}。請重新安裝 XMark。"
 
   # MCP client config — parsing and structure
   mcp.invalidJson: "JSON 無效：%{detail}"
@@ -390,19 +390,19 @@ errors:
   mcp.serversNotObject: "%{key} 不是物件"
   mcp.serversNotTable: "mcp_servers 不是表"
   mcp.vmarkEntryNotObject: "%{key} 不是物件"
-  mcp.vmarkEntryNotTable: "mcp_servers.vmark 不是表"
+  mcp.vmarkEntryNotTable: "mcp_servers.xmark 不是表"
   mcp.envNotObject: "%{key} 不是物件"
-  mcp.envNotTable: "mcp_servers.vmark.env 不是資料表"
+  mcp.envNotTable: "mcp_servers.xmark.env 不是資料表"
 
   # MCP 橋接 —— 授權主體所綁定的用戶端憑證
-  mcp.principalMissing: "此 AI 用戶端未提供 VMark 憑證，因此已拒絕其委派操作。請開啟「設定 > 整合」，為它執行「安裝」，然後重新啟動該用戶端。"
-  mcp.principalUnknown: "此 AI 用戶端提供的憑證不在 VMark 的記錄中，因此已拒絕其委派操作。請開啟「設定 > 整合」，為它執行「安裝」，然後重新啟動該用戶端。"
-  mcp.principalAmbiguous: "此 AI 用戶端提供的憑證同時設定給多個用戶端（%{detail}），VMark 無法分辨它們。請開啟「設定 > 整合」，為每一個都執行「安裝」，然後分別重新啟動。"
+  mcp.principalMissing: "此 AI 用戶端未提供 XMark 憑證，因此已拒絕其委派操作。請開啟「設定 > 整合」，為它執行「安裝」，然後重新啟動該用戶端。"
+  mcp.principalUnknown: "此 AI 用戶端提供的憑證不在 XMark 的記錄中，因此已拒絕其委派操作。請開啟「設定 > 整合」，為它執行「安裝」，然後重新啟動該用戶端。"
+  mcp.principalAmbiguous: "此 AI 用戶端提供的憑證同時設定給多個用戶端（%{detail}），XMark 無法分辨它們。請開啟「設定 > 整合」，為每一個都執行「安裝」，然後分別重新啟動。"
 
   # MCP client config — reading, backing up and writing
   mcp.readFailed: "讀取 %{path} 失敗：%{detail}"
   mcp.createDirFailed: "建立目錄 %{path} 失敗：%{detail}"
-  mcp.configChangedOnDisk: "VMark 更新期間 %{path} 在磁碟上發生變更。請關閉正在寫入該檔案的用戶端後重試。"
+  mcp.configChangedOnDisk: "XMark 更新期間 %{path} 在磁碟上發生變更。請關閉正在寫入該檔案的用戶端後重試。"
   mcp.backupWriteFailed: "寫入備份 %{path} 失敗：%{detail}"
   mcp.backupFlushFailed: "清空備份 %{path} 的緩衝區失敗：%{detail}"
   mcp.backupSyncFailed: "同步備份 %{path} 失敗：%{detail}"
@@ -416,37 +416,37 @@ errors:
   mcp.writeConfigPartialOrphaned: "寫入 %{path} 失敗：%{detail}。不完整的檔案也無法刪除（%{cleanup_detail}）。請在重試前手動刪除，否則下次安裝會把它當成損毀的設定讀取。"
 
   # === Secure store (secure_store.rs) ===
-  secureStore.keychainDenied: "鑰匙圈存取遭到拒絕。請在鑰匙圈提示中允許 VMark，或在「鑰匙圈存取」中授予存取權限，然後再試一次。"
+  secureStore.keychainDenied: "鑰匙圈存取遭到拒絕。請在鑰匙圈提示中允許 XMark，或在「鑰匙圈存取」中授予存取權限，然後再試一次。"
 
   # === 工作區存取授權 (workspace/grants/commands.rs, WI-LX1.1) ===
-  workspaceAccess.notGranted: "VMark 尚未獲得存取「%{path}」的權限。請透過 檔案 → 開啟工作區... 選擇該資料夾以授予權限。"
+  workspaceAccess.notGranted: "XMark 尚未獲得存取「%{path}」的權限。請透過 檔案 → 開啟工作區... 選擇該資料夾以授予權限。"
   workspaceAccess.pickerBusy: "已有一個資料夾對話框處於開啟狀態"
-  workspaceAccess.checkBusy: "VMark 仍在檢查對該資料夾的存取權限，請稍後再試"
-  workspaceAccess.listProtected: "VMark 可開啟的資料夾清單只能由 VMark 本身修改"
+  workspaceAccess.checkBusy: "XMark 仍在檢查對該資料夾的存取權限，請稍後再試"
+  workspaceAccess.listProtected: "XMark 可開啟的資料夾清單只能由 XMark 本身修改"
 
 # WI-LX1.1 — the folder picker Rust shows for workspace access
 workspaceAccess:
   pickTitle: "開啟工作區資料夾"
-  confirmTitle: "允許 VMark 開啟此資料夾"
+  confirmTitle: "允許 XMark 開啟此資料夾"
 
 window:
   settings.title: "設定"
   pdfExport.title: "匯出 PDF"
-  print.title: "VMark 列印"
+  print.title: "XMark 列印"
 
 # #1419 — the Windows close-to-tray icon's menu. Quit reuses menu.app.quit.
 tray:
-  show: "顯示 VMark"
+  show: "顯示 XMark"
 
-# #1527 — Windows: a VMark holds the single-instance lock but cannot be reached.
+# #1527 — Windows: a XMark holds the single-instance lock but cannot be reached.
 singleInstance:
-  unreachable.title: "VMark 已在執行"
-  unreachable.body: "另一個 VMark 處理程序仍在執行，但已沒有回應，因此無法在它旁邊安全地啟動新的 VMark。\n\n請開啟工作管理員，結束所有「VMark」處理程序，然後重新啟動 VMark。"
+  unreachable.title: "XMark 已在執行"
+  unreachable.body: "另一個 XMark 處理程序仍在執行，但已沒有回應，因此無法在它旁邊安全地啟動新的 XMark。\n\n請開啟工作管理員，結束所有「XMark」處理程序，然後重新啟動 XMark。"
 
 cli:
   dialogTitle: "Shell 指令"
-  installed: "'vmark' 指令已安裝至 %{path}"
-  alreadyInstalled: "'vmark' 指令已安裝於 %{path}"
-  removed: "'vmark' 指令已從 %{path} 移除"
-  notInstalled: "'vmark' 指令尚未安裝。"
-  runHint: "現在可以在終端機中執行 'vmark'。"
+  installed: "'xmark' 指令已安裝至 %{path}"
+  alreadyInstalled: "'xmark' 指令已安裝於 %{path}"
+  removed: "'xmark' 指令已從 %{path} 移除"
+  notInstalled: "'xmark' 指令尚未安裝。"
+  runHint: "現在可以在終端機中執行 'xmark'。"

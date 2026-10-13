@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "VMark",
-  "version": "0.9.99",
-  "identifier": "app.vmark",
+  "productName": "XMark",
+  "version": "0.1.0",
+  "identifier": "app.xmark",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
@@ -14,7 +14,7 @@
     "macOSPrivateApi": true,
     "windows": [
       {
-        "title": "VMark",
+        "title": "XMark",
         "label": "main",
         "width": 800,
         "height": 600,
@@ -40,7 +40,7 @@
     "targets": "all",
     "createUpdaterArtifacts": true,
     "shortDescription": "Plain-text workspace for humans and AI",
-    "longDescription": "VMark is the plain-text workspace where humans and AI collaborate. Both parties read and write the same artifacts — markdown, YAML, JSON, TOML, Mermaid, SVG, HTML, code — directly. Schema-aware previews render the right view for known artifacts (GitHub Actions workflows, Cargo.toml, package.json, pyproject.toml).",
+    "longDescription": "XMark (an unofficial fork of VMark) is the plain-text workspace where humans and AI collaborate. Both parties read and write the same artifacts — markdown, YAML, JSON, TOML, Mermaid, SVG, HTML, code — directly. Schema-aware previews render the right view for known artifacts (GitHub Actions workflows, Cargo.toml, package.json, pyproject.toml).",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -106,6 +106,7 @@
       "resources/generated/THIRD_PARTY_LICENSES.txt"
     ],
     "macOS": {
+      "signingIdentity": "-",
       "entitlements": "app-entitlements.plist",
       "minimumSystemVersion": "13.4",
       "files": {
@@ -133,10 +134,10 @@
       "requireLiteralLeadingDot": false
     },
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEZFQ0NGRjU5RUZBM0RBMDIKUldRQzJxUHZXZi9NL2k3RU9JbGg5amYxS2FVVFNGU0hTUWdEbUppcHpxTTRQMThkOVlKL0F3MUcK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDAxRERDQUZCQzE2MzIzQTcKUldTbkkyUEIrOHJkQWRXSkYvSnBTdkhZTXIzQW9sNHVGcjI5MzJTV2d5enBOWE9BbExYS3BpcFoK",
       "endpoints": [
-        "https://log.vmark.app/update/latest.json?target={{target}}&arch={{arch}}&version={{current_version}}",
-        "https://github.com/xiaolai/vmark/releases/latest/download/latest.json"
+        "https://xmark.xiezhaoye.site/update/latest.json",
+        "https://github.com/xiezhaoye/xmark/releases/latest/download/latest.json"
       ]
     }
   }

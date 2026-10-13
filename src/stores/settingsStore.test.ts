@@ -284,8 +284,8 @@ describe("settingsStore openInNewTab", () => {
 });
 
 describe("settingsStore workspaceRailMode", () => {
-  it("defaults workspaceRailMode to false", () => {
-    expect(useSettingsStore.getState().general.workspaceRailMode).toBe(false);
+  it("defaults workspaceRailMode to true (XMark's three-column layout)", () => {
+    expect(useSettingsStore.getState().general.workspaceRailMode).toBe(true);
   });
 
   it("toggles workspaceRailMode through general settings", () => {
@@ -296,10 +296,10 @@ describe("settingsStore workspaceRailMode", () => {
     expect(useSettingsStore.getState().general.workspaceRailMode).toBe(false);
   });
 
-  it("resets workspaceRailMode to false on resetSettings", () => {
-    useSettingsStore.getState().updateGeneralSetting("workspaceRailMode", true);
+  it("resets workspaceRailMode to true on resetSettings", () => {
+    useSettingsStore.getState().updateGeneralSetting("workspaceRailMode", false);
     useSettingsStore.getState().resetSettings();
-    expect(useSettingsStore.getState().general.workspaceRailMode).toBe(false);
+    expect(useSettingsStore.getState().general.workspaceRailMode).toBe(true);
   });
 });
 

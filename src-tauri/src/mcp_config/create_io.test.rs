@@ -10,7 +10,7 @@ use super::*;
 use std::path::PathBuf;
 use tempfile::tempdir;
 
-const CONTENTS: &[u8] = br#"{"mcpServers":{"vmark":{"command":"/opt/vmark"}}}"#;
+const CONTENTS: &[u8] = br#"{"mcpServers":{"xmark":{"command":"/opt/vmark"}}}"#;
 
 /// Half the bytes land, then the write dies — what ENOSPC or EIO looks like
 /// from the caller's side. No portable filesystem hands us that on demand, so

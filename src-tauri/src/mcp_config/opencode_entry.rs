@@ -26,10 +26,10 @@ pub(crate) fn upsert_opencode_vmark(
     client_token: &str,
 ) -> Result<(), String> {
     let entry = servers
-        .entry("vmark")
+        .entry(super::MCP_ENTRY_NAME)
         .or_insert_with(|| JsonValue::Object(Map::new()));
     let entry = entry.as_object_mut().ok_or_else(|| {
-        rust_i18n::t!("errors.mcp.vmarkEntryNotObject", key = "mcp.vmark").to_string()
+        rust_i18n::t!("errors.mcp.vmarkEntryNotObject", key = "mcp.xmark").to_string()
     })?;
 
     entry.insert("type".to_string(), JsonValue::String("local".to_string()));
@@ -50,7 +50,7 @@ pub(crate) fn upsert_opencode_vmark(
     client_token_field::write_json_under(
         entry,
         "environment",
-        "mcp.vmark.environment",
+        "mcp.xmark.environment",
         client_token,
     )
 }

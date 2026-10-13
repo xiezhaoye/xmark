@@ -17,6 +17,7 @@
  * @module services/terminalAttention
  */
 import { invoke } from "@tauri-apps/api/core";
+import { APP_NAME } from "@/utils/appName";
 import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
 import i18n from "@/i18n";
 import { useSettingsStore, type TerminalBellMode } from "@/stores/settingsStore";
@@ -92,7 +93,7 @@ export async function notifyTerminalAttention(label: string): Promise<void> {
     lastNotifiedAt.set(label, now);
     if (!(await ensureNotificationPermission())) return;
     sendNotification({
-      title: "VMark",
+      title: APP_NAME,
       body: i18n.t("statusbar:terminal.notify.attention", { name: label }),
     });
   } catch {

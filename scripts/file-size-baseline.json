@@ -77,7 +77,7 @@
     "src/export/resourceResolver.test.ts": 828,
     "src/hooks/__tests__/useGenieInvocation.test.ts": 1224,
     "src/hooks/useExternalFileChanges.test.ts": 1709,
-    "src/hooks/useFinderFileOpen.test.ts": 806,
+    "src/hooks/useFinderFileOpen.test.ts": 805,
     "src/hooks/useSourceEditorSearch.test.ts": 860,
     "src/hooks/useTabDragOut.test.ts": 1150,
     "src/hooks/useUpdateChecker.comprehensive.test.ts": 886,

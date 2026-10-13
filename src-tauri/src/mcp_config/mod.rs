@@ -21,3 +21,8 @@ mod parsed_config;
 mod providers;
 mod types;
 mod vmark_entry;
+
+/// The key XMark's server entry takes in every client config
+/// (`mcpServers.xmark`, `[mcp_servers.xmark]`, `mcp.xmark`). Distinct from
+/// upstream VMark's `vmark` so both apps can be installed side by side.
+pub(crate) const MCP_ENTRY_NAME: &str = "xmark";

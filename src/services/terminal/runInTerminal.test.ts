@@ -9,6 +9,7 @@
 // WI-TS4.2 — delivery stays PINNED to the session id captured at request
 // time: a rail switch mid-delivery must not redirect the payload.
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { setClassicWorkspaceMode } from "@/test/classicWorkspaceMode";
 
 // The real activeTerminal module runs. The test plays the terminal panel: it
 // registers the window's resolver, exactly as useTerminalSessions does.
@@ -409,4 +410,9 @@ describe("id-pinned delivery across a rail switch (WI-TS4.2, D-T10)", () => {
     expect(terminalResolver).toHaveBeenLastCalledWith(first.id);
     expect(paste).toHaveBeenCalledWith("make build");
   });
+});
+
+// These suites assert the classic (rail-off) workspace model; XMark defaults the rail on.
+beforeEach(() => {
+  setClassicWorkspaceMode();
 });

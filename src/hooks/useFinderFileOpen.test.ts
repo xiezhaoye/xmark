@@ -9,6 +9,7 @@
  *   - Workspace adoption, different workspace (new window), loadFileIntoTab errors
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import "@/test/classicWorkspaceModeHook"; // classic (rail-off) model; XMark defaults the rail on
 import { fileBytes } from "@/test/fileBytes";
 import { renderHook } from "@testing-library/react";
 
@@ -178,9 +179,7 @@ describe("useFinderFileOpen", () => {
     mockIsWithinRoot.mockReturnValue(false);
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
+  afterEach(() => vi.restoreAllMocks());
 
   it("registers event listener on mount", async () => {
     renderHook(() => useFinderFileOpen());

@@ -30,10 +30,10 @@ describe("buildCcSwitchImportLink", () => {
     );
   });
 
-  it("sets resource=mcp and name=vmark", () => {
+  it("sets resource=mcp and name=xmark", () => {
     const q = parseQuery(buildCcSwitchImportLink("/bin/x"));
     expect(q.resource).toBe("mcp");
-    expect(q.name).toBe("vmark");
+    expect(q.name).toBe("xmark");
   });
 
   it("defaults apps to claude,codex,grok,opencode (comma-separated, literal)", () => {
@@ -87,7 +87,7 @@ describe("buildCcSwitchImportLink", () => {
     // so a bare `{command}` would import zero servers even once Base64 is fixed.
     const path = "/usr/local/bin/vmark-mcp-server";
     expect(decodeConfig(buildCcSwitchImportLink(path))).toEqual({
-      mcpServers: { vmark: { command: path } },
+      mcpServers: { xmark: { command: path } },
     });
   });
 
@@ -110,7 +110,7 @@ describe("buildCcSwitchImportLink", () => {
     // like /Users/张三 would break the button rather than the import.
     const path = "/Users/张三/Library/Application Support/vmark/vmark-mcp-server";
     expect(decodeConfig(buildCcSwitchImportLink(path))).toEqual({
-      mcpServers: { vmark: { command: path } },
+      mcpServers: { xmark: { command: path } },
     });
   });
 
@@ -118,7 +118,7 @@ describe("buildCcSwitchImportLink", () => {
     const path = "/path/with spaces/bin";
     const link = buildCcSwitchImportLink(path);
     expect(link).not.toMatch(/ /);
-    expect(decodeConfig(link)).toEqual({ mcpServers: { vmark: { command: path } } });
+    expect(decodeConfig(link)).toEqual({ mcpServers: { xmark: { command: path } } });
   });
 
   it("is a pure deterministic function", () => {

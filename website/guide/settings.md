@@ -202,7 +202,7 @@ File browser, saving, document history, image handling, and document tools.
 
 | Setting | Description | Default |
 |---------|-------------|---------|
-| Workspace rail | Show the left workspace rail and keep multiple workspaces and loose files in one window | Off |
+| Workspace rail | Show the left workspace rail and keep multiple workspaces and loose files in one window | On |
 
 See [Workspace Rail](/guide/workspace-rail) for what the rail adds.
 

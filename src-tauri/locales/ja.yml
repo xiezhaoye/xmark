@@ -1,14 +1,14 @@
-# VMark 日本語ロケール
+# XMark 日本語ロケール
 # キーの規則: menu.<section>.<item>
 # 動的メニュー項目（最近のファイル、ジーニーなど）の構造ラベルもここに含まれます。
 
 menu:
   # === アプリメニュー（macOSのみ）===
-  app: "VMark"
-  app.about: "VMark について"
+  app: "XMark"
+  app.about: "XMark について"
   app.settings: "設定..."
   app.saveAllQuit: "すべて保存して終了"
-  app.quit: "VMark を終了"
+  app.quit: "XMark を終了"
 
   # === ファイルメニュー ===
   file: "ファイル"
@@ -204,9 +204,9 @@ menu:
 
   # === ヘルプメニュー ===
   help: "ヘルプ"
-  help.vmarkHelp: "VMark ヘルプ"
+  help.vmarkHelp: "XMark ヘルプ"
   help.keyboardShortcuts: "キーボードショートカット"
-  help.installCli: "シェルコマンド: 'vmark' をPATHにインストール..."
+  help.installCli: "シェルコマンド: 'xmark' をPATHにインストール..."
   help.reportIssue: "問題を報告..."
 
   # === 動的メニューラベル ===
@@ -228,7 +228,7 @@ errors:
   coherence.ledgerUnavailable: "整合性の履歴を読み取れませんでした: %{detail}"
   coherence.rejectedArgument: "リクエストは拒否されました: %{detail}"
   coherence.stateConflict: "このリクエスト以降にワークスペースが変更されました: %{detail}"
-  coherence.buildTooOld: "このバージョンの VMark は整合性履歴の一部を読み取れません。続行するには VMark を更新してください: %{detail}"
+  coherence.buildTooOld: "このバージョンの XMark は整合性履歴の一部を読み取れません。続行するには XMark を更新してください: %{detail}"
   # === Core (lib.rs) ===
   core.htmlTooLarge: "HTML コンテンツが大きすぎます（50 MB 超）"
   core.pathTraversal: "パストラバーサル（..）は許可されていません"
@@ -301,7 +301,7 @@ errors:
   workflow.snapshotFailed: "このワークフローが変更するファイルのスナップショットを作成できなかったため、実行しませんでした: %{detail}"
   workflow.snapshotNotFound: "そのワークフローのスナップショットはもう存在しません"
   workflow.snapshotUnreadable: "ワークフローのスナップショットの記録を読み取れませんでした: %{detail}"
-  workflow.snapshotNoWorkspace: "このスナップショットは以前のバージョンの VMark で作成されたため、復元できません"
+  workflow.snapshotNoWorkspace: "このスナップショットは以前のバージョンの XMark で作成されたため、復元できません"
   workflow.snapshotWorkspaceMissing: "このスナップショットが属するフォルダーはもう存在しません: %{path}"
   workflow.snapshotListFailed: "ワークフローのスナップショットを一覧表示できませんでした: %{detail}"
   workflow.restoreWhileRunning: "ワークフローが実行中です。ファイルを復元する前に、完了を待つかキャンセルしてください。"
@@ -361,7 +361,7 @@ errors:
   cli.mismatchNotRemoved: "「%{path}」のファイルは想定したスクリプトと一致せず、削除もできませんでした。手動で削除してください。"
 
   # === External editor ===
-  externalEditor.unknownName: "「%{name}」は VMark が名前で認識できるエディタではありません。エディタのフルパスを入力してください"
+  externalEditor.unknownName: "「%{name}」は XMark が名前で認識できるエディタではありません。エディタのフルパスを入力してください"
   externalEditor.notAnEditor: "「%{name}」は渡されたファイルを開かずに実行するため、外部エディタとして使用できません"
   externalEditor.notPlainPath: "外部エディタには、エディタ名またはフルパスを指定してください。パスに「..」を含めることや、末尾にスラッシュを付けることはできません"
 
@@ -376,11 +376,11 @@ errors:
 
   # MCP client config — provider and sidecar binary resolution
   mcp.unknownProvider: "不明なプロバイダーです: %{provider}"
-  mcp.legacyProvider: "%{name} は廃止されました。残っている VMark エントリは削除のみ可能です。"
+  mcp.legacyProvider: "%{name} は廃止されました。残っている XMark エントリは削除のみ可能です。"
   mcp.noHomeDir: "ホームディレクトリを特定できません"
   mcp.exePathFailed: "実行ファイルのパスを取得できません: %{detail}"
   mcp.exeDirFailed: "実行ファイルのディレクトリを取得できません"
-  mcp.binaryNotFound: "MCP サーバーのバイナリが見つかりません: %{name}。VMark を再インストールしてください。"
+  mcp.binaryNotFound: "MCP サーバーのバイナリが見つかりません: %{name}。XMark を再インストールしてください。"
 
   # MCP client config — parsing and structure
   mcp.invalidJson: "JSON が無効です: %{detail}"
@@ -390,19 +390,19 @@ errors:
   mcp.serversNotObject: "%{key} がオブジェクトではありません"
   mcp.serversNotTable: "mcp_servers がテーブルではありません"
   mcp.vmarkEntryNotObject: "%{key} がオブジェクトではありません"
-  mcp.vmarkEntryNotTable: "mcp_servers.vmark がテーブルではありません"
+  mcp.vmarkEntryNotTable: "mcp_servers.xmark がテーブルではありません"
   mcp.envNotObject: "%{key} がオブジェクトではありません"
-  mcp.envNotTable: "mcp_servers.vmark.env がテーブルではありません"
+  mcp.envNotTable: "mcp_servers.xmark.env がテーブルではありません"
 
   # MCP ブリッジ — 認可プリンシパルが結び付くクライアント資格情報
-  mcp.principalMissing: "この AI クライアントは VMark の資格情報を提示しなかったため、委任された操作を拒否しました。「設定 > 連携」を開いてインストールを実行し、クライアントを再起動してください。"
-  mcp.principalUnknown: "この AI クライアントが提示した資格情報は VMark に登録されていないため、委任された操作を拒否しました。「設定 > 連携」を開いてインストールを実行し、クライアントを再起動してください。"
-  mcp.principalAmbiguous: "この AI クライアントが提示した資格情報は複数のクライアント（%{detail}）に設定されているため、VMark は区別できません。「設定 > 連携」を開いてそれぞれにインストールを実行し、再起動してください。"
+  mcp.principalMissing: "この AI クライアントは XMark の資格情報を提示しなかったため、委任された操作を拒否しました。「設定 > 連携」を開いてインストールを実行し、クライアントを再起動してください。"
+  mcp.principalUnknown: "この AI クライアントが提示した資格情報は XMark に登録されていないため、委任された操作を拒否しました。「設定 > 連携」を開いてインストールを実行し、クライアントを再起動してください。"
+  mcp.principalAmbiguous: "この AI クライアントが提示した資格情報は複数のクライアント（%{detail}）に設定されているため、XMark は区別できません。「設定 > 連携」を開いてそれぞれにインストールを実行し、再起動してください。"
 
   # MCP client config — reading, backing up and writing
   mcp.readFailed: "%{path} の読み込みに失敗しました: %{detail}"
   mcp.createDirFailed: "ディレクトリ %{path} の作成に失敗しました: %{detail}"
-  mcp.configChangedOnDisk: "VMark が更新している間に %{path} がディスク上で変更されました。書き込んでいるクライアントを終了してから再試行してください。"
+  mcp.configChangedOnDisk: "XMark が更新している間に %{path} がディスク上で変更されました。書き込んでいるクライアントを終了してから再試行してください。"
   mcp.backupWriteFailed: "バックアップ %{path} の書き込みに失敗しました: %{detail}"
   mcp.backupFlushFailed: "バックアップ %{path} のフラッシュに失敗しました: %{detail}"
   mcp.backupSyncFailed: "バックアップ %{path} の同期に失敗しました: %{detail}"
@@ -416,37 +416,37 @@ errors:
   mcp.writeConfigPartialOrphaned: "%{path} の書き込みに失敗しました: %{detail}。不完全なファイルも削除できませんでした（%{cleanup_detail}）。再試行する前に手動で削除してください。そのままでは次回のインストールで破損した設定として読み込まれます。"
 
   # === Secure store (secure_store.rs) ===
-  secureStore.keychainDenied: "キーチェーンへのアクセスが拒否されました。キーチェーンのダイアログで VMark を許可するか、「キーチェーンアクセス」でアクセス権を付与してから、もう一度お試しください。"
+  secureStore.keychainDenied: "キーチェーンへのアクセスが拒否されました。キーチェーンのダイアログで XMark を許可するか、「キーチェーンアクセス」でアクセス権を付与してから、もう一度お試しください。"
 
   # === ワークスペースのアクセス許可 (workspace/grants/commands.rs, WI-LX1.1) ===
-  workspaceAccess.notGranted: "VMark には「%{path}」へのアクセスが許可されていません。ファイル → ワークスペースを開く... でフォルダを選択して許可してください。"
+  workspaceAccess.notGranted: "XMark には「%{path}」へのアクセスが許可されていません。ファイル → ワークスペースを開く... でフォルダを選択して許可してください。"
   workspaceAccess.pickerBusy: "フォルダ選択ダイアログはすでに開いています"
-  workspaceAccess.checkBusy: "VMark はまだそのフォルダへのアクセスを確認しています。少し待ってからもう一度お試しください"
-  workspaceAccess.listProtected: "VMark が開くことを許可されたフォルダの一覧は、VMark 自身しか変更できません"
+  workspaceAccess.checkBusy: "XMark はまだそのフォルダへのアクセスを確認しています。少し待ってからもう一度お試しください"
+  workspaceAccess.listProtected: "XMark が開くことを許可されたフォルダの一覧は、XMark 自身しか変更できません"
 
 # WI-LX1.1 — the folder picker Rust shows for workspace access
 workspaceAccess:
   pickTitle: "ワークスペースフォルダを開く"
-  confirmTitle: "このフォルダを開くことを VMark に許可"
+  confirmTitle: "このフォルダを開くことを XMark に許可"
 
 window:
   settings.title: "設定"
   pdfExport.title: "PDF を書き出す"
-  print.title: "VMark 印刷"
+  print.title: "XMark 印刷"
 
 # #1419 — the Windows close-to-tray icon's menu. Quit reuses menu.app.quit.
 tray:
-  show: "VMark を表示"
+  show: "XMark を表示"
 
-# #1527 — Windows: a VMark holds the single-instance lock but cannot be reached.
+# #1527 — Windows: a XMark holds the single-instance lock but cannot be reached.
 singleInstance:
-  unreachable.title: "VMark はすでに実行中です"
-  unreachable.body: "別の VMark プロセスが実行中ですが、応答していません。そのため、新しい VMark を安全に起動できません。\n\nタスク マネージャーを開いてすべての「VMark」プロセスを終了してから、VMark をもう一度起動してください。"
+  unreachable.title: "XMark はすでに実行中です"
+  unreachable.body: "別の XMark プロセスが実行中ですが、応答していません。そのため、新しい XMark を安全に起動できません。\n\nタスク マネージャーを開いてすべての「XMark」プロセスを終了してから、XMark をもう一度起動してください。"
 
 cli:
   dialogTitle: "シェルコマンド"
-  installed: "'vmark' コマンドを %{path} にインストールしました"
-  alreadyInstalled: "'vmark' コマンドは既に %{path} にインストールされています"
-  removed: "'vmark' コマンドを %{path} から削除しました"
-  notInstalled: "'vmark' コマンドはインストールされていません。"
-  runHint: "ターミナルから 'vmark' を実行できます。"
+  installed: "'xmark' コマンドを %{path} にインストールしました"
+  alreadyInstalled: "'xmark' コマンドは既に %{path} にインストールされています"
+  removed: "'xmark' コマンドを %{path} から削除しました"
+  notInstalled: "'xmark' コマンドはインストールされていません。"
+  runHint: "ターミナルから 'xmark' を実行できます。"

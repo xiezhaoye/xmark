@@ -33,7 +33,7 @@ function withDiagnostics(rows: ProviderDiagnostic[]) {
   );
 }
 
-describe("McpConfigInstaller — a config VMark cannot parse", () => {
+describe("McpConfigInstaller — a config XMark cannot parse", () => {
   beforeEach(() => {
     invokeMock.mockReset();
   });
@@ -70,7 +70,7 @@ describe("McpConfigInstaller — a config VMark cannot parse", () => {
     ]);
     render(<McpConfigInstaller />);
 
-    const line = await screen.findByText(/VMark cannot read/);
+    const line = await screen.findByText(/XMark cannot read/);
     expect(line).toHaveTextContent("~/.claude.json");
     expect(line).toHaveTextContent("Invalid JSON: expected `,` at line 4 column 3");
   });
@@ -145,7 +145,7 @@ describe("McpConfigInstaller — what each status offers", () => {
         status: "BinaryMissing",
         hasVmark: true,
         configuredBinaryPath: "/gone/vmark-mcp-server",
-        message: "Binary not found - reinstall VMark",
+        message: "Binary not found - reinstall XMark",
       }),
     ]);
     render(<McpConfigInstaller />);
@@ -188,7 +188,7 @@ describe("McpConfigInstaller — what each status offers", () => {
 
     expect(await screen.findByRole("button", { name: "Remove" })).toBeInTheDocument();
     expect(screen.getByText("Discontinued")).toBeInTheDocument();
-    expect(screen.getByText(/leftover VMark entry/)).toBeInTheDocument();
+    expect(screen.getByText(/leftover XMark entry/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Install" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Update" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Repair" })).not.toBeInTheDocument();

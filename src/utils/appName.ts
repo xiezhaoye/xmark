@@ -5,6 +5,8 @@
  * the WINDOW rather than a document — the native window title and the title-bar
  * strip when nothing is open (#1331).
  *
+ * XMark is an unofficial fork of VMark; the About page credits the original.
+ *
  * Not translated: it is the brand. `src-tauri/tauri.conf.json` spells it the
  * same way for the bundle, and every locale's `common.json` carries it verbatim
  * as `emptyState.title`.
@@ -13,4 +15,4 @@
  */
 
 /** The app's display name. */
-export const APP_NAME = "VMark";
+export const APP_NAME = "XMark";

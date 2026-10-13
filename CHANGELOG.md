@@ -11,6 +11,10 @@ section as part of the version bump (`.claude/rules/40-version-bump.md`).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-13
+
+First XMark release: an unofficial fork of VMark 0.9.99 by Xiaolai Li.
+
 ### Added (XMark fork)
 
 - Three-column layout: the workspace column lists workspaces by their full
@@ -28,6 +32,11 @@ section as part of the version bump (`.claude/rules/40-version-bump.md`).
 - The workspace column's hover "Duplicate" badge moved into the context menu.
 - File-tree toolbar rearranged; "show all files" is an eye toggle with a
   state-aware tooltip; the status bar no longer has an "open sidebar" button.
+- Renamed to XMark with its own app identifier (`app.xmark`), keychain
+  entries, `xmark` command-line launcher and update channel, so it installs
+  alongside VMark without sharing settings or updates. Its AI (MCP) entry is
+  `xmark`, separate from VMark's `vmark`.
+- The workspace column is on by default.
 
 ## [0.9.99] - 2026-10-13
 
@@ -295,7 +304,8 @@ section as part of the version bump (`.claude/rules/40-version-bump.md`).
 
 - Raised the `markdown-it` version floor past GHSA-253c-mchw-3w2r.
 
-[Unreleased]: https://github.com/xiaolai/vmark/compare/v0.9.99...HEAD
+[Unreleased]: https://github.com/xiezhaoye/xmark/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/xiezhaoye/xmark/releases/tag/v0.1.0
 [0.9.99]: https://github.com/xiaolai/vmark/releases/tag/v0.9.99
 [0.9.98]: https://github.com/xiaolai/vmark/releases/tag/v0.9.98
 [0.9.97]: https://github.com/xiaolai/vmark/releases/tag/v0.9.97

@@ -24,7 +24,7 @@
   "states.unpinnable": "Não fixável",
   "confidence.inferred": "Proveniência inferida — o conjunto de entradas registrado subestima o que o agente realmente consultou",
   "confidence.inferredShort": "inferida",
-  "confidence.unknown": "Proveniência desconhecida — esta alteração foi observada fora do VMark",
+  "confidence.unknown": "Proveniência desconhecida — esta alteração foi observada fora do XMark",
   "confidence.unknownShort": "desconhecida",
   "priorWaived": "isenta anteriormente ×{{count}}",
   "waiveExpiryPlaceholder": "Expira (opcional, YYYY-MM-DD)",

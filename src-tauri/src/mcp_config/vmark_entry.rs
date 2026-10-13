@@ -1,6 +1,6 @@
 //! The `vmark` server entry itself — upsert only the fields VMark owns.
 //!
-//! Install used to `insert("vmark", { "command": … })`, replacing the whole
+//! Install used to `insert(super::MCP_ENTRY_NAME, { "command": … })`, replacing the whole
 //! entry. That is the same class of bug as replacing the whole `mcpServers`
 //! object, one level deeper: a user's `env`, `timeout`, `disabled` flag or
 //! extra `args` on OUR entry were silently discarded on every install and
@@ -120,10 +120,10 @@ pub(crate) fn upsert_json_vmark(
     client_token: &str,
 ) -> Result<(), String> {
     let entry = servers
-        .entry("vmark")
+        .entry(super::MCP_ENTRY_NAME)
         .or_insert_with(|| JsonValue::Object(Map::new()));
     let entry = entry.as_object_mut().ok_or_else(|| {
-        rust_i18n::t!("errors.mcp.vmarkEntryNotObject", key = "mcpServers.vmark").to_string()
+        rust_i18n::t!("errors.mcp.vmarkEntryNotObject", key = "mcpServers.xmark").to_string()
     })?;
 
     entry.insert(
@@ -143,7 +143,7 @@ pub(crate) fn upsert_json_vmark(
 
 /// How a `vmark` entry we have to CREATE must be written.
 ///
-/// A standard `[mcp_servers.vmark]` header is the idiomatic Codex form, but it
+/// A standard `[mcp_servers.xmark]` header is the idiomatic Codex form, but it
 /// is illegal in a *value* context — inside an inline `mcp_servers = { … }` or
 /// under a dotted `mcp_servers.other.command = …`. There, `toml_edit` does not
 /// merely emit invalid TOML: `InlineTable`'s `TableLike::insert` unwraps
@@ -185,18 +185,18 @@ pub(crate) fn upsert_toml_vmark(
     binary_path: &str,
     client_token: &str,
 ) -> Result<(), String> {
-    if !servers.contains_key("vmark") {
-        servers.insert("vmark", style.empty_entry());
+    if !servers.contains_key(super::MCP_ENTRY_NAME) {
+        servers.insert(super::MCP_ENTRY_NAME, style.empty_entry());
     }
     // The `env` table's style follows the ENTRY, not `mcp_servers`. Read
     // before the mutable borrow below.
     let env_style = TomlEntryStyle::of_parent(
         servers
-            .get("vmark")
+            .get(super::MCP_ENTRY_NAME)
             .ok_or_else(|| rust_i18n::t!("errors.mcp.vmarkEntryNotTable").to_string())?,
     );
     let entry = servers
-        .get_mut("vmark")
+        .get_mut(super::MCP_ENTRY_NAME)
         .and_then(TomlItem::as_table_like_mut)
         .ok_or_else(|| rust_i18n::t!("errors.mcp.vmarkEntryNotTable").to_string())?;
 

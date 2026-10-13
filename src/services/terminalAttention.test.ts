@@ -66,7 +66,7 @@ describe("notifyTerminalAttention", () => {
     mockIsGranted.mockResolvedValue(true);
     await notifyTerminalAttention("notes.md");
     expect(mockRequest).not.toHaveBeenCalled();
-    expect(mockSend).toHaveBeenCalledWith({ title: "VMark", body: "statusbar:terminal.notify.attention|notes.md" });
+    expect(mockSend).toHaveBeenCalledWith({ title: "XMark", body: "statusbar:terminal.notify.attention|notes.md" });
   });
 
   it("requests permission once, then sends if granted", async () => {
@@ -121,7 +121,7 @@ describe("maybeNotifyTerminalBell", () => {
     mockIsGranted.mockResolvedValue(true);
     maybeNotifyTerminalBell();
     await vi.waitFor(() => expect(mockSend).toHaveBeenCalledWith({
-      title: "VMark",
+      title: "XMark",
       body: "statusbar:terminal.notify.attention|notes.md",
     }));
   });
@@ -155,7 +155,7 @@ describe("maybeNotifyTerminalBell", () => {
     mockIsGranted.mockResolvedValue(true);
     maybeNotifyTerminalBell();
     await vi.waitFor(() => expect(mockSend).toHaveBeenCalledWith({
-      title: "VMark",
+      title: "XMark",
       body: "statusbar:terminal.notify.attention|statusbar:terminal.ariaLabel",
     }));
   });

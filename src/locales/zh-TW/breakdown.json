@@ -24,7 +24,7 @@
   "states.unpinnable": "無法固定",
   "confidence.inferred": "來源為推斷 — 記錄的輸入集可能少於智慧代理實際參考的內容",
   "confidence.inferredShort": "推斷",
-  "confidence.unknown": "來源未知 — 此變更是在 VMark 之外被觀測到的",
+  "confidence.unknown": "來源未知 — 此變更是在 XMark 之外被觀測到的",
   "confidence.unknownShort": "未知",
   "priorWaived": "先前已豁免 ×{{count}}",
   "waiveExpiryPlaceholder": "到期時間（選填，YYYY-MM-DD）",

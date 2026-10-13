@@ -24,7 +24,7 @@
   "states.unpinnable": "Unpinnable",
   "confidence.inferred": "Provenance inferred — the recorded input set under-approximates what the agent actually consulted",
   "confidence.inferredShort": "inferred",
-  "confidence.unknown": "Provenance unknown — this change was observed outside VMark",
+  "confidence.unknown": "Provenance unknown — this change was observed outside XMark",
   "confidence.unknownShort": "unknown",
   "priorWaived": "previously waived ×{{count}}",
   "waiveExpiryPlaceholder": "Expires (optional, YYYY-MM-DD)",

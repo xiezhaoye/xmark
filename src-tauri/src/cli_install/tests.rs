@@ -8,7 +8,7 @@ use super::*;
 fn script_content_is_valid_bash() {
     assert!(SCRIPT_CONTENT.starts_with("#!/bin/bash\n"));
     assert!(SCRIPT_CONTENT.ends_with('\n'));
-    assert!(SCRIPT_CONTENT.contains("open -b app.vmark"));
+    assert!(SCRIPT_CONTENT.contains("open -b app.xmark"));
     // The content travels inside a command-line argument, which cannot hold a NUL.
     assert!(!SCRIPT_CONTENT.contains('\0'));
 }

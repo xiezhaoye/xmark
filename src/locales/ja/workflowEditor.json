@@ -43,7 +43,7 @@
   "settings.fetchActionMetadata.label": "アクションのメタデータを取得",
   "settings.fetchActionMetadata.description": "参照されている GitHub Actions の `action.yml` を取得し、構造化エディタの `with:` フォームに反映します。無効にするとワークフローエディタは完全にオフラインになり、ネットワークリクエストは行われません。",
   "settings.actionlint.label": "actionlint が利用可能なら使用",
-  "settings.actionlint.description": "`actionlint` バイナリが PATH にあれば、ワークフローファイルに対して実行してより詳細な診断を得ます。インストールされていない場合、VMark はセッションごとに一度だけ通知し、チェックをスキップします。",
+  "settings.actionlint.description": "`actionlint` バイナリが PATH にあれば、ワークフローファイルに対して実行してより詳細な診断を得ます。インストールされていない場合、XMark はセッションごとに一度だけ通知し、チェックをスキップします。",
   "settings.preserveYamlFormatting.label": "保存時に YAML の書式を保持",
   "settings.preserveYamlFormatting.description": "構造化エディタが変更を保存する際、可能な限りコメント・アンカー・既存の書式を保持します。無効にすると保存のたびに整形し直します。",
   "form.job.kind": "ジョブ",

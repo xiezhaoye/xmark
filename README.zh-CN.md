@@ -31,14 +31,24 @@ XMark 保留了 VMark 的全部功能，主要改造了文件夹和工作区的�
 - 在文件树里点文件夹那一行即可展开或收起；行不再支持拖拽，触控板第一次点击就能生效。
 - 文件树工具栏：左边是展开/折叠/显示全部文件，右边是新建文件和新建文件夹，文件/大纲/历史记录的切换按钮移到了底部；「显示全部文件」改为眼睛图标，悬停提示会说明点击后的效果。
 
+## 下载
+
+在 [Releases](https://github.com/xiezhaoye/xmark/releases/latest) 下载最新的 `.dmg`（macOS，Apple Silicon 芯片）。
+
+这个安装包没有经过 Apple 公证，所以 macOS 会拦截**第一次**打开。把 XMark 拖进「应用程序」后，先打开一次，再到 **系统设置 → 隐私与安全性**，在 XMark 的提示旁点 **仍要打开**。也可以在终端里执行：
+
+```bash
+xattr -dr com.apple.quarantine /Applications/XMark.app
+```
+
+之后再打开、以及 App 内自动更新，都不会再被拦截。XMark 可以和 VMark 同时安装：它有自己的应用标识（`app.xmark`）、设置和更新渠道，互不影响。
+
 ## 构建 XMark
 
-目前还没有 XMark 的安装包，需要从源码构建，步骤见英文 README 中的 [Building from Source](README.md#building-from-source)。实际构建中的两点经验：
+从源码构建的步骤见英文 README 中的 [Building from Source](README.md#building-from-source)。实际构建中的两点经验：
 
 - 使用 Node.js 22 或 24（Node 25 会被部分依赖的版本检查拒绝）。
 - 第一次运行前先构建一次 MCP 辅助程序：`pnpm --dir server/mcp build:sidecar`，再运行 `pnpm tauri:dev`。
-
-目前 App 内部仍显示 **VMark** 的名称，并沿用 VMark 的应用标识；App 本身的改名会在后续完成。
 
 ## 许可协议
 

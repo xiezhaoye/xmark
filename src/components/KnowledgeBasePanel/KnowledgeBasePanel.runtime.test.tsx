@@ -96,7 +96,7 @@ describe("KnowledgeBasePanel runtime state (WI-FL1.1)", () => {
     probeAnswers(runtime({ cli: "missing", cliSource: null, detail: "content-server runtime not provisioned" }));
     renderPanel({ isDevBuild: false });
     const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent(/no vmark release/i);
+    expect(alert).toHaveTextContent(/no xmark release/i);
     expect(alert).toHaveTextContent(/every platform/i);
     expect(alert).not.toHaveTextContent(/this build/i);
     expect(alert).not.toHaveTextContent(/VMARK_CONTENT_SERVER_CLI/);
@@ -121,7 +121,7 @@ describe("KnowledgeBasePanel runtime state (WI-FL1.1)", () => {
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent(/VMARK_CONTENT_SERVER_CLI/);
     expect(alert).toHaveTextContent(/base-kb/);
-    expect(alert).not.toHaveTextContent(/no vmark release/i);
+    expect(alert).not.toHaveTextContent(/no xmark release/i);
     expect(startButton()).toBeNull();
   });
 
@@ -131,7 +131,7 @@ describe("KnowledgeBasePanel runtime state (WI-FL1.1)", () => {
     const alert = await screen.findByRole("alert");
     const items = alert.querySelectorAll("li");
     expect(items).toHaveLength(2);
-    expect(items[0]).toHaveTextContent(/no vmark release/i);
+    expect(items[0]).toHaveTextContent(/no xmark release/i);
     expect(items[1]).toHaveTextContent(/Node\.js/);
     expect(startButton()).toBeNull();
   });

@@ -252,36 +252,36 @@ describe('getAppDataDir — per-platform port file location', () => {
 
   it('uses ~/Library/Application Support on macOS', async () => {
     expect(await pathOn('darwin')).toBe(
-      '/home/u/Library/Application Support/app.vmark/mcp-port',
+      '/home/u/Library/Application Support/app.xmark/mcp-port',
     );
   });
 
   it('honours XDG_DATA_HOME on Linux', async () => {
-    expect(await pathOn('linux', { XDG_DATA_HOME: '/xdg' })).toBe('/xdg/app.vmark/mcp-port');
+    expect(await pathOn('linux', { XDG_DATA_HOME: '/xdg' })).toBe('/xdg/app.xmark/mcp-port');
   });
 
   it('falls back to ~/.local/share on Linux without XDG_DATA_HOME', async () => {
     expect(await pathOn('linux', { XDG_DATA_HOME: undefined })).toBe(
-      '/home/u/.local/share/app.vmark/mcp-port',
+      '/home/u/.local/share/app.xmark/mcp-port',
     );
   });
 
   it('honours APPDATA on Windows', async () => {
     expect(await pathOn('win32', { APPDATA: 'C:\\Roaming' })).toBe(
-      'C:\\Roaming/app.vmark/mcp-port',
+      'C:\\Roaming/app.xmark/mcp-port',
     );
   });
 
   it('falls back to ~/AppData/Roaming on Windows without APPDATA', async () => {
     expect(await pathOn('win32', { APPDATA: undefined })).toBe(
-      '/home/u/AppData/Roaming/app.vmark/mcp-port',
+      '/home/u/AppData/Roaming/app.xmark/mcp-port',
     );
   });
 
   it('best-guesses the XDG layout on an unrecognised platform', async () => {
     // Not a supported target, but returning something plausible beats
     // throwing inside the reconnect loop.
-    expect(await pathOn('freebsd')).toBe('/home/u/.local/share/app.vmark/mcp-port');
+    expect(await pathOn('freebsd')).toBe('/home/u/.local/share/app.xmark/mcp-port');
   });
 });
 

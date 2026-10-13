@@ -115,7 +115,7 @@ fn install_merges_and_backs_up_an_existing_config() {
         serde_json::from_str(&fs::read_to_string(&path).unwrap()).unwrap();
     assert_eq!(json["numStartups"], 42);
     assert!(json["projects"]["/tmp/x"].is_object());
-    assert_eq!(json["mcpServers"]["vmark"]["command"], BIN);
+    assert_eq!(json["mcpServers"]["xmark"]["command"], BIN);
 }
 
 #[test]
@@ -127,7 +127,7 @@ fn install_creates_missing_parent_directories() {
 
     assert!(backup.is_none(), "nothing to back up on a fresh install");
     let doc: toml::Table = fs::read_to_string(&path).unwrap().parse().unwrap();
-    assert_eq!(doc["mcp_servers"]["vmark"]["command"].as_str(), Some(BIN));
+    assert_eq!(doc["mcp_servers"]["xmark"]["command"].as_str(), Some(BIN));
 }
 
 #[cfg(unix)]
@@ -220,7 +220,7 @@ fn uninstall_on_malformed_toml_errors_leaves_the_file_untouched_and_makes_no_bac
 fn uninstall_removes_the_entry_backs_up_and_keeps_everything_else() {
     let dir = tempdir().unwrap();
     let path = dir.path().join(".claude.json");
-    let existing = r#"{"numStartups": 7, "mcpServers": {"vmark": {"command": "x"}, "other": {"command": "y"}}}"#;
+    let existing = r#"{"numStartups": 7, "mcpServers": {"xmark": {"command": "x"}, "other": {"command": "y"}}}"#;
     fs::write(&path, existing).unwrap();
 
     let outcome = uninstall_config_at(&path, "claude").expect("valid config uninstalls");
@@ -235,7 +235,7 @@ fn uninstall_removes_the_entry_backs_up_and_keeps_everything_else() {
         serde_json::from_str(&fs::read_to_string(&path).unwrap()).unwrap();
     assert_eq!(json["numStartups"], 7);
     assert_eq!(json["mcpServers"]["other"]["command"], "y");
-    assert!(json["mcpServers"].get("vmark").is_none());
+    assert!(json["mcpServers"].get("xmark").is_none());
 }
 
 #[test]

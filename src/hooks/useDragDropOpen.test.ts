@@ -8,6 +8,7 @@
 
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { setClassicWorkspaceMode } from "@/test/classicWorkspaceMode";
 import { fileBytes } from "@/test/fileBytes";
 
 // --- Mocks ---
@@ -87,6 +88,7 @@ describe("useDragDropOpen.openFileInNewTab — size-tier routing", () => {
     vi.clearAllMocks();
     dragDropHandler = null;
     useSettingsStore.getState().resetSettings();
+    setClassicWorkspaceMode();
     useLargeFileSessionStore.setState({ forcedSourceTabs: {} });
     useFileLoadStore.getState().endLoad();
     useTabStore.getState().removeWindow(WINDOW);
@@ -248,4 +250,9 @@ describe("useDragDropOpen.openFileInNewTab — size-tier routing", () => {
       cmd === "open_workspace_with_files_in_new_window"
     )).toBe(false);
   });
+});
+
+// These suites assert the classic (rail-off) workspace model; XMark defaults the rail on.
+beforeEach(() => {
+  setClassicWorkspaceMode();
 });

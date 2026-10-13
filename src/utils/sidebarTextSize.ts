@@ -13,6 +13,7 @@
  * @coordinates-with components/Sidebar/FileExplorer/FileExplorer.tsx — tree row height
  * @module utils/sidebarTextSize
  */
+
 /** The size presets offered in Settings → Appearance, in px. */
 export const SIDEBAR_FONT_SIZES = [13, 14, 15, 16] as const;
 

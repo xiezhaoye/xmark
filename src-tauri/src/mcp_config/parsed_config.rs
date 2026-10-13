@@ -66,7 +66,7 @@ impl Parsed {
             Parsed::Json(json) => {
                 let entry = json
                     .get(format.servers_key())
-                    .and_then(|s| s.get("vmark"))?;
+                    .and_then(|s| s.get(super::MCP_ENTRY_NAME))?;
                 Some(match format {
                     ConfigFormat::OpenCode => VmarkEntry::OpenCode(entry),
                     _ => VmarkEntry::Json(entry),
@@ -75,7 +75,7 @@ impl Parsed {
             Parsed::Toml(doc) => doc
                 .get(format.servers_key())
                 .and_then(TomlItem::as_table_like)
-                .and_then(|s| s.get("vmark"))
+                .and_then(|s| s.get(super::MCP_ENTRY_NAME))
                 .map(VmarkEntry::Toml),
         }
     }

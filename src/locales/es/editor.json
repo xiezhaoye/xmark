@@ -29,7 +29,7 @@
   "preview.htmlIframeTitle": "Vista previa HTML",
   "preview.htmlTrustSafe": "Vista previa segura — los scripts están bloqueados",
   "preview.htmlTrustEnable": "Activar vista previa de confianza…",
-  "preview.htmlTrustWarning": "La vista previa de confianza ejecuta los scripts de este documento en un origen aislado, sin acceso a la red ni a VMark. Actívala solo para archivos que hayas escrito o en los que confíes plenamente.",
+  "preview.htmlTrustWarning": "La vista previa de confianza ejecuta los scripts de este documento en un origen aislado, sin acceso a la red ni a XMark. Actívala solo para archivos que hayas escrito o en los que confíes plenamente.",
   "preview.htmlTrustConfirm": "Activar scripts",
   "preview.htmlTrustActive": "De confianza — scripts activados",
   "preview.htmlTrustStale": "Puede no coincidir con el código fuente actual",

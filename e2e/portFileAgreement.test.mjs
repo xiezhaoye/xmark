@@ -22,7 +22,7 @@ import { homedir, platform } from "node:os";
 import { join } from "node:path";
 import { readFileSync } from "node:fs";
 
-const RELEASE_ID = "app.vmark";
+const RELEASE_ID = "app.xmark";
 
 /** The path `e2e/lib/vmarkMcp.mjs` computes, re-derived from its own source. */
 function harnessPath(identifier) {

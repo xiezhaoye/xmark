@@ -39,7 +39,7 @@ fn json_config(dir: &Path, name: &str, token: Option<&str>) -> PathBuf {
     };
     std::fs::write(
         &path,
-        serde_json::json!({ "mcpServers": { "vmark": entry } }).to_string(),
+        serde_json::json!({ "mcpServers": { "xmark": entry } }).to_string(),
     )
     .expect("write config");
     path
@@ -49,7 +49,7 @@ fn toml_config(dir: &Path, name: &str, token: &str) -> PathBuf {
     let path = dir.join(name);
     std::fs::write(
         &path,
-        format!("[mcp_servers.vmark]\ncommand = \"/bin/vmark\"\n\n[mcp_servers.vmark.env]\nVMARK_MCP_TOKEN = \"{token}\"\n"),
+        format!("[mcp_servers.xmark]\ncommand = \"/bin/vmark\"\n\n[mcp_servers.xmark.env]\nVMARK_MCP_TOKEN = \"{token}\"\n"),
     )
     .expect("write config");
     path
@@ -194,7 +194,7 @@ fn published_credentials_are_visible_to_readers() {
 #[test]
 fn preview_shows_the_configured_credential_when_there_is_one() {
     let existing = serde_json::json!({
-        "mcpServers": { "vmark": { "command": "/bin/vmark", "env": { "VMARK_MCP_TOKEN": "kept" } } }
+        "mcpServers": { "xmark": { "command": "/bin/vmark", "env": { "VMARK_MCP_TOKEN": "kept" } } }
     })
     .to_string();
     assert_eq!(preview_token("claude", Some(&existing)), "kept");

@@ -130,12 +130,12 @@ function confirmationRefusal(canonicalPath: string, request: ConfirmationRequest
     case "opened":
       return {
         error: "APPROVAL_REQUIRED",
-        message: `VMark opened a folder dialog at ${canonicalPath}. The user must choose that folder there before it can open as a workspace. Ask them to, then retry.`,
+        message: `XMark opened a folder dialog at ${canonicalPath}. The user must choose that folder there before it can open as a workspace. Ask them to, then retry.`,
       };
     case "busy":
       return {
         error: "BUSY",
-        message: `Another folder dialog is already open in VMark, so none was shown for ${canonicalPath}. Ask the user to finish with it, then retry.`,
+        message: `Another folder dialog is already open in XMark, so none was shown for ${canonicalPath}. Ask the user to finish with it, then retry.`,
       };
     case "failed":
       return {
