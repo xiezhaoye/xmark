@@ -48,6 +48,8 @@ First XMark release: an unofficial fork of VMark 0.9.99 by Xiaolai Li.
   `xmark`, separate from VMark's `vmark`.
 - The workspace column is on by default.
 
+## Upstream VMark history
+
 ## [0.9.99] - 2026-10-13
 
 ### Changed
