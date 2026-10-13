@@ -1,9 +1,9 @@
 {
-  "version": "0.1.1",
+  "version": "0.1.2",
   "date": "2026-10-13",
-  "dmgFile": "XMark_0.1.1_aarch64.dmg",
+  "dmgFile": "XMark_0.1.2_aarch64.dmg",
   "dmgSizeMB": 39,
-  "updaterFile": "v0.1.1/XMark_aarch64.app.tar.gz",
-  "updaterSignature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTbkkyUEIrOHJkQWJlbWJTaTY1RVZQckxTTnFaY3ZqSWpPQS9wVTNNTStoVlM4U1Y5THJ0aW9OMTAzekZ0cDI2YzBiZnNGR1UzdkUwMlVGRmpmbGh2SEtPR01ZMzg1R2drPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxODg2NjI1CWZpbGU6WE1hcmsuYXBwLnRhci5negl2ZXJzaW9uOjAuMS4xCk9lb1RxNFJvYjd1WUh2akwxY2JqZnNDV1VPZ0ZQLzUrdWtkSjhiYml6c21ENytLWTBDdWZ4ZXVsQzMwMUZHMVYwWEZRdjdyc2FaemlHQVN4a2h4SERBPT0K",
-  "notes": "XMark 0.1.1"
+  "updaterFile": "v0.1.2/XMark_aarch64.app.tar.gz",
+  "updaterSignature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTbkkyUEIrOHJkQVdieGtjZWxadjF3eFNFazhFT2dIZTZEMDJYaFprVmd1UGFrdXcvYi81bVB5ZUtSZUJQVDJycC9XN2pFQmJNS3JpM05lL2l4bGRjZnliUFVKZUMzSGd3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxODg5NTQ1CWZpbGU6WE1hcmsuYXBwLnRhci5negl2ZXJzaW9uOjAuMS4yClp4NVY5NVYzNURqczgvRWhLc0YzWW9sMGc0OGpiQmhIRkNDZnNrZ2I2YVNYbHNRQWh0TE5iWFlnS0dpSGJRd0EwTDFHYUlzM3JNUDVHdkFXWmhHSURBPT0K",
+  "notes": "XMark 0.1.2"
 }
