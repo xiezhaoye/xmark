@@ -67,7 +67,7 @@ Right-click a file, a folder, or the empty space below the tree to access the co
 | New Folder | Folders, empty space | Create a new folder in this location |
 | Open Terminal Here | Folders | Start a new terminal session in this folder (disabled once 5 sessions are open) — see [Terminal](/guide/terminal) |
 
-You can also **drag and drop** files between folders directly in the tree.
+Clicking a folder row opens or closes it. Dragging rows is disabled, so a trackpad click is never mistaken for a drag; use **Move To…** to move a file into another folder.
 
 ### Visibility Toggles
 

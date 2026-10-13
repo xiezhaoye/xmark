@@ -165,19 +165,25 @@ export function useExplorerActionWiring({
     [contextMenu, openFileByType, duplicateFile, moveItem, deleteItem, copyPath, revealInFinder, handleNewFile, handleNewFolder, t, treeRef]
   );
 
-  // File activation (single click or Enter on a file row).
+  // Row activation (a single click on a row).
+  //
+  // A folder row toggles open/closed, as in Finder and VS Code. It used to
+  // only select, so the folder opened from its 14px chevron alone — a target
+  // trackpad taps often missed, which read as "the first click did nothing".
   //
   // react-arborist does not await this, so the promise ends here: the
   // system-app branch of `openFileByType` has no try/catch of its own, and a
   // refused `openWithDefaultApp` surfaced as an unhandled rejection.
   // Same boundary treatment as the context-menu route above.
   const handleActivate = useCallback(
-    (node: { data: FileNodeType }) => {
-      if (!node.data.isFolder) {
-        void openFileByType(node.data.id).catch((e: unknown) =>
-          fileExplorerError("Failed to open file:", node.data.id, e),
-        );
+    (node: { data: FileNodeType; toggle?: () => void }) => {
+      if (node.data.isFolder) {
+        node.toggle?.();
+        return;
       }
+      void openFileByType(node.data.id).catch((e: unknown) =>
+        fileExplorerError("Failed to open file:", node.data.id, e),
+      );
     },
     [openFileByType]
   );

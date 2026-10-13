@@ -97,10 +97,14 @@ describe("useExplorerActionWiring", () => {
     );
   });
 
-  it("activation opens files and ignores folders", () => {
+  it("activation opens files and toggles folders", () => {
     const w = wiring();
-    w.handleActivate({ data: { id: "/ws/dir", name: "dir", isFolder: true } });
-    w.handleActivate({ data: { id: "/ws/a.md", name: "a.md", isFolder: false } });
+    const toggleDir = vi.fn();
+    const toggleFile = vi.fn();
+    w.handleActivate({ data: { id: "/ws/dir", name: "dir", isFolder: true }, toggle: toggleDir });
+    w.handleActivate({ data: { id: "/ws/a.md", name: "a.md", isFolder: false }, toggle: toggleFile });
+    expect(toggleDir).toHaveBeenCalledTimes(1);
+    expect(toggleFile).not.toHaveBeenCalled();
     expect(ops.openFile).toHaveBeenCalledTimes(1);
     expect(ops.openFile).toHaveBeenCalledWith("/ws/a.md");
   });

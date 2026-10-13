@@ -3,15 +3,17 @@
  *
  * Purpose: Workspace file tree panel using react-arborist for virtualized tree rendering.
  * Only available in workspace mode — shows the file types VMark can open (or every file,
- * via the header's showAllFiles toggle) with drag-and-drop, rename, delete, context menus.
+ * via the header's showAllFiles toggle) with rename, delete and context menus.
  * Non-markdown files open with the system default app.
  * User-visible strings are translated via the "sidebar" i18n namespace.
  *
  * User interactions:
- *   - Single click opens a file in a tab (react-arborist activates on click;
- *     Enter starts inline rename instead, since onRename is wired)
+ *   - Single click opens a file in a tab, or toggles a folder open/closed
+ *     (react-arborist activates on click; Enter starts inline rename instead,
+ *     since onRename is wired)
  *   - Right-click for context menu (file/folder/empty area variants)
- *   - Drag-and-drop to move files between folders
+ *   - Drag-and-drop is disabled (unreliable on trackpads); files move via
+ *     the context menu's Move To…
  *   - Inline rename on F2 or via context menu
  *
  * Key decisions:
@@ -75,7 +77,7 @@ interface FileExplorerProps {
   currentFilePath: string | null;
 }
 
-/** Workspace file tree panel with virtualized rendering, drag-and-drop, and context menu support. */
+/** Workspace file tree panel with virtualized rendering and context menu support. */
 export const FileExplorer = forwardRef<FileExplorerHandle, FileExplorerProps>(
   function FileExplorer({ currentFilePath }, ref) {
   const { t } = useTranslation("sidebar");
@@ -197,8 +199,12 @@ export const FileExplorer = forwardRef<FileExplorerHandle, FileExplorerProps>(
           onRename={handleRename}
           onDelete={handleDelete}
           onMove={handleMove}
-          disableDrag={false}
-          disableDrop={false}
+          // Drag-to-move is OFF. Every row was an HTML5 drag source, and a
+          // trackpad press that drifted a few pixels started a drag instead of
+          // a click — the row ignored the first click. Moving a file stays
+          // available from the context menu (Move To…). Flip both to re-enable.
+          disableDrag={true}
+          disableDrop={true}
           disableEdit={false}
         >
           {renderNode}
