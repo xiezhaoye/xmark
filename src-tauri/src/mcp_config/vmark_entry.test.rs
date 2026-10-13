@@ -117,7 +117,7 @@ fn an_absent_entry_under_an_inline_parent_is_created_inline() {
     assert!(!out.contains('['), "must stay inline, got: {out}");
     assert!(
         out.contains(&format!(
-            "vmark = {{ command = \"/bin/vmark\", env = {{ VMARK_MCP_TOKEN = \"{TOK}\" }} }}"
+            "xmark = {{ command = \"/bin/vmark\", env = {{ VMARK_MCP_TOKEN = \"{TOK}\" }} }}"
         )),
         "{out}"
     );
@@ -256,3 +256,4 @@ fn a_non_table_toml_vmark_entry_is_rejected() {
     let err = upsert_into(&mut doc, "/bin/vmark").expect_err("7 is not a table");
     assert!(err.contains("mcp_servers.xmark is not a table"), "{err}");
 }
+// WI-PRDY3.2 — assert XMark's MCP config key rather than the upstream key.

@@ -1,4 +1,5 @@
 //! Unit tests for the CLI install/uninstall module (see `mod.rs`).
+// WI-PRDY3.2 — assert the fork's user-facing product name.
 //! Split into a sibling file to keep `mod.rs` under the size gate. The
 //! install flow itself is exercised in `install_flow.test.rs`.
 
@@ -25,7 +26,7 @@ fn error_display_cancelled() {
 fn error_display_foreign() {
     let msg = CliInstallError::ForeignFile.to_string();
     assert!(msg.contains(CLI_PATH));
-    assert!(msg.contains("not installed by VMark"));
+    assert!(msg.contains("not installed by XMark"));
 }
 
 #[test]
