@@ -49,6 +49,14 @@ h1 { font-size: 40px; line-height: 1.2; margin: 16px 0 8px; letter-spacing: -0.5
 .notice h2 { font-size: 17px; margin: 0 0 6px; }
 .notice ol { margin: 0; padding-left: 20px; color: var(--muted); font-size: 15px; }
 code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: var(--line); padding: 2px 6px; border-radius: 6px; word-break: break-all; }
+.shot { margin: 40px 0 0; }
+.shot img, .gallery img { display: block; width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--line); background: var(--card); }
+.shot img { box-shadow: 0 12px 40px rgba(15, 23, 42, .18); }
+figcaption { color: var(--muted); font-size: 14px; text-align: center; margin: 10px 0 0; }
+.gallery { display: grid; gap: 20px; margin: 28px 0 0; }
+@media (min-width: 640px) { .gallery { grid-template-columns: repeat(3, 1fr); gap: 16px; } }
+.gallery figure, .shot { margin-left: 0; margin-right: 0; }
+.gallery figure { margin: 0; }
 footer { color: var(--muted); font-size: 13px; text-align: center; margin: 40px 0 0; }
 footer a { color: var(--muted); }
 </style>
@@ -64,6 +72,26 @@ footer a { color: var(--muted); }
     <p class="meta">适用于 Apple 芯片（M1 及更新）的 Mac · macOS 13.4 或更新 · {{DMG_SIZE}} MB</p>
     <p class="links"><a href="https://github.com/xiezhaoye/xmark">GitHub</a> · <a href="https://github.com/xiezhaoye/xmark/blob/main/CHANGELOG.md">更新日志</a> · <a href="https://github.com/xiezhaoye/xmark/issues">反馈问题</a></p>
   </section>
+
+  <figure class="shot">
+    <img src="screenshots/three-columns.webp" width="1600" height="1100" alt="XMark 三栏布局：左侧工作区分组，中间文件树，右侧文档">
+    <figcaption>三栏布局：工作区分组 · 文件树 · 文档</figcaption>
+  </figure>
+
+  <div class="gallery">
+    <figure>
+      <img src="screenshots/split-view.webp" width="1600" height="1098" loading="lazy" alt="Markdown 源码和预览左右并排">
+      <figcaption>源码和预览并排</figcaption>
+    </figure>
+    <figure>
+      <img src="screenshots/rail-folded.webp" width="1600" height="1101" loading="lazy" alt="工作区栏收起成一条细条">
+      <figcaption>工作区栏收起成细条</figcaption>
+    </figure>
+    <figure>
+      <img src="screenshots/both-folded.webp" width="1600" height="1100" loading="lazy" alt="两侧栏都收起，只留文档">
+      <figcaption>两侧栏都收起，专注写作</figcaption>
+    </figure>
+  </div>
 
   <ul class="features">
     <li><h2>三栏布局</h2><p>工作区、文件树、文档并排显示；两侧栏都能收起成一条细条。</p></li>

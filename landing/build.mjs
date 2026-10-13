@@ -2,7 +2,7 @@
 // release.json: fills in the download link and writes the updater manifest
 // served at /update/latest.json (its archive URL points at the R2 download
 // domain, so updates work without reaching GitHub).
-import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const here = import.meta.dirname;
@@ -32,6 +32,7 @@ rmSync(dist, { recursive: true, force: true });
 mkdirSync(join(dist, "update"), { recursive: true });
 writeFileSync(join(dist, "index.html"), html);
 copyFileSync(join(here, "logo.svg"), join(dist, "logo.svg"));
+cpSync(join(here, "screenshots"), join(dist, "screenshots"), { recursive: true });
 writeFileSync(join(dist, "update", "latest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
 writeFileSync(
   join(dist, "_headers"),
