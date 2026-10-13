@@ -1,4 +1,5 @@
 // @vitest-environment node
+// WI-PRDY3.1 — per-connection authenticated client approval binding.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 // open_workspace handler — fail-now -> approve -> AI-retry (plan WI-1.5).
@@ -42,8 +43,38 @@ beforeEach(() => {
 });
 
 describe("handleWorkspaceOpenWorkspace", () => {
+  it("fails closed when the authenticated client id is absent", async () => {
+    await handleWorkspaceOpenWorkspace("id1", { folderPath: "/proj", clientId: "forged" });
+
+    expect(openWorkspaceByPath).not.toHaveBeenCalled();
+    expect(useWorkspaceApprovalStore.getState().pending).toHaveLength(0);
+    expect(String(responses[0].error)).toContain("authenticated MCP client identity is missing");
+  });
+
+  it("binds approval to the authenticated connection, ignoring a clientId in tool args", async () => {
+    await handleWorkspaceOpenWorkspace(
+      "id1",
+      { folderPath: "/proj", clientId: "bridge-client-18" },
+      "bridge-client-17",
+    );
+    expect(useWorkspaceApprovalStore.getState().pending[0].clientId).toBe("bridge-client-17");
+    useWorkspaceApprovalStore.getState().resolveApproval("id1", "approve");
+    responses.length = 0;
+
+    await handleWorkspaceOpenWorkspace(
+      "id2",
+      { folderPath: "/proj", clientId: "bridge-client-17" },
+      "bridge-client-18",
+    );
+    expect(openWorkspaceByPath).not.toHaveBeenCalled();
+    expect((responses[0].data as { needsApproval?: boolean }).needsApproval).toBe(true);
+
+    await handleWorkspaceOpenWorkspace("id3", { folderPath: "/proj" }, "bridge-client-17");
+    expect(openWorkspaceByPath).toHaveBeenCalledWith("/proj", { windowLabel: "main" });
+  });
+
   it("rejects a missing folderPath", async () => {
-    await handleWorkspaceOpenWorkspace("id1", {});
+    await handleWorkspaceOpenWorkspace("id1", {}, "bridge-client-1");
     expect(responses[0].success).toBe(false);
     expect(String(responses[0].error)).toContain("INVALID_PATH");
     expect(openWorkspaceByPath).not.toHaveBeenCalled();
@@ -51,13 +82,13 @@ describe("handleWorkspaceOpenWorkspace", () => {
 
   it("rejects a path that Rust validation rejects (not a directory)", async () => {
     invokeMock.mockRejectedValueOnce(new Error("'/a/file.md' is not a directory"));
-    await handleWorkspaceOpenWorkspace("id1", { folderPath: "/a/file.md" });
+    await handleWorkspaceOpenWorkspace("id1", { folderPath: "/a/file.md" }, "bridge-client-1");
     expect(responses[0].success).toBe(false);
     expect(String(responses[0].error)).toContain("INVALID_PATH");
   });
 
   it("first call queues approval and fails now (does not open)", async () => {
-    await handleWorkspaceOpenWorkspace("id1", { folderPath: "/proj", clientId: "c1" });
+    await handleWorkspaceOpenWorkspace("id1", { folderPath: "/proj" }, "bridge-client-1");
 
     expect(openWorkspaceByPath).not.toHaveBeenCalled();
     expect(responses[0].success).toBe(false);
@@ -68,13 +99,13 @@ describe("handleWorkspaceOpenWorkspace", () => {
 
   it("retry after approval consumes the one-shot and opens under the guard", async () => {
     // First call queues the prompt.
-    await handleWorkspaceOpenWorkspace("id1", { folderPath: "/proj", clientId: "c1" });
+    await handleWorkspaceOpenWorkspace("id1", { folderPath: "/proj" }, "bridge-client-1");
     // User approves.
     useWorkspaceApprovalStore.getState().resolveApproval("id1", "approve");
     responses.length = 0;
 
     // Retry (same path/window/client) consumes and opens.
-    await handleWorkspaceOpenWorkspace("id2", { folderPath: "/proj", clientId: "c1" });
+    await handleWorkspaceOpenWorkspace("id2", { folderPath: "/proj" }, "bridge-client-1");
 
     expect(withReentryGuard).toHaveBeenCalledWith(
       "main",
@@ -89,22 +120,22 @@ describe("handleWorkspaceOpenWorkspace", () => {
   });
 
   it("a retry without approval fails again (no open)", async () => {
-    await handleWorkspaceOpenWorkspace("id1", { folderPath: "/proj", clientId: "c1" });
+    await handleWorkspaceOpenWorkspace("id1", { folderPath: "/proj" }, "bridge-client-1");
     responses.length = 0;
     // Retry WITHOUT approving — still needs approval.
-    await handleWorkspaceOpenWorkspace("id2", { folderPath: "/proj", clientId: "c1" });
+    await handleWorkspaceOpenWorkspace("id2", { folderPath: "/proj" }, "bridge-client-1");
     expect(openWorkspaceByPath).not.toHaveBeenCalled();
     expect(responses[0].success).toBe(false);
   });
 
   it("a busy transition guard fails BUSY and does NOT consume the grant (M4)", async () => {
-    await handleWorkspaceOpenWorkspace("id1", { folderPath: "/proj", clientId: "c1" });
+    await handleWorkspaceOpenWorkspace("id1", { folderPath: "/proj" }, "bridge-client-1");
     useWorkspaceApprovalStore.getState().resolveApproval("id1", "approve");
     responses.length = 0;
     // The guard is held by a concurrent menu transition → callback skipped.
     withReentryGuard.mockImplementationOnce(async () => undefined);
 
-    await handleWorkspaceOpenWorkspace("id2", { folderPath: "/proj", clientId: "c1" });
+    await handleWorkspaceOpenWorkspace("id2", { folderPath: "/proj" }, "bridge-client-1");
 
     expect(openWorkspaceByPath).not.toHaveBeenCalled();
     expect(responses[0].success).toBe(false);
@@ -114,12 +145,12 @@ describe("handleWorkspaceOpenWorkspace", () => {
   });
 
   it("an internal open failure fails closed (no false success) (M8)", async () => {
-    await handleWorkspaceOpenWorkspace("id1", { folderPath: "/proj", clientId: "c1" });
+    await handleWorkspaceOpenWorkspace("id1", { folderPath: "/proj" }, "bridge-client-1");
     useWorkspaceApprovalStore.getState().resolveApproval("id1", "approve");
     responses.length = 0;
     openWorkspaceByPath.mockResolvedValueOnce(false);
 
-    await handleWorkspaceOpenWorkspace("id2", { folderPath: "/proj", clientId: "c1" });
+    await handleWorkspaceOpenWorkspace("id2", { folderPath: "/proj" }, "bridge-client-1");
 
     expect(responses[0].success).toBe(false);
     expect(String(responses[0].error)).toContain("INTERNAL");
@@ -133,7 +164,7 @@ describe("handleWorkspaceOpenWorkspace", () => {
     for (let i = 0; i < 32; i++) store.requestApproval(`p${i}`, `/full${i}`, "main", "c1");
     responses.length = 0;
 
-    await handleWorkspaceOpenWorkspace("overflow", { folderPath: "/new", clientId: "c1" });
+    await handleWorkspaceOpenWorkspace("overflow", { folderPath: "/new" }, "bridge-client-1");
 
     expect(responses[0].success).toBe(false);
     expect(String(responses[0].error)).toContain("RESOURCE_EXHAUSTED");
@@ -149,7 +180,7 @@ describe("open_workspace confirms an ungranted folder in the picker (WI-LX1.1)",
   const refused = { code: "permission-denied", message: "not granted" };
 
   async function approve(path = "/proj"): Promise<void> {
-    await handleWorkspaceOpenWorkspace("id1", { folderPath: path });
+    await handleWorkspaceOpenWorkspace("id1", { folderPath: path }, "bridge-client-1");
     useWorkspaceApprovalStore.getState().resolveApproval("id1", "approve");
     responses.length = 0;
   }
@@ -172,7 +203,7 @@ describe("open_workspace confirms an ungranted folder in the picker (WI-LX1.1)",
     rustAnswers(async () => { throw refused; });
     existsMock.mockRejectedValue(new Error("forbidden path: /proj"));
 
-    await handleWorkspaceOpenWorkspace("id2", { folderPath: "/proj" });
+    await handleWorkspaceOpenWorkspace("id2", { folderPath: "/proj" }, "bridge-client-1");
 
     expect(invokeMock).toHaveBeenCalledWith("request_workspace_confirmation", { path: "/proj" });
     expect(openWorkspaceByPath).not.toHaveBeenCalled();
@@ -189,12 +220,12 @@ describe("open_workspace confirms an ungranted folder in the picker (WI-LX1.1)",
     await approve();
     rustAnswers(async () => { throw refused; });
     existsMock.mockRejectedValue(new Error("forbidden path: /proj"));
-    await handleWorkspaceOpenWorkspace("id2", { folderPath: "/proj" });
+    await handleWorkspaceOpenWorkspace("id2", { folderPath: "/proj" }, "bridge-client-1");
     responses.length = 0;
 
     // The pick made Rust record the folder; now it grants it.
     rustAnswers(async () => "/proj");
-    await handleWorkspaceOpenWorkspace("id3", { folderPath: "/proj" });
+    await handleWorkspaceOpenWorkspace("id3", { folderPath: "/proj" }, "bridge-client-1");
 
     expect(openWorkspaceByPath).toHaveBeenCalledWith("/proj", { windowLabel: "main" });
     expect(responses[0].success).toBe(true);
@@ -206,7 +237,7 @@ describe("open_workspace confirms an ungranted folder in the picker (WI-LX1.1)",
     rustAnswers(async () => { throw refused; });
     existsMock.mockResolvedValue(true);
 
-    await handleWorkspaceOpenWorkspace("id2", { folderPath: "/proj" });
+    await handleWorkspaceOpenWorkspace("id2", { folderPath: "/proj" }, "bridge-client-1");
 
     expect(invokeMock.mock.calls.map((c) => c[0])).not.toContain("request_workspace_confirmation");
     expect(responses[0].success).toBe(true);
@@ -216,7 +247,7 @@ describe("open_workspace confirms an ungranted folder in the picker (WI-LX1.1)",
     await approve();
     rustAnswers(async () => { throw new Error("ipc down"); });
 
-    await handleWorkspaceOpenWorkspace("id2", { folderPath: "/proj" });
+    await handleWorkspaceOpenWorkspace("id2", { folderPath: "/proj" }, "bridge-client-1");
 
     expect(openWorkspaceByPath).not.toHaveBeenCalled();
     expect(String(responses[0].error)).toContain("INTERNAL");
@@ -234,7 +265,7 @@ describe("open_workspace confirms an ungranted folder in the picker (WI-LX1.1)",
     );
     existsMock.mockRejectedValue(new Error("forbidden path: /proj"));
 
-    await handleWorkspaceOpenWorkspace("id2", { folderPath: "/proj" });
+    await handleWorkspaceOpenWorkspace("id2", { folderPath: "/proj" }, "bridge-client-1");
 
     expect(String(responses[0].error)).toContain("BUSY");
     expect(String(responses[0].error)).not.toContain("opened a folder dialog");
@@ -247,7 +278,7 @@ describe("open_workspace confirms an ungranted folder in the picker (WI-LX1.1)",
     rustAnswers(async () => { throw refused; }, async () => { throw new Error("ipc down"); });
     existsMock.mockRejectedValue(new Error("forbidden path: /proj"));
 
-    await handleWorkspaceOpenWorkspace("id2", { folderPath: "/proj" });
+    await handleWorkspaceOpenWorkspace("id2", { folderPath: "/proj" }, "bridge-client-1");
 
     expect(String(responses[0].error)).toContain("INTERNAL");
     expect(String(responses[0].error)).toContain("ipc down");
@@ -259,7 +290,7 @@ describe("open_workspace confirms an ungranted folder in the picker (WI-LX1.1)",
     await approve();
     rustAnswers(async () => { throw { code: "not-found", message: "gone" }; });
 
-    await handleWorkspaceOpenWorkspace("id2", { folderPath: "/proj" });
+    await handleWorkspaceOpenWorkspace("id2", { folderPath: "/proj" }, "bridge-client-1");
 
     expect(openWorkspaceByPath).not.toHaveBeenCalled();
     expect(String(responses[0].error)).toContain("INVALID_PATH");
@@ -293,11 +324,11 @@ describe("windowLabel is ignored, and that is a security property", () => {
   });
 
   it("a request that carries one still prompts and opens in the delivering window", async () => {
-    await handleWorkspaceOpenWorkspace("id1", { folderPath: "/proj", windowLabel: "doc-9" });
+    await handleWorkspaceOpenWorkspace("id1", { folderPath: "/proj", windowLabel: "doc-9" }, "bridge-client-1");
     expect(useWorkspaceApprovalStore.getState().pending[0]).toMatchObject({ windowLabel: "main" });
     useWorkspaceApprovalStore.getState().resolveApproval("id1", "approve");
 
-    await handleWorkspaceOpenWorkspace("id2", { folderPath: "/proj", windowLabel: "doc-9" });
+    await handleWorkspaceOpenWorkspace("id2", { folderPath: "/proj", windowLabel: "doc-9" }, "bridge-client-1");
 
     expect(openWorkspaceByPath).toHaveBeenCalledWith("/proj", { windowLabel: "main" });
   });

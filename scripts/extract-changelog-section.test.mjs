@@ -177,12 +177,17 @@ describe("this repository", () => {
     expect(() => extractSection(changelog, version)).not.toThrow();
   });
 
-  it("lists every release newest first, each with a non-empty section", () => {
-    const versions = listVersions(changelog);
-    expect(versions.length).toBeGreaterThan(0);
-    const sorted = [...versions].sort((a, b) => b.localeCompare(a, "en", { numeric: true }));
-    expect(versions).toEqual(sorted);
-    for (const v of versions) expect(() => extractSection(changelog, v)).not.toThrow();
+  it("lists each product's releases newest first, each with a non-empty section", () => {
+    // XMark restarts versioning; upstream versions belong to their own history.
+    const histories = changelog.split(/^## Upstream VMark history\s*$/m);
+    expect(histories).toHaveLength(2);
+    for (const history of histories) {
+      const versions = listVersions(history);
+      expect(versions.length).toBeGreaterThan(0);
+      const sorted = [...versions].sort((a, b) => b.localeCompare(a, "en", { numeric: true }));
+      expect(versions).toEqual(sorted);
+      for (const v of versions) expect(() => extractSection(changelog, v)).not.toThrow();
+    }
   });
 });
 

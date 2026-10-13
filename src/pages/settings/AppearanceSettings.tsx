@@ -107,9 +107,8 @@ function ThemeSwatchRow({
 export function AppearanceSettings() {
   const { t } = useTranslation("settings");
   const appearance = useSettingsStore((state) => state.appearance);
-  const updateSetting = useSettingsStore(
-    (state) => state.updateAppearanceSetting
-  );
+  const updateSetting = <K extends keyof typeof appearance>(key: K, value: (typeof appearance)[K]) =>
+    useSettingsStore.getState().updateAppearanceSetting(key, value);
   const followSystem = appearance.followSystemAppearance ?? false;
 
   return (
@@ -117,24 +116,17 @@ export function AppearanceSettings() {
       {/* Theme selector */}
       <SettingsGroup title={t("appearance.group.theme")}>
         {followSystem ? (
-          <>
-            <div className="text-xs font-medium text-[var(--text-secondary)] pb-1.5">
-              {t("appearance.systemLightTheme.label")}
-            </div>
+          (["systemLightTheme", "systemDarkTheme"] as const).flatMap((key) => [
+            <div key={`${key}.label`} className="text-xs font-medium text-[var(--text-secondary)] pb-1.5">
+              {t(`appearance.${key}.label`)}
+            </div>,
             <ThemeSwatchRow
-              mode="light"
-              selected={appearance.systemLightTheme}
-              onSelect={(id) => updateSetting("systemLightTheme", id)}
-            />
-            <div className="text-xs font-medium text-[var(--text-secondary)] pb-1.5">
-              {t("appearance.systemDarkTheme.label")}
-            </div>
-            <ThemeSwatchRow
-              mode="dark"
-              selected={appearance.systemDarkTheme}
-              onSelect={(id) => updateSetting("systemDarkTheme", id)}
-            />
-          </>
+              key={key}
+              mode={key === "systemLightTheme" ? "light" : "dark"}
+              selected={appearance[key]}
+              onSelect={(id) => updateSetting(key, id)}
+            />,
+          ])
         ) : (
           <ThemeSwatchRow
             selected={appearance.theme}

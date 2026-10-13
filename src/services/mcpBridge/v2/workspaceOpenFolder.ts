@@ -34,9 +34,9 @@
  * so the granted tree and the one-shot binding are the REAL target (Codex F-06).
  * Keeping raw fs out of the bridge surface also satisfies the fs-guard invariant.
  *
- * Security seam still owed (scoped in the plan): Codex F-10 — the authenticated
- * client id must come from the bridge event; until it does the one-shot binds
- * to a single session id (see `ONE_SHOT_CLIENT_ID`), so it binds per-session.
+ * The authenticated client id comes from the Rust bridge event, where it is
+ * minted per connection after token authentication. It is never read from MCP
+ * operation args or the client's self-reported identity label.
  *
  * @coordinates-with stores/workspaceApprovalStore.ts — the one-shot store
  * @coordinates-with services/workspaces/openWorkspaceByPath.ts — the shared open sequence
@@ -66,23 +66,6 @@ import { structuredError } from "./tabGuard";
 import { v2ErrorString } from "./types";
 import type { V2Error } from "./types";
 import { commandErrorMessage } from "@/services/commands/commandError";
-
-/**
- * Client id the one-shot approval binds to.
- *
- * There is exactly one, deliberately. This used to read `args.clientId` and
- * fall back to a constant — but the bridge event carries no principal, and the
- * wire contract declares `clientId` on no operation, so the read could never
- * fire and the fallback was the only behaviour that ever ran (the
- * `windowId` class again: code shaped like a feature that nothing can reach).
- *
- * The constant is honest: the one-shot binds per SESSION, not per client, so
- * one approved client's grant is spendable by another connected client. That
- * is the security seam Codex F-10 still owes — a per-principal binding needs
- * Rust to carry the authenticated principal on the request, and cannot be
- * faked from a field no one sends.
- */
-const ONE_SHOT_CLIENT_ID = "mcp-session";
 
 /** Canonicalize + is-dir validate via Rust (resolves symlinks, returns the
  *  canonical path). Never touches the webview fs surface.
@@ -192,8 +175,16 @@ function outcomeRefusal(canonicalPath: string, outcome: Exclude<ApprovedOutcome,
 export async function handleWorkspaceOpenWorkspace(
   id: string,
   args: Record<string, unknown>,
+  clientId?: string,
 ): Promise<void> {
   return wrapHandler(id, async () => {
+    if (!clientId) {
+      await structuredError(id, {
+        error: "INTERNAL",
+        message: "The authenticated MCP client identity is missing; reconnect and retry.",
+      });
+      return;
+    }
     // The contract declares `folderPath` and nothing else: a `windowLabel` a
     // client sends is not read, here or anywhere below.
     const { folderPath } = readOperationArgs("vmark.workspace.open_workspace", args);
@@ -218,7 +209,6 @@ export async function handleWorkspaceOpenWorkspace(
     // the delivering window keeps the prompt, one-shot, and open consistent.
     // Multi-window targeting is deferred (Codex F-10/H3).
     const windowLabel = getCurrentWindowLabel();
-    const clientId = ONE_SHOT_CLIENT_ID;
     const approvals = useWorkspaceApprovalStore.getState();
 
     // Retry path: a matching one-shot authorizes this open — once access is

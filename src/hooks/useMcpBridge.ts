@@ -3,15 +3,18 @@
  *
  * Purpose: Listens for `mcp-bridge:request` events from the Rust MCP server
  *   and forwards each request to `handleRequest`, which routes it through the
- *   pruned 5-tool v2 surface.
+ *   pruned 5-tool v2 surface. It preserves the Rust-assigned WebSocket client
+ *   id so client-scoped workspace approvals stay bound to that connection.
  *
  * Pipeline: AI client → MCP server (Rust) → WebSocket → Tauri event
  *   "mcp-bridge:request" → useMcpBridge parses args_json → handleRequest →
  *   dispatchV2 → tool handler → respond() back to Rust → MCP server → AI client
+ *   (workspace.open_workspace also receives the authenticated client id)
  *
  * Key decisions:
  *   - useMcpBridge parses each request's `args_json` (handling Tauri's
- *     snake_case/camelCase IPC quirk) before forwarding to handleRequest.
+ *     snake_case/camelCase IPC quirk) and carries the server-supplied
+ *     connection id through to handleRequest; request arguments cannot set it.
  *   - Duplicate deliveries of the same request id (Rust wake-and-retry)
  *     are dropped via requestDedup before dispatch — first sighting wins.
  *   - handleRequest applies the read-only guard (READ_ONLY_BLOCKED +
@@ -110,6 +113,10 @@ export function useMcpBridge(): void {
 
       // Try both snake_case and camelCase (Tauri might convert)
       const argsJsonStr = raw.args_json ?? raw.argsJson ?? "{}";
+      const rawClientId = raw.client_id ?? raw.clientId;
+      const clientId = typeof rawClientId === "string" && rawClientId.length > 0
+        ? rawClientId
+        : undefined;
 
       let args: Record<string, unknown>;
       try {
@@ -130,6 +137,7 @@ export function useMcpBridge(): void {
         id: raw.id,
         type: raw.type,
         args,
+        ...(clientId ? { clientId } : {}),
       };
       // Fire-and-forget with error logging to prevent unhandled rejections
       handleRequest(parsed).catch((err) => {

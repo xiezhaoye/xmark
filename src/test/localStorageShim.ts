@@ -1,6 +1,6 @@
 /**
  * localStorageShim — installs a Map-backed `localStorage` when the test
- * environment has none, so code that reads storage runs under node.
+ * environment lacks a complete Storage API, so storage works under node.
  *
  * @module test/localStorageShim
  */
@@ -9,7 +9,16 @@ const storage = new Map<string, string>();
 
 let hasLocalStorage: boolean;
 try {
-  hasLocalStorage = typeof globalThis.localStorage !== "undefined";
+  // Some runtimes expose an empty object when no storage file is configured.
+  // Inspect methods without calling them: a real API may deny storage access.
+  const candidate = globalThis.localStorage;
+  hasLocalStorage = [
+    candidate?.clear,
+    candidate?.getItem,
+    candidate?.key,
+    candidate?.removeItem,
+    candidate?.setItem,
+  ].every((method) => typeof method === "function");
 } catch {
   hasLocalStorage = false;
 }

@@ -65,6 +65,16 @@ describe("workspaceApprovalStore", () => {
     expect(s.consumeOneShot(KEY.canonicalPath, KEY.windowLabel, KEY.clientId)).toBe(false);
   });
 
+  it("does not let a different authenticated client spend an approved one-shot", () => {
+    const s = useWorkspaceApprovalStore.getState();
+    s.requestApproval("id1", KEY.canonicalPath, KEY.windowLabel, "bridge-client-17");
+    s.resolveApproval("id1", "approve");
+
+    expect(s.hasOneShot(KEY.canonicalPath, KEY.windowLabel, "bridge-client-18")).toBe(false);
+    expect(s.consumeOneShot(KEY.canonicalPath, KEY.windowLabel, "bridge-client-18")).toBe(false);
+    expect(s.consumeOneShot(KEY.canonicalPath, KEY.windowLabel, "bridge-client-17")).toBe(true);
+  });
+
   it("deny clears the pending prompt and mints no one-shot", () => {
     const s = useWorkspaceApprovalStore.getState();
     s.requestApproval("id1", KEY.canonicalPath, KEY.windowLabel, KEY.clientId);

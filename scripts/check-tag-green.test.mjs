@@ -46,7 +46,7 @@ const GH_STUB = `#!/bin/bash
 # A stub that scanned argv for the path would accept extra flags (--paginate,
 # --jq, a second --hostname) and prove nothing about what the gate really runs.
 set -u
-expected="repos/xiaolai/vmark/commits/\${EXPECTED_SHA}/check-runs?per_page=100"
+expected="repos/xiezhaoye/xmark/commits/\${EXPECTED_SHA}/check-runs?per_page=100"
 if [ "$#" -ne 2 ] || [ "\${1}" != "api" ] || [ "\${2}" != "$expected" ]; then
   echo "unexpected gh argv (\$# args): $*" >&2
   exit 99
@@ -126,7 +126,7 @@ const GREEN_RUST = run("rust", "completed", "success");
 
 describe("check-tag-green.sh (stubbed gh, matrix)", () => {
   // Case 1 — both required checks green → exit 0
-  it("passes when frontend and rust are both completed+success", () => {
+  it("queries XMark and passes when frontend and rust are both completed+success", () => {
     const { status, stdout } = runScript({ fixture: checkRuns(GREEN_FRONTEND, GREEN_RUST) });
     expect(status).toBe(0);
     expect(stdout).toContain("green");
@@ -344,7 +344,7 @@ if [ "$#" -ne 2 ] || [ "\${1}" != "api" ]; then
   echo "unexpected gh argv (\$# args): $*" >&2
   exit 99
 fi
-sha="\${2#repos/xiaolai/vmark/commits/}"
+sha="\${2#repos/xiezhaoye/xmark/commits/}"
 sha="\${sha%/check-runs?per_page=100}"
 f="\${GH_FIXTURE_DIR}/\${sha}.json"
 if [ ! -f "$f" ]; then

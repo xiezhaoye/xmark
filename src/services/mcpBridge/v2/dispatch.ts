@@ -2,7 +2,8 @@
  * Purpose: Route the pruned MCP surface — `vmark.session.*`,
  *   `vmark.workspace.*`, `vmark.document.*`, `vmark.workflow.*`,
  *   `vmark.selection.*` and the `vmark.browser.*` tools — to their handlers. Returns `true` iff the
- *   request type matched. Also exports SUPPORTED_TOOL_PREFIXES as the
+ *   request type matched. The authenticated connection id is forwarded only
+ *   to workspace.open_workspace for client-scoped approval. Also exports SUPPORTED_TOOL_PREFIXES as the
  *   single source of truth for the routed surface — anything that
  *   enumerates supported tools (diagnostic errors, capability docs)
  *   must import this rather than carry its own list.
@@ -19,6 +20,8 @@
  *   - Lookups are own-property only: the type string comes from an untrusted
  *     client, and a plain-object index on `"constructor"` would have returned
  *     `Object` and called it.
+ *   - The authenticated client id is supplied out-of-band to the workspace
+ *     folder handler; it is never read from MCP args or forwarded to other tools.
  *   - `ROUTED_OPERATIONS` / `BROWSER_ROUTED_OPERATIONS` are exported for the
  *     completeness proofs (`dispatch.test.ts`, `operationManifestParity.test.ts`),
  *     which read the tables instead of scraping case labels.
@@ -74,7 +77,7 @@ export const SUPPORTED_TOOL_PREFIXES = [
   "vmark.browser.*",
 ] as const;
 
-type Handler = (id: string, args: Record<string, unknown>) => Promise<void>;
+type Handler = (id: string, args: Record<string, unknown>, clientId?: string) => Promise<void>;
 
 /** Every operation handled by an eagerly loaded module. */
 const EAGER_ROUTES = {
@@ -149,10 +152,11 @@ function ownRoute<T extends object>(table: T, type: string): T[keyof T] | undefi
 }
 
 export async function dispatchV2(event: McpRequestEvent): Promise<boolean> {
-  const { id, type, args } = event;
+  const { id, type, args, clientId } = event;
   const eager = ownRoute(EAGER_ROUTES, type);
   if (eager) {
-    await eager(id, args);
+    if (type === "vmark.workspace.open_workspace") await eager(id, args, clientId);
+    else await eager(id, args);
     return true;
   }
   const lazy = ownRoute(BROWSER_ROUTES, type);

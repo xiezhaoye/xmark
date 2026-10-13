@@ -225,7 +225,9 @@ describe("dispatchV2 — routing", () => {
   it.each(["constructor", "__proto__", "toString", "hasOwnProperty"])(
     "does not route the prototype key %j the untrusted client could send",
     async (type) => {
-      expect(await dispatchV2({ id: "proto", type, args: {} })).toBe(false);
+      expect(
+        await dispatchV2({ id: "proto", type, args: {}, clientId: "bridge-client-1" }),
+      ).toBe(false);
     },
   );
 
@@ -233,13 +235,20 @@ describe("dispatchV2 — routing", () => {
     const id = `req-${route.type}`;
     if (route.handler) {
       const args = route.args ?? {};
-      expect(await dispatchV2({ id, type: route.type, args })).toBe(true);
+      const clientId = "bridge-client-17";
+      expect(await dispatchV2({ id, type: route.type, args, clientId })).toBe(true);
       expect(route.handler).toHaveBeenCalledTimes(1);
-      expect(route.handler).toHaveBeenCalledWith(id, args);
+      expect(route.handler).toHaveBeenCalledWith(
+        ...(route.type === "vmark.workspace.open_workspace"
+          ? [id, args, clientId]
+          : [id, args]),
+      );
       return;
     }
     const args = { ...route.args, [PROBE]: true };
-    expect(await dispatchV2({ id, type: route.type, args })).toBe(true);
+    expect(
+      await dispatchV2({ id, type: route.type, args, clientId: "bridge-client-17" }),
+    ).toBe(true);
     // The handler that parsed THIS operation saw these args, once…
     expect(operationsParsed()).toEqual([route.type]);
     // …and answered this request, once.
@@ -247,7 +256,12 @@ describe("dispatchV2 — routing", () => {
   });
 
   it("session.get_state carries the app version into the answer", async () => {
-    await dispatchV2({ id: "req-version", type: "vmark.session.get_state", args: {} });
+    await dispatchV2({
+      id: "req-version",
+      type: "vmark.session.get_state",
+      args: {},
+      clientId: "bridge-client-1",
+    });
     expect(responses()).toEqual([
       expect.objectContaining({
         id: "req-version",
@@ -264,6 +278,7 @@ describe("dispatchV2 — routing", () => {
       id: "req-unknown",
       type: "vmark.bogus.action",
       args: { [PROBE]: true },
+      clientId: "bridge-client-1",
     });
     expect(matched).toBe(false);
 
@@ -278,6 +293,7 @@ describe("dispatchV2 — routing", () => {
       id: "req-iso",
       type: "vmark.selection.get",
       args: { [PROBE]: true },
+      clientId: "bridge-client-1",
     });
     expect(operationsParsed()).toEqual(["vmark.selection.get"]);
     expect(responses().map((r) => r.id)).toEqual(["req-iso"]);
