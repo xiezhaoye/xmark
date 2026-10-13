@@ -124,6 +124,9 @@ export interface TerminalInstance {
    * DOM renderer, and broadcasts nothing.
    */
   resetDisplay: () => void;
+  /** Release / re-attach the WebGL renderer while the session is hidden. */
+  suspendRenderer: () => void;
+  resumeRenderer: () => void;
   /** The shell's last-reported cwd via OSC 7, or null if never reported. */
   getCwd: () => string | null;
   /** Command marks from OSC 133 (prompt line + exit code) for prompt nav and
@@ -270,6 +273,8 @@ export function createTerminalInstance(
       container,
       dispose,
       resetDisplay: webgl.resetDisplay,
+      suspendRenderer: webgl.suspend,
+      resumeRenderer: webgl.resume,
       getCwd: osc.getCwd,
       getCommands: osc133.getCommands,
       isShellBusy: osc133.isRunning,

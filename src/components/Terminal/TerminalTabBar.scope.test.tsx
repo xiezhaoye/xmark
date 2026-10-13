@@ -5,7 +5,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { act, render, fireEvent } from "@testing-library/react";
 import { TerminalTabBar } from "./TerminalTabBar";
-import { resetTerminalSessionStore, useTerminalStore } from "@/stores/terminalStore";
+import {
+  MAX_TOTAL_TERMINAL_SESSIONS,
+  resetTerminalSessionStore,
+  useTerminalStore,
+} from "@/stores/terminalStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useWorkspaceInstancesStore } from "@/stores/workspaceInstancesStore";
 import {
@@ -121,5 +125,20 @@ describe("TerminalTabBar — scoped rendering (WI-TS3.1)", () => {
 
     const created = useTerminalStore.getState().sessions[0];
     expect(created?.workspaceInstanceId).toBe("wsi-a");
+  });
+
+  it("the window-wide total disables + even where the visible scope is empty", () => {
+    // Spread over hidden scopes: none reaches its own per-scope cap.
+    for (let i = 0; i < MAX_TOTAL_TERMINAL_SESSIONS; i++) {
+      useTerminalStore.getState().terminalCreateSession({ ownerInstanceId: `wsi-hidden-${i % 4}` });
+    }
+    const { container } = renderBar();
+
+    expect(tabCount(container)).toBe(0);
+    const plus = container.querySelector<HTMLButtonElement>('[data-terminal-action="new"]');
+    expect(plus?.disabled).toBe(true);
+    expect(plus?.title).toBe(
+      `Maximum ${MAX_TOTAL_TERMINAL_SESSIONS} terminals across all workspaces — close one to open another`,
+    );
   });
 });

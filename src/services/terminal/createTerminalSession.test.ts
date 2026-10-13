@@ -7,7 +7,12 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useWorkspaceInstancesStore } from "@/stores/workspaceInstancesStore";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
-import { MAX_TERMINAL_SESSIONS, resetTerminalSessionStore, useTerminalStore } from "@/stores/terminalStore";
+import {
+  MAX_TERMINAL_SESSIONS,
+  MAX_TOTAL_TERMINAL_SESSIONS,
+  resetTerminalSessionStore,
+  useTerminalStore,
+} from "@/stores/terminalStore";
 import {
   createWorkspaceInstance,
   createWorkspaceRootIdentity,
@@ -151,6 +156,20 @@ describe("predicate/action parity (R2-1)", () => {
     }
     setRail(false);
     expect(sessions()).toHaveLength(MAX_TERMINAL_SESSIONS);
+    expectParity(false);
+  });
+
+  it("agrees at the window-wide total cap even where the scope has headroom", () => {
+    // Spread sessions over hidden scopes so none reaches the per-scope cap.
+    const perScope = MAX_TERMINAL_SESSIONS - 1;
+    for (let i = 0; i < MAX_TOTAL_TERMINAL_SESSIONS; i++) {
+      const id = `wsi-${Math.floor(i / perScope)}`;
+      if (i % perScope === 0) addWorkspace(id, `/repo-${id}`);
+      useWorkspaceInstancesStore.getState().activateWorkspaceInstance(W, id);
+      expect(createTerminalSessionInScope(W)).not.toBeNull();
+    }
+    addWorkspace("wsi-fresh", "/repo-fresh");
+    useWorkspaceInstancesStore.getState().activateWorkspaceInstance(W, "wsi-fresh");
     expectParity(false);
   });
 });

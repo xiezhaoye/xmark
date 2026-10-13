@@ -73,6 +73,7 @@
   "terminal.floatingPrompt.jumpToPrompt": "跳到输入行",
   "terminal.newSession": "新建终端",
   "terminal.maxSessions": "最多 5 个会话",
+  "terminal.maxSessionsTotal": "所有工作区合计最多 {{max}} 个终端，请先关闭一个再新建",
   "terminal.closeSession": "关闭",
   "terminal.restartSession": "重启",
   "terminal.renameSession": "重命名终端会话",

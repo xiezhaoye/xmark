@@ -36,6 +36,8 @@ Each tab reflects the running program's title (set by tools that emit a terminal
 
 With the [workspace rail](/guide/workspace-rail) enabled, each workspace on the rail owns its **own set** of terminal sessions. Switching workspaces swaps the visible terminal tabs — the hidden workspace's shells stay exactly where they were: alive, same working directory, nothing typed into them. Switching back reveals the same shells again, and the session you were looking at is remembered per workspace.
 
+While hidden, a workspace's terminals release their GPU renderer and pick it up again when you switch back, so a long list of open workspaces does not hold a graphics context per terminal. One window holds at most 12 terminal sessions across all its workspaces; at that limit the **+** button is greyed out until you close one. Nothing is ever closed for you.
+
 - New sessions belong to the workspace that was active when they were created, and start in that workspace's root.
 - The 5-session cap and the `Terminal 1…5` numbering apply to the **visible** set — hidden workspaces' sessions do not consume the active workspace's headroom.
 - Opening the panel over a workspace with no sessions creates one there automatically; without a workspace (or a saved file to anchor a directory) the panel shows a hint instead.

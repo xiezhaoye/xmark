@@ -36,6 +36,8 @@ Chaque onglet reflète le titre du programme en cours d'exécution (défini par 
 
 Lorsque la [barre des espaces de travail](/fr/guide/workspace-rail) est activée, chaque espace de travail de la barre possède son **propre ensemble** de sessions de terminal. Changer d'espace de travail permute les onglets de terminal visibles — les shells de l'espace de travail masqué restent exactement où ils étaient : actifs, dans le même répertoire de travail, sans que rien n'y soit tapé. Revenir en arrière réaffiche les mêmes shells, et la session que vous regardiez est mémorisée pour chaque espace de travail.
 
+Tant qu’un espace de travail est masqué, ses terminaux libèrent leur moteur de rendu GPU et le reprennent quand vous y revenez : de nombreux espaces ouverts ne gardent donc pas un contexte graphique par terminal. Une fenêtre contient au plus 12 sessions de terminal pour l’ensemble de ses espaces de travail ; à cette limite, le bouton **+** est grisé jusqu’à ce que vous en fermiez une. Rien n’est jamais fermé à votre place.
+
 - Les nouvelles sessions appartiennent à l'espace de travail actif au moment de leur création, et démarrent à la racine de cet espace de travail.
 - La limite de 5 sessions et la numérotation `Terminal 1…5` s'appliquent à l'ensemble **visible** — les sessions des espaces de travail masqués n'empiètent pas sur la marge de l'espace de travail actif.
 - Ouvrir le panneau sur un espace de travail sans session en crée une automatiquement ; sans espace de travail (ni fichier enregistré pour ancrer un répertoire), le panneau affiche une indication à la place.

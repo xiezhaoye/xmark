@@ -73,6 +73,7 @@
   "terminal.floatingPrompt.jumpToPrompt": "Ir al prompt",
   "terminal.newSession": "Nueva terminal",
   "terminal.maxSessions": "Máximo 5 sesiones",
+  "terminal.maxSessionsTotal": "Máximo {{max}} terminales en todos los espacios de trabajo — cierra uno para abrir otro",
   "terminal.closeSession": "Cerrar",
   "terminal.restartSession": "Reiniciar",
   "terminal.renameSession": "Renombrar sesión de terminal",

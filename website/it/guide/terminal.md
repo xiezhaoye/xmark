@@ -36,6 +36,8 @@ Ogni scheda riflette il titolo del programma in esecuzione (impostato dagli stru
 
 Con la [barra degli spazi di lavoro](/it/guide/workspace-rail) attiva, ogni workspace nella barra possiede il **proprio insieme** di sessioni del terminale. Cambiare workspace sostituisce le schede del terminale visibili — le shell del workspace nascosto restano esattamente dov'erano: attive, nella stessa directory di lavoro, senza che nulla venga digitato al loro interno. Tornando indietro ricompaiono le stesse shell, e la sessione che stavi guardando viene ricordata per ogni workspace.
 
+Mentre uno spazio di lavoro è nascosto, i suoi terminali rilasciano il renderer GPU e lo riprendono quando ci torni, quindi molti spazi aperti non tengono un contesto grafico per ogni terminale. Una finestra contiene al massimo 12 sessioni di terminale in tutti i suoi spazi di lavoro; al limite il pulsante **+** è disattivato finché non ne chiudi una. Non viene mai chiuso nulla al posto tuo.
+
 - Le nuove sessioni appartengono al workspace attivo al momento della loro creazione e partono dalla radice di quel workspace.
 - Il limite di 5 sessioni e la numerazione `Terminal 1…5` si applicano all'insieme **visibile** — le sessioni dei workspace nascosti non consumano lo spazio disponibile del workspace attivo.
 - Aprire il pannello su un workspace senza sessioni ne crea automaticamente una lì; senza un workspace (o un file salvato a cui ancorare una directory) il pannello mostra invece un suggerimento.

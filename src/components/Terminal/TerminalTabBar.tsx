@@ -41,7 +41,12 @@ import { useCallback, useState } from "react";
 import { Plus, Trash2, RotateCcw, ArrowLeftRight, ArrowUpDown, ChartColumn } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { EffectiveTerminalPosition } from "@/stores/uiStore";
-import { MAX_TERMINAL_SESSIONS, useTerminalStore, type TerminalSession } from "@/stores/terminalStore";
+import {
+  MAX_TERMINAL_SESSIONS,
+  MAX_TOTAL_TERMINAL_SESSIONS,
+  useTerminalStore,
+  type TerminalSession,
+} from "@/stores/terminalStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { getCurrentWindowLabel } from "@/services/persistence/workspaceStorage";
 import { createTerminalSessionInScope } from "@/services/terminal/createTerminalSession";
@@ -142,8 +147,14 @@ export function TerminalTabBar({ onClose, onRestart, orientation = "vertical", p
   }, []);
 
   // The cap gates on what the user can SEE (D-T5's visible union) — a hidden
-  // scope's sessions do not consume this scope's headroom.
-  const isMaxed = sessions.length >= MAX_TERMINAL_SESSIONS;
+  // scope's sessions do not consume this scope's headroom — and on the
+  // window-wide total, since hidden workspaces' sessions stay alive.
+  const totalSessions = useTerminalStore((s) => s.sessions.length);
+  const isTotalMaxed = totalSessions >= MAX_TOTAL_TERMINAL_SESSIONS;
+  const isMaxed = isTotalMaxed || sessions.length >= MAX_TERMINAL_SESSIONS;
+  const addLabel = isTotalMaxed
+    ? t("terminal.maxSessionsTotal", { max: MAX_TOTAL_TERMINAL_SESSIONS })
+    : t(isMaxed ? "terminal.maxSessions" : "terminal.newSession");
   // The transcript's strings live with its setting; asking for the namespace
   // through the hook is what loads it (a bare `{ ns }` option renders the key).
   const transcriptLabel = tSettings("terminal.transcript.title");
@@ -196,8 +207,8 @@ export function TerminalTabBar({ onClose, onRestart, orientation = "vertical", p
           data-terminal-action="new"
           onClick={handleCreate}
           disabled={isMaxed}
-          title={isMaxed ? t("terminal.maxSessions") : t("terminal.newSession")}
-          aria-label={isMaxed ? t("terminal.maxSessions") : t("terminal.newSession")}
+          title={addLabel}
+          aria-label={addLabel}
         >
           <Plus size={14} />
         </button>

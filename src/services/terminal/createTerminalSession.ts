@@ -8,23 +8,22 @@
  * "Open Terminal Here", and Run-in-Terminal's reuse-or-create all did it by
  * hand before. `canCreateTerminalSessionHere` is the AUTHORITATIVE can-create
  * predicate: it computes the same creation-time union (D-T5) the store's cap
- * gate applies, owner included, so a UI gate can never say yes while creation
- * says no.
+ * gate applies (per-scope union and window-wide total), owner included, so a
+ * UI gate can never say yes while creation says no.
  *
  * @coordinates-with stores/terminalStore/sessionActions.ts — terminalCreateSession + creationUnion
  * @coordinates-with resolveTerminalOwnerInstanceId.ts — the D-T1 carve-outs
  * @module services/terminal/createTerminalSession
  */
-import { creationUnion } from "@/stores/terminalStore/sessionActions";
-import { MAX_TERMINAL_SESSIONS, useTerminalStore, type TerminalSession } from "@/stores/terminalStore";
+import { terminalCreationBlock } from "@/stores/terminalStore/sessionActions";
+import { useTerminalStore, type TerminalSession } from "@/stores/terminalStore";
 import { resolveTerminalOwnerInstanceId } from "./resolveTerminalOwnerInstanceId";
 
-/** Whether a session created NOW in this window would pass the cap gate —
- *  the SAME union the store applies, owner and all (never a bare count). */
+/** Whether a session created NOW in this window would pass both cap gates —
+ *  the SAME decision the store applies, owner and all (never a bare count). */
 export function canCreateTerminalSessionHere(windowLabel: string): boolean {
   const owner = resolveTerminalOwnerInstanceId(windowLabel);
-  const sessions = useTerminalStore.getState().sessions;
-  return creationUnion(sessions, owner).length < MAX_TERMINAL_SESSIONS;
+  return terminalCreationBlock(useTerminalStore.getState().sessions, owner) === null;
 }
 
 /** Create a session in the active scope (owner stamped per D-T1's carve-outs).

@@ -36,6 +36,8 @@ Cada aba reflete o título do programa em execução (definido por ferramentas q
 
 Com a [barra de espaços de trabalho](/pt-BR/guide/workspace-rail) ativada, cada área de trabalho da barra tem o seu **próprio conjunto** de sessões de terminal. Trocar de área de trabalho troca as abas de terminal visíveis — os shells da área de trabalho oculta ficam exatamente onde estavam: ativos, no mesmo diretório de trabalho, sem nada digitado neles. Voltar mostra os mesmos shells de novo, e a sessão que você estava vendo é lembrada por área de trabalho.
 
+Enquanto um espaço de trabalho está oculto, seus terminais liberam o renderizador de GPU e o retomam quando você volta a ele, então muitos espaços abertos não mantêm um contexto gráfico por terminal. Uma janela comporta no máximo 12 sessões de terminal em todos os seus espaços de trabalho; no limite, o botão **+** fica desativado até você fechar uma. Nada é fechado por você.
+
 - Novas sessões pertencem à área de trabalho que estava ativa quando foram criadas e começam na raiz dessa área de trabalho.
 - O limite de 5 sessões e a numeração `Terminal 1…5` se aplicam ao conjunto **visível** — as sessões de áreas de trabalho ocultas não consomem a margem da área de trabalho ativa.
 - Abrir o painel sobre uma área de trabalho sem sessões cria uma automaticamente; sem área de trabalho (ou um arquivo salvo que sirva de âncora para um diretório), o painel mostra uma dica.

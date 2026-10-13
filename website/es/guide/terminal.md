@@ -36,6 +36,8 @@ Cada pestaña refleja el título del programa en ejecución (definido por herram
 
 Con la [barra de espacios de trabajo](/es/guide/workspace-rail) activada, cada espacio de trabajo de la barra tiene su **propio conjunto** de sesiones de terminal. Cambiar de espacio de trabajo intercambia las pestañas de terminal visibles — los shells del espacio de trabajo oculto se quedan exactamente donde estaban: vivos, en el mismo directorio de trabajo, sin que se escriba nada en ellos. Al volver se muestran de nuevo los mismos shells, y la sesión que estabas viendo se recuerda por espacio de trabajo.
 
+Mientras un espacio de trabajo está oculto, sus terminales liberan el renderizador de GPU y lo recuperan al volver a él, así que tener muchos espacios de trabajo abiertos no mantiene un contexto gráfico por terminal. Una ventana admite como máximo 12 sesiones de terminal entre todos sus espacios de trabajo; al llegar al límite, el botón **+** se desactiva hasta que cierres una. Nunca se cierra nada por ti.
+
 - Las sesiones nuevas pertenecen al espacio de trabajo que estaba activo cuando se crearon, y comienzan en la raíz de ese espacio de trabajo.
 - El límite de 5 sesiones y la numeración `Terminal 1…5` se aplican al conjunto **visible** — las sesiones de los espacios de trabajo ocultos no consumen el margen del espacio de trabajo activo.
 - Abrir el panel sobre un espacio de trabajo sin sesiones crea una allí automáticamente; sin un espacio de trabajo (o un archivo guardado que ancle un directorio) el panel muestra una indicación en su lugar.

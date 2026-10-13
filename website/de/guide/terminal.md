@@ -36,6 +36,8 @@ Jeder Tab zeigt den Titel des laufenden Programms (gesetzt von Werkzeugen, die e
 
 Wenn die [Workspace-Leiste](/de/guide/workspace-rail) aktiviert ist, besitzt jeder Arbeitsbereich in der Leiste seinen **eigenen Satz** an Terminalsitzungen. Ein Wechsel des Arbeitsbereichs tauscht die sichtbaren Terminal-Tabs aus — die Shells des ausgeblendeten Arbeitsbereichs bleiben genau so, wie sie waren: aktiv, im selben Arbeitsverzeichnis, ohne dass etwas in sie eingegeben wird. Beim Zurückwechseln erscheinen wieder dieselben Shells, und die Sitzung, die Sie zuletzt angesehen haben, wird pro Arbeitsbereich gemerkt.
 
+Solange ein Arbeitsbereich verborgen ist, geben seine Terminals ihren GPU-Renderer frei und übernehmen ihn wieder, sobald Sie zurückwechseln — viele offene Arbeitsbereiche halten also nicht pro Terminal einen Grafikkontext. Ein Fenster hält höchstens 12 Terminal-Sitzungen über alle Arbeitsbereiche; an dieser Grenze ist die Schaltfläche **+** ausgegraut, bis Sie eine schließen. Es wird nie etwas automatisch geschlossen.
+
 - Neue Sitzungen gehören zu dem Arbeitsbereich, der bei ihrer Erstellung aktiv war, und starten in dessen Stammverzeichnis.
 - Die Obergrenze von 5 Sitzungen und die Nummerierung `Terminal 1…5` gelten für den **sichtbaren** Satz — Sitzungen ausgeblendeter Arbeitsbereiche verbrauchen keinen Spielraum des aktiven Arbeitsbereichs.
 - Wird das Panel über einem Arbeitsbereich ohne Sitzungen geöffnet, wird dort automatisch eine erstellt; ohne Arbeitsbereich (oder eine gespeicherte Datei, die ein Verzeichnis vorgibt) zeigt das Panel stattdessen einen Hinweis.

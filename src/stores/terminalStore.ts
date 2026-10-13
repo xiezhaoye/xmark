@@ -35,7 +35,7 @@ import {
 import { createTerminalScopeActions } from "./terminalStore/scopeActions";
 
 export type { TerminalSession, TerminalStore } from "./terminalStore/types";
-export { MAX_TERMINAL_SESSIONS } from "./terminalStore/sessionActions";
+export { MAX_TERMINAL_SESSIONS, MAX_TOTAL_TERMINAL_SESSIONS } from "./terminalStore/sessionActions";
 
 export const useTerminalStore = create<TerminalStore>((set, get) => ({
   ...initialTerminal,

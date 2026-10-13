@@ -10,6 +10,10 @@
  *     terminal: startShell resets for every new PTY (#1471).
  *   - removeSessionEntry releases the session's transcript binding, which
  *     deletes its binding file (transcriptBinding.forgetTranscriptBinding).
+ *   - switchVisibility suspends the WebGL renderer of every hidden session
+ *     (sessions of other workspaces stay alive behind display:none) and
+ *     resumes the active one before its fit, so a hidden terminal holds no
+ *     GPU context. The buffer and the shell are not touched.
  *
  * @coordinates-with useTerminalSessions.ts — sole caller
  * @coordinates-with useTerminalShellLifecycle.ts — startShell, which resets the terminal
@@ -63,8 +67,10 @@ export function switchVisibility(
   for (const [id, entry] of sessionsRef.current) {
     if (id === activeId) {
       entry.instance.container.style.display = "block";
+      entry.instance.resumeRenderer();
     } else {
       entry.instance.container.style.display = "none";
+      entry.instance.suspendRenderer();
       entry.instance.searchAddon.clearDecorations();
       // Cancel pending RAF to prevent spawning a shell while hidden.
       if (entry.pendingRafId !== null) {

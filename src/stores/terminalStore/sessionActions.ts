@@ -16,6 +16,13 @@
  *   - `requestedCwd` ("Open Terminal Here") is peeked by the spawn path and
  *     cleared only after a spawn using it succeeds, so a failed first attempt
  *     stays retryable in the directory the user asked for.
+ *   - Two creation caps, both gates only (nothing is ever closed to make
+ *     room): MAX_TERMINAL_SESSIONS per visible union, and
+ *     MAX_TOTAL_TERMINAL_SESSIONS across the whole window. The second exists
+ *     because every workspace's sessions stay alive behind display:none, each
+ *     with its own scrollback, so the per-scope cap alone let N workspaces
+ *     hold 5×N live terminals. `terminalCreationBlock` is the one place that
+ *     decides, for the store action, the can-create predicate and the + button.
  *
  * @module stores/terminalStore/sessionActions
  */
@@ -30,6 +37,9 @@ import type {
 import { isSessionVisibleInScope } from "./scopeSelectors";
 
 export const MAX_TERMINAL_SESSIONS = 5;
+
+/** Live sessions allowed across every workspace in one window. */
+export const MAX_TOTAL_TERMINAL_SESSIONS = 12;
 
 export const initialTerminal: TerminalState = {
   sessions: [],
@@ -102,6 +112,21 @@ export function creationUnion(
   return sessions.filter((s) => isSessionVisibleInScope(s, ownerInstanceId));
 }
 
+/**
+ * Which cap, if any, refuses a session created now by `ownerInstanceId`:
+ * `"total"` when the window already holds MAX_TOTAL_TERMINAL_SESSIONS,
+ * `"scope"` when the creation union is full, else null. Total is checked first
+ * because no amount of closing in this scope alone necessarily lifts it.
+ */
+export function terminalCreationBlock(
+  sessions: TerminalSession[],
+  ownerInstanceId?: string,
+): "total" | "scope" | null {
+  if (sessions.length >= MAX_TOTAL_TERMINAL_SESSIONS) return "total";
+  if (creationUnion(sessions, ownerInstanceId).length >= MAX_TERMINAL_SESSIONS) return "scope";
+  return null;
+}
+
 /** Reset the session ID counter — for tests only (via resetTerminalSessionStore). */
 export function resetTerminalIdCounter(): void {
   nextTerminalId = 1;
@@ -146,8 +171,8 @@ export function createTerminalActions(set: TerminalSet, get: TerminalGet): Termi
       // Cap and ordinal run over the VISIBLE union (D-T5), a creation-time
       // gate only — adoption/rekey never consult it, so a scope can
       // transiently exceed the cap without anything being killed.
+      if (terminalCreationBlock(state.sessions, options?.ownerInstanceId)) return null;
       const union = creationUnion(state.sessions, options?.ownerInstanceId);
-      if (union.length >= MAX_TERMINAL_SESSIONS) return null;
       const ordinal = nextTerminalOrdinal(union);
       const session: TerminalSession = {
         id: generateTerminalId(),

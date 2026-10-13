@@ -20,6 +20,8 @@ function makeEntry(overrides: Partial<SessionEntry> = {}): SessionEntry {
       term: { focus: vi.fn() },
       fitAddon: { fit: vi.fn() },
       searchAddon: { clearDecorations: vi.fn() },
+      suspendRenderer: vi.fn(),
+      resumeRenderer: vi.fn(),
     },
     pty: { kill: vi.fn() },
     ptyRefForKeys: { current: null },
@@ -147,6 +149,43 @@ describe("switchVisibility", () => {
     expect(active.instance.container.style.display).toBe("block");
     expect(other.instance.container.style.display).toBe("none");
     expect(other.instance.searchAddon.clearDecorations).toHaveBeenCalledOnce();
+  });
+
+  it("suspends the renderer of every hidden session and resumes the active one", () => {
+    const active = makeEntry();
+    const other = makeEntry();
+    const ref = makeRef({ a: active, b: other });
+
+    switchVisibility(ref, "a", vi.fn());
+
+    expect(other.instance.suspendRenderer).toHaveBeenCalledOnce();
+    expect(other.instance.resumeRenderer).not.toHaveBeenCalled();
+    expect(active.instance.resumeRenderer).toHaveBeenCalledOnce();
+    expect(active.instance.suspendRenderer).not.toHaveBeenCalled();
+  });
+
+  it("resumes the active renderer before fitting it", () => {
+    const active = makeEntry();
+    const order: string[] = [];
+    vi.mocked(active.instance.resumeRenderer).mockImplementation(() => order.push("resume"));
+    vi.mocked(active.instance.fitAddon.fit).mockImplementation(() => order.push("fit"));
+    const ref = makeRef({ a: active });
+
+    switchVisibility(ref, "a", vi.fn());
+    flushRaf();
+
+    expect(order).toEqual(["resume", "fit"]);
+  });
+
+  it("suspends every renderer when no session is active", () => {
+    const a = makeEntry();
+    const b = makeEntry();
+    const ref = makeRef({ a, b });
+
+    switchVisibility(ref, null, vi.fn());
+
+    expect(a.instance.suspendRenderer).toHaveBeenCalledOnce();
+    expect(b.instance.suspendRenderer).toHaveBeenCalledOnce();
   });
 
   it("fits, focuses, and starts the shell exactly once on first activation", () => {

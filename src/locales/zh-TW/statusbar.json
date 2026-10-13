@@ -73,6 +73,7 @@
   "terminal.floatingPrompt.jumpToPrompt": "跳到輸入行",
   "terminal.newSession": "新增終端機",
   "terminal.maxSessions": "最多 5 個工作階段",
+  "terminal.maxSessionsTotal": "所有工作區合計最多 {{max}} 個終端機，請先關閉一個再新增",
   "terminal.closeSession": "關閉",
   "terminal.restartSession": "重新啟動",
   "terminal.renameSession": "重新命名終端機工作階段",

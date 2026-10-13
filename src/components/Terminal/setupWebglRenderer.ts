@@ -71,9 +71,7 @@
  *     attached to whichever canvases the renderer paints into.
  *   - On context loss, the addon is disposed and xterm 6.0's built-in
  *     DOM renderer takes over automatically (the canvas addon was
- *     removed in 6.0, so DOM is the only fallback).
- *   - resetDisplay() is the user-facing escape hatch: it clears the
- *     atlas, re-paints the viewport, and broadcasts per rule (b). Safe to
+ *     removed in 6.0, so DOM is the only fallback).x *     atlas, re-paints the viewport, and broadcasts per rule (b). Safe to
  *     call when WebGL is disabled or has already lost context.
  *
  * @coordinates-with createTerminalInstance.ts — sole caller
@@ -106,6 +104,10 @@ export interface WebglRendererHandle {
    * when WebGL is disabled or already disposed.
    */
   resetDisplay: () => void;
+  /** Release the WebGL addon while the terminal is hidden. Idempotent. */
+  suspend: () => void;
+  /** Re-attach WebGL after suspend() and repaint. No-op unless suspended. */
+  resume: () => void;
   /** Tear down all listeners. Idempotent. */
   cleanup: () => void;
 }
@@ -165,8 +167,27 @@ export function setupWebglRenderer({ term, container, enabled }: SetupOptions): 
 
   const peer = { syncAfterAtlasClear: clearOwnAtlasAndRepaint };
 
+  /** Set once a context is lost: the DOM renderer then stays for good. */
+  let contextLost = false;
+  let suspended = false;
+
+  /** Dispose the addon and everything bound to its canvases. */
+  const detach = () => {
+    if (!webglAddon) return;
+    try {
+      webglAddon.dispose();
+    } catch {
+      // Already disposing or never fully initialized — safe to ignore.
+    }
+    webglAddon = null;
+    liveRenderers.delete(peer);
+    drainDomCleanups();
+  };
+
   const handleContextLoss = () => {
     if (!webglAddon) return;
+    contextLost = true;
+    // Stays registered (see liveRenderers): only the addon goes.
     try {
       webglAddon.dispose();
     } catch {
@@ -186,7 +207,7 @@ export function setupWebglRenderer({ term, container, enabled }: SetupOptions): 
     });
   };
 
-  if (enabled) {
+  const attach = () => {
     try {
       const addon = new WebglAddon();
       webglAddon = addon;
@@ -226,7 +247,23 @@ export function setupWebglRenderer({ term, container, enabled }: SetupOptions): 
       webglAddon = null;
       /* v8 ignore stop */
     }
-  }
+  };
+
+  if (enabled) attach();
+
+  const suspend = () => {
+    if (suspended || !webglAddon) return;
+    suspended = true;
+    detach();
+  };
+
+  const resume = () => {
+    if (!suspended) return;
+    suspended = false;
+    if (!enabled || contextLost) return;
+    attach();
+    refreshViewport();
+  };
 
   const resetDisplay = () => {
     // Whether we are about to disturb the SHARED atlas, decided before the
@@ -254,5 +291,5 @@ export function setupWebglRenderer({ term, container, enabled }: SetupOptions): 
     // The addon itself is disposed by term.dispose() via the registered addon.
   };
 
-  return { resetDisplay, cleanup };
+  return { resetDisplay, suspend, resume, cleanup };
 }

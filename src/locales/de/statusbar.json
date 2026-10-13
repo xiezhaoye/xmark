@@ -73,6 +73,7 @@
   "terminal.floatingPrompt.jumpToPrompt": "Zur Eingabezeile springen",
   "terminal.newSession": "Neues Terminal",
   "terminal.maxSessions": "Maximal 5 Sitzungen",
+  "terminal.maxSessionsTotal": "Maximal {{max}} Terminals über alle Arbeitsbereiche — schließen Sie eines, um ein neues zu öffnen",
   "terminal.closeSession": "Schließen",
   "terminal.restartSession": "Neu starten",
   "terminal.renameSession": "Terminalsitzung umbenennen",

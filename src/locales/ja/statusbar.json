@@ -73,6 +73,7 @@
   "terminal.floatingPrompt.jumpToPrompt": "プロンプトへ移動",
   "terminal.newSession": "新しいターミナル",
   "terminal.maxSessions": "最大5セッション",
+  "terminal.maxSessionsTotal": "すべてのワークスペースで最大 {{max}} 個のターミナルです。新しく開くには 1 つ閉じてください",
   "terminal.closeSession": "閉じる",
   "terminal.restartSession": "再起動",
   "terminal.renameSession": "ターミナルセッションの名前を変更",
