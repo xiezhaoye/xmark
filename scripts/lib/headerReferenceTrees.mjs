@@ -24,6 +24,7 @@ export const TREES = [
   { dir: "src-tauri/src", moduleBase: "src-tauri/src", packageRoot: "src-tauri", lang: "rust" },
   { dir: "server/mcp/src", moduleBase: "server/mcp/src", packageRoot: "server/mcp", lang: "ts" },
   { dir: "server/content/src", moduleBase: "server/content/src", packageRoot: "server/content", lang: "ts" },
+  { dir: "server/mobile/src", moduleBase: "server/mobile/src", packageRoot: "server/mobile", lang: "ts" },
   { dir: "scripts", moduleBase: ".", packageRoot: ".", lang: "ts" },
   { dir: ".claude/hooks", moduleBase: ".", packageRoot: ".", lang: "ts" },
   { dir: "e2e", moduleBase: ".", packageRoot: ".", lang: "ts" },

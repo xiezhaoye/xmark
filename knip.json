@@ -55,6 +55,17 @@
         "mdast-util-find-and-replace"
       ]
     },
+    "server/mobile": {
+      "entry": [
+        "src/**/*.test.ts"
+      ],
+      "project": [
+        "src/**/*.ts"
+      ],
+      "ignoreDependencies": [
+        "ignore"
+      ]
+    },
     "server/mcp": {
       "project": [
         "src/**/*.ts"

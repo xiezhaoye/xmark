@@ -1031,6 +1031,12 @@
       "doc": "website/guide/knowledge-base.md"
     },
     {
+      "name": "Mobile reader server",
+      "paths": [
+        "server/mobile/src"
+      ]
+    },
+    {
       "name": "Workflow engine (bespoke YAML)",
       "paths": [
         "src/lib/workflow",

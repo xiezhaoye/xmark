@@ -3775,6 +3775,20 @@ Two unrelated features share this area. The coherence layer is a Rust kernel (`s
 - tests: `src/components/KnowledgeBasePanel/KnowledgeBasePanel.test.tsx`, `src/components/KnowledgeBasePanel/KnowledgeBasePanel.runtime.test.tsx`, `src/components/KnowledgeBasePanel/KnowledgeBaseOverlay.test.tsx`, `src/components/KnowledgeBasePanel/runtimeState.test.ts`, `src/services/contentServer/availability.test.ts`, `src/services/menu/conditionalMenuItemSync.test.ts`, `src/services/commands/viewCommands.test.ts`, `src/hooks/useContentServer.test.ts`, `src/hooks/useContentServerWorkspaceSync.test.ts`, `src/stores/contentServerStore.test.ts`, `src-tauri/src/content_server/runtime.test.rs`, `src-tauri/src/content_server/bundle_manifest.test.rs`, `src-tauri/src/menu/conditional_items.test.rs`, `e2e/journeys/39-knowledge-base-runtime-state.mjs`, `scripts/release-smoke-kb-runtime.test.mjs`; `useContentServerSupervisor.ts` has no test file of its own (its restart budget is exercised in `useContentServer.test.ts`)
 - notes: Rule 60 §12 D1 resolved as option (c), developer-mode-only (#1425). `BUNDLED_CLI_RESOURCE` is `None` and `.github/workflows/release-smoke.yml` asserts `cli=missing` on each macOS release; that assertion must flip when a runtime ships. The shortcut row stays listed in Settings → Shortcuts with "(requires Developer Mode)". The `availability.ts` header says hiding the entry points does not close an open panel; `KnowledgeBaseOverlay.tsx` does close it.
 
+### Mobile reader server (read-only workspace groups over Tailscale)
+- id: mobile-reader-server
+- feature: Mobile reader server
+- summary: A standalone Node HTTP server, `xmark-mobile-server`, that lets the XMark Mobile iPhone reader browse the folders in the desktop's workspace groups, read-only, over Tailscale. Not spawned by the desktop app.
+- capabilities: bearer-token gate on every route (header only, timing-safe, follows `rotate-token` without a restart); `/api/health`, `/api/workspaces` (groups → folders with opaque `rootId`s, no absolute paths), `/api/tree` (one level, folders first, natural order, hidden/always-skipped/symlinked/unsupported entries left out), `/api/file` (UTF-8 text up to 5 MB, BOM dropped), `/api/asset` (images up to 30 MB, ETag/304, sandboxing CSP), `/api/search` (content-server walker and capped matcher across roots, 30 s walk cache); share-file reader with mtime reload and a 5 s folder re-resolve; binds only the Tailscale IPv4 and exits when that address changes; CLI `serve`, `pair` (terminal QR `xmark-mobile://pair?host&port&token`), `rotate-token`, `install-agent`/`uninstall-agent` (launchd `app.xmark.mobile-server`); default port 8740
+- status: dev-only, macos-only
+- gate: always on when run; reads `~/Library/Application Support/<XMARK_APP_IDENTIFIER or app.xmark>/mobile-share.json`
+- surfaces: CLI `xmark-mobile-server`; launchd agent
+- code: `server/mobile/src/cli.ts`, `server/mobile/src/cliMain.ts`, `server/mobile/src/createApp.ts`, `server/mobile/src/auth.ts`, `server/mobile/src/token.ts`, `server/mobile/src/registry.ts`, `server/mobile/src/shareFile.ts`, `server/mobile/src/containment.ts`, `server/mobile/src/routes/target.ts`, `server/mobile/src/routes/tree.ts`, `server/mobile/src/routes/file.ts`, `server/mobile/src/routes/asset.ts`, `server/mobile/src/routes/search.ts`, `server/mobile/src/tailscale.ts`, `server/mobile/src/launchAgent.ts`
+- rust: none
+- docs: none
+- tests: every module has a sibling `*.test.ts` under `server/mobile/src` (`createApp.test.ts`, `runtime.test.ts` and `cliMain.test.ts` bind real sockets); `pnpm test:mobile-server`
+- notes: The desktop does not write `mobile-share.json` yet, so until it does the server lists no groups. Searches markdown only; the tree applies no `.gitignore`, search does (the content-server walker). Plain HTTP inside WireGuard; no CORS, because the phone calls through Tauri's HTTP plugin.
+
 ### Content server (knowledge base + Slidev host)
 - id: content-server
 - feature: Knowledge base & Slidev

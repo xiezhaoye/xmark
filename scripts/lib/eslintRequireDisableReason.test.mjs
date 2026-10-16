@@ -109,7 +109,7 @@ function sourceFiles(dir) {
  * Every tree whose code is ours. The server packages lint under the root
  * config; scripts and e2e are not linted, so this scan is their only check.
  */
-const SCANNED = ["src", "server/content/src", "server/mcp/src", "server/mcp/__tests__", "scripts", "e2e"];
+const SCANNED = ["src", "server/content/src", "server/mobile/src", "server/mcp/src", "server/mcp/__tests__", "scripts", "e2e"];
 /** This rule's own module and test quote directives as data. */
 const SELF = new Set(["scripts/lib/eslintRequireDisableReason.mjs", "scripts/lib/eslintRequireDisableReason.test.mjs"]);
 
