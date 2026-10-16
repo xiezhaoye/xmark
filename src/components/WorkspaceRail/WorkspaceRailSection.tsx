@@ -14,7 +14,7 @@
  * @coordinates-with WorkspaceRail.tsx — owns the store calls and the menu
  * @module components/WorkspaceRail/WorkspaceRailSection
  */
-import { useEffect, useRef, type MouseEvent, type ReactNode } from "react";
+import { useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { ChevronDown, ChevronRight, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { isImeKeyEvent } from "@/utils/imeGuard";
@@ -29,6 +29,35 @@ interface WorkspaceRailSectionProps {
   onHeaderContextMenu: (event: MouseEvent<HTMLButtonElement>) => void;
   onRenameCommit: (name: string) => void;
   onRenameCancel: () => void;
+  /**
+   * Group id whose folder rows this section's list holds, published as
+   * `data-rail-folder-rows` so a folder drag measures the target group's rows
+   * and no others. `null` for Ungrouped, which has no stored order to reorder
+   * and is never a drop target.
+   */
+  folderRowsId: string | null;
+  /**
+   * A dragged folder is held over this group and would be appended to it —
+   * the group shows no rows to drop between (collapsed or empty), so the whole
+   * group is the indicator.
+   */
+  dropInto?: boolean;
+  /**
+   * Drag-to-reorder wiring. `null` for the derived Ungrouped section, which has
+   * no stored order to change (its entries come from the window's instances),
+   * so it neither drags nor accepts a drop.
+   */
+  drag?: {
+    onPointerDown: (event: ReactPointerEvent) => void;
+    /** Alt+Arrow moves the row one slot; the keyboard's equivalent of the drag. */
+    onKeyDown: (event: ReactKeyboardEvent<HTMLButtonElement>) => void;
+    /** This header is the row being dragged. */
+    dragging: boolean;
+    /** The drop lands immediately above this header. */
+    dropAbove: boolean;
+    /** The drop lands at the very foot of the section list. */
+    dropBelow: boolean;
+  } | null;
   children: ReactNode;
 }
 
@@ -41,15 +70,38 @@ export function WorkspaceRailSection({
   onHeaderContextMenu,
   onRenameCommit,
   onRenameCancel,
+  folderRowsId,
+  dropInto = false,
+  drag,
   children,
 }: WorkspaceRailSectionProps) {
   const { t } = useTranslation();
   const isGroup = section.groupId !== null;
   const Chevron = collapsed ? ChevronRight : ChevronDown;
+  const sectionClass = [
+    "workspace-rail__section",
+    drag?.dragging ? "workspace-rail__section--dragging" : "",
+    drag?.dropAbove ? "workspace-rail__section--drop-above" : "",
+    drag?.dropBelow ? "workspace-rail__section--drop-below" : "",
+    dropInto ? "workspace-rail__section--drop-into" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
-    <div className="workspace-rail__section" role="group" aria-label={section.name}>
-      <div className="workspace-rail__section-header">
+    <div
+      className={sectionClass}
+      role="group"
+      aria-label={section.name}
+      // The box a folder drag hit-tests to pick its target group.
+      {...(folderRowsId !== null ? { "data-rail-group-id": folderRowsId } : {})}
+    >
+      <div
+        className="workspace-rail__section-header"
+        // The row a group drag is measured against — see useRailDragReorder.
+        {...(drag ? { "data-rail-row": "group" } : {})}
+        onPointerDown={drag?.onPointerDown}
+      >
         {editing ? (
           <GroupNameInput initial={section.name} onCommit={onRenameCommit} onCancel={onRenameCancel} />
         ) : (
@@ -58,9 +110,13 @@ export function WorkspaceRailSection({
             className="workspace-rail__section-toggle"
             data-rail-action="toggle-section"
             data-section-id={section.id}
+            // The group's press target: a drag may start here (see the guard in
+            // useRailDragReorder); a press that does not move still toggles.
+            {...(drag ? { "data-rail-drag-handle": "group" } : {})}
             aria-expanded={!collapsed}
             onClick={onToggle}
             onContextMenu={isGroup ? onHeaderContextMenu : (event) => event.preventDefault()}
+            onKeyDown={drag?.onKeyDown}
           >
             <Chevron size={14} aria-hidden="true" />
             <span className="workspace-rail__section-name">{section.name}</span>
@@ -82,7 +138,11 @@ export function WorkspaceRailSection({
         )}
       </div>
       {!collapsed && (
-        <div className="workspace-rail__section-list" role="list">
+        <div
+          className="workspace-rail__section-list"
+          role="list"
+          {...(folderRowsId !== null ? { "data-rail-folder-rows": folderRowsId } : {})}
+        >
           {section.entries.length === 0 && isGroup ? (
             <p className="workspace-rail__section-empty">{t("workspaceRail.emptyGroup")}</p>
           ) : (

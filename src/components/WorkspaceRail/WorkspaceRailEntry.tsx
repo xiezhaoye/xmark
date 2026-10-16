@@ -16,7 +16,12 @@
  * @coordinates-with WorkspaceRail.tsx — owns the menu and the actions
  * @module components/WorkspaceRail/WorkspaceRailEntry
  */
-import type { CSSProperties, MouseEvent } from "react";
+import type {
+  CSSProperties,
+  KeyboardEvent as ReactKeyboardEvent,
+  MouseEvent,
+  PointerEvent as ReactPointerEvent,
+} from "react";
 import { FileStack } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { RailEntry } from "./workspaceRailModel";
@@ -49,6 +54,19 @@ interface WorkspaceRailEntryProps {
   active: boolean;
   onActivate: () => void;
   onContextMenu: (event: MouseEvent<HTMLButtonElement>) => void;
+  /**
+   * Drag-to-reorder wiring, present only for a real group's entries. An entry
+   * in the derived Ungrouped section has no stored order to change, so it is
+   * passed `null` and neither drags nor accepts a drop.
+   */
+  drag?: {
+    onPointerDown: (event: ReactPointerEvent) => void;
+    /** Alt+Arrow moves the row one slot; the keyboard's equivalent of the drag. */
+    onKeyDown: (event: ReactKeyboardEvent<HTMLButtonElement>) => void;
+    dragging: boolean;
+    dropAbove: boolean;
+    dropBelow: boolean;
+  } | null;
 }
 
 export function WorkspaceRailEntry({
@@ -58,16 +76,26 @@ export function WorkspaceRailEntry({
   active,
   onActivate,
   onContextMenu,
+  drag,
 }: WorkspaceRailEntryProps) {
   const { t } = useTranslation();
   const instance = entry.instance;
   const instanceId = instance?.workspaceInstanceId;
   const closed = instance === null;
+  const entryClass = [
+    "workspace-rail__entry",
+    drag?.dragging ? "workspace-rail__entry--dragging" : "",
+    drag?.dropAbove ? "workspace-rail__entry--drop-above" : "",
+    drag?.dropBelow ? "workspace-rail__entry--drop-below" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div
-      className="workspace-rail__entry"
+      className={entryClass}
       role="listitem"
+      onPointerDown={drag?.onPointerDown}
       style={{ "--workspace-rail-color": colorForSeed(colorSeed) } as EntryStyle}
     >
       <button
@@ -79,8 +107,12 @@ export function WorkspaceRailEntry({
         aria-label={t(closed ? "workspaceRail.openSaved" : "workspaceRail.activate", { name: entry.label })}
         aria-pressed={closed ? undefined : active}
         title={entry.path ?? entry.label}
+        // Marks the press target that MAY start a drag, so the hook can tell a
+        // row press from a press on the row's own controls (the "+").
+        {...(drag ? { "data-rail-row": "folder" } : {})}
         onClick={onActivate}
         onContextMenu={onContextMenu}
+        onKeyDown={drag?.onKeyDown}
       >
         {instance?.kind === "loose" ? (
           <span className="workspace-rail__loose" aria-hidden="true">

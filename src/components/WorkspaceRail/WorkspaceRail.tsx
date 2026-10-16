@@ -43,6 +43,7 @@ import { WorkspaceRailSection } from "./WorkspaceRailSection";
 import { WorkspaceRailEntry } from "./WorkspaceRailEntry";
 import { buildRailSections, type RailEntry, type RailInstance } from "./workspaceRailModel";
 import { buildEntryMenuItems, buildGroupMenuItems } from "./workspaceRailMenus";
+import { useRailReorder } from "./useRailReorder";
 import {
   handleCloseWorkspace,
   handleDuplicateWorkspace,
@@ -90,6 +91,15 @@ export function WorkspaceRail({ windowLabel }: { windowLabel: string }) {
   const [menu, setMenu] = useState<OpenMenu | null>(null);
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
 
+  // Drag-to-reorder, and its keyboard equivalent. Declared ABOVE the two early
+  // returns below, with every other hook: the folded rail returns a strip and
+  // the disabled rail returns null, and a hook after either would change the
+  // hook count between renders (React throws "Rendered fewer hooks than
+  // expected"). The hook reads the store through
+  // `useWorkspaceGroupsStore.getState()` — the repo's rule inside callbacks —
+  // so it needs nothing from the render below it.
+  const { listRef, isReordering, rowDrag, dropInto } = useRailReorder();
+
   // Clear a lingering context menu when the rail is disabled (R3-11) —
   // re-enabling must not resurrect a stale menu over an instance that may be
   // gone. Render-time guarded one-way adjustment (an effect cannot run once
@@ -125,6 +135,9 @@ export function WorkspaceRail({ windowLabel }: { windowLabel: string }) {
     label: instance.displayNameKey ? t(instance.displayNameKey) : instance.displayName,
   }));
   const sections = buildRailSections(groups, railInstances, resolveLegacyRootId, t("workspaceRail.ungrouped"));
+  // How many rows a group reorder can land among: Ungrouped is derived and not
+  // reorderable, so it is not one of them.
+  const groupRowCount = groups.length;
   const glyphOf = (entry: RailEntry) =>
     workspaceRailGlyphs([{ workspaceInstanceId: "x", displayName: entry.label, kind: entry.instance?.kind ?? "workspace" }]).x;
 
@@ -187,41 +200,66 @@ export function WorkspaceRail({ windowLabel }: { windowLabel: string }) {
   };
 
   return (
-    <nav className="workspace-rail" aria-label={t("workspaceRail.label")} style={sidebarTextVars(sidebarFontSize)}>
-      <div className="workspace-rail__list">
-        {sections.map((section) => (
-          <WorkspaceRailSection
-            key={section.id}
-            section={section}
-            collapsed={collapsed[section.id] === true}
-            editing={section.groupId !== null && editingGroupId === section.groupId}
-            onToggle={() => groupsApi().toggleCollapsed(section.id)}
-            onAddFolder={() => void addFolderToGroup(section.id)}
-            onHeaderContextMenu={(event) => openMenu(event, section.name, groupMenu(section.id, section.name))}
-            onRenameCommit={(name) => {
-              groupsApi().renameGroup(section.id, name);
-              setEditingGroupId(null);
-            }}
-            onRenameCancel={() => setEditingGroupId(null)}
-          >
-            {section.entries.map((entry) => (
-              <WorkspaceRailEntry
-                key={entry.key}
-                entry={entry}
-                glyph={glyphOf(entry)}
-                colorSeed={entry.instance?.rootId ?? (entry.path ? resolveLegacyRootId(entry.path) : null) ?? entry.key}
-                active={entry.instance?.workspaceInstanceId === activeId}
-                onActivate={() => {
-                  // The FULL context switch (stash outgoing, restore incoming
-                  // tabs/panes, sidebar re-root) — not a raw flip.
-                  if (entry.instance) switchWorkspaceInstance(windowLabel, entry.instance.workspaceInstanceId);
-                  else if (entry.path) void handleOpenGroupFolder(windowLabel, entry.path);
-                }}
-                onContextMenu={(event) => openMenu(event, entry.label, entryMenu(entry, section.groupId))}
-              />
-            ))}
-          </WorkspaceRailSection>
-        ))}
+    <nav
+      className={`workspace-rail${isReordering ? " workspace-rail--reordering" : ""}`}
+      aria-label={t("workspaceRail.label")}
+      style={sidebarTextVars(sidebarFontSize)}
+    >
+      <div className="workspace-rail__list" ref={listRef}>
+        {sections.map((section) => {
+          // Index among the DRAGGABLE sections only: Ungrouped contributes no
+          // row, so counting it would shift every index after it by one and
+          // drop groups one slot short of where the user aimed.
+          const groupIndex = sections.indexOf(section);
+          const draggable = section.groupId !== null;
+          return (
+            <WorkspaceRailSection
+              key={section.id}
+              section={section}
+              collapsed={collapsed[section.id] === true}
+              editing={section.groupId !== null && editingGroupId === section.groupId}
+              onToggle={() => groupsApi().toggleCollapsed(section.id)}
+              onAddFolder={() => void addFolderToGroup(section.id)}
+              onHeaderContextMenu={(event) => openMenu(event, section.name, groupMenu(section.id, section.name))}
+              onRenameCommit={(name) => {
+                groupsApi().renameGroup(section.id, name);
+                setEditingGroupId(null);
+              }}
+              onRenameCancel={() => setEditingGroupId(null)}
+              drag={
+                draggable ? rowDrag({ kind: "group", groupId: section.id }, groupIndex, groupRowCount) : null
+              }
+              // A folder drag hit-tests this group and measures its rows.
+              folderRowsId={section.groupId}
+              dropInto={draggable && dropInto(section.id)}>
+              {section.entries.map((entry) => (
+                <WorkspaceRailEntry
+                  key={entry.key}
+                  entry={entry}
+                  glyph={glyphOf(entry)}
+                  colorSeed={entry.instance?.rootId ?? (entry.path ? resolveLegacyRootId(entry.path) : null) ?? entry.key}
+                  active={entry.instance?.workspaceInstanceId === activeId}
+                  onActivate={() => {
+                    // The FULL context switch (stash outgoing, restore incoming
+                    // tabs/panes, sidebar re-root) — not a raw flip.
+                    if (entry.instance) switchWorkspaceInstance(windowLabel, entry.instance.workspaceInstanceId);
+                    else if (entry.path) void handleOpenGroupFolder(windowLabel, entry.path);
+                  }}
+                  onContextMenu={(event) => openMenu(event, entry.label, entryMenu(entry, section.groupId))}
+                  drag={
+                    draggable && entry.path
+                      ? rowDrag(
+                          { kind: "folder", groupId: section.id, path: entry.path },
+                          section.entries.indexOf(entry),
+                          section.entries.length,
+                        )
+                      : null
+                  }
+                />
+              ))}
+            </WorkspaceRailSection>
+          );
+        })}
       </div>
       <div className="workspace-rail__footer">
         <button

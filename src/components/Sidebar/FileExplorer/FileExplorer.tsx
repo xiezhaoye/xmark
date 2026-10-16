@@ -206,6 +206,13 @@ export const FileExplorer = forwardRef<FileExplorerHandle, FileExplorerProps>(
           // trackpad press that drifted a few pixels started a drag instead of
           // a click — the row ignored the first click. Moving a file stays
           // available from the context menu (Move To…). Flip both to re-enable.
+          //
+          // This is about react-arborist's HTML5 drag specifically, which
+          // decides click-vs-drag below the app and swallows the click when it
+          // guesses wrong. It is NOT a reason to avoid drag gestures as such:
+          // the workspace rail reorders with pointer events plus an app-owned
+          // threshold, where nothing is armed until the pointer has actually
+          // moved (see WorkspaceRail/useRailDragReorder.ts).
           disableDrag={true}
           disableDrop={true}
           disableEdit={false}

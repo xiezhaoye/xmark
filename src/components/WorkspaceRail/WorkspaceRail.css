@@ -308,3 +308,73 @@
   outline: none;
   background-color: var(--border-color);
 }
+
+/* ── Drag to reorder ────────────────────────────────────────────────────
+   The gesture itself lives in useRailDragReorder; this is only what it looks
+   like. Rows are never MOVED in the DOM during a drag — the drop indicator
+   shows where the row will land, and the order changes once, on release. */
+
+/* The row being dragged is dimmed, not hidden: it stays the thing under the
+   pointer, so the gesture reads as moving it. `--opacity-muted` is the same
+   step the rail already uses for a row that is present but not the subject. */
+.workspace-rail__entry--dragging,
+.workspace-rail__section--dragging {
+  opacity: var(--opacity-muted);
+}
+
+/* The drop indicator is a 2px accent line on the edge of the row's box (the
+   top edge for "lands above", the bottom edge for "lands at the end"), clear of
+   the label it is explaining. `::after` on the row, absolute against
+   `.workspace-rail__entry` (positioned above) and `.workspace-rail__section`,
+   which is positioned here: without it the group's line anchors to the rail's
+   scroll container and never appears next to the group it points at. */
+.workspace-rail__section {
+  position: relative;
+}
+
+.workspace-rail__entry--drop-above::after,
+.workspace-rail__section--drop-above::after,
+.workspace-rail__entry--drop-below::after,
+.workspace-rail__section--drop-below::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: var(--border-medium);
+  border-radius: var(--radius-pill);
+  background: var(--accent-primary);
+}
+
+.workspace-rail__entry--drop-above::after,
+.workspace-rail__section--drop-above::after {
+  top: 0;
+}
+
+.workspace-rail__entry--drop-below::after,
+.workspace-rail__section--drop-below::after {
+  bottom: 0;
+}
+
+/* During an ARMED drag only, so a plain click never repaints the cursor or
+   blocks selection — the failure mode this whole gesture is guarding against.
+   `useDocumentDrag` is not asked for a cursor because it would set one at
+   `pointerdown`, before the threshold decides whether this is a drag at all. */
+.workspace-rail--reordering {
+  user-select: none;
+  cursor: grabbing;
+}
+
+/* A row that can be reordered keeps the platform's interactive cursor; the
+   grabbing cursor appears only once a drag has armed (above). `data-rail-row`
+   sits on the press target itself: the entry's button, the group's header. */
+[data-rail-row] {
+  cursor: var(--cursor-interactive, default);
+}
+
+/* A folder held over a group that shows no rows to drop between (collapsed or
+   empty) lands at its end: the whole header is the indicator, outlined in the
+   same accent as the 2px line. */
+.workspace-rail__section--drop-into > .workspace-rail__section-header {
+  border-radius: var(--radius-sm);
+  box-shadow: inset 0 0 0 var(--border-medium) var(--accent-primary);
+}
