@@ -98,6 +98,81 @@ fn labels_are_unique_and_strictly_increasing() {
     assert_eq!(sorted.len(), numbers.len(), "labels must be distinct");
 }
 
+// -- acceptFirstMouse: one behaviour, two window-construction paths -------
+//
+// A macOS window with `acceptsFirstMouse: NO` (AppKit's default, and Tauri's —
+// the config field is `#[serde(default)] bool`) is activated by a click WITHOUT
+// delivering that click to the web content. On this app's leading columns,
+// where a single click selects a file or a workspace, that reads as "my click
+// did nothing; I have to click twice".
+//
+// The behaviour is asked for in TWO places that do not share code: the `main`
+// window is declared in `tauri.conf.json` and built by Tauri at setup, while
+// every rebuilt/restored window goes through `build_document_window`. Setting
+// it in only one is invisible on the machine of whoever set it — the main
+// window is the one the user actually clicks in on launch, and a document
+// window is what they click in afterwards. That asymmetry is exactly how this
+// shipped: `build_document_window` asked from the start, the config entry did
+// not, so the FIRST window a user touched was the one that swallowed the click.
+// Both are asserted here so the pair cannot drift apart again.
+
+/// The base config's window entries, as JSON.
+fn configured_windows() -> Vec<serde_json::Value> {
+    let config: serde_json::Value =
+        serde_json::from_str(include_str!("../../tauri.conf.json"))
+            .expect("tauri.conf.json parses");
+    config["app"]["windows"]
+        .as_array()
+        .expect("app.windows is a list")
+        .clone()
+}
+
+/// Every window the config declares asks AppKit to deliver the click that
+/// activates it.
+///
+/// Not scoped to the window called `main`: the next window added to this list
+/// has the same problem, and a test that names `main` would not notice.
+#[test]
+fn every_configured_window_accepts_the_click_that_activates_it() {
+    let windows = configured_windows();
+    assert!(!windows.is_empty(), "app.windows names no window");
+    for window in &windows {
+        assert_eq!(
+            window["acceptFirstMouse"],
+            serde_json::json!(true),
+            "window {:?} does not set acceptFirstMouse — on macOS its first click \
+             would activate the window without reaching the webview, and the user \
+             would have to click twice",
+            window["label"],
+        );
+    }
+}
+
+/// The runtime builder asks for the same behaviour, so a window rebuilt after
+/// the main one was destroyed (`ensure_main_window`, hot-exit restore, a
+/// transfer) does not silently regress to AppKit's default.
+#[test]
+fn the_runtime_document_window_builder_accepts_the_click_that_activates_it() {
+    let source = include_str!("document_windows.rs");
+    assert!(
+        source.contains(".accept_first_mouse(true)"),
+        "build_document_window no longer calls accept_first_mouse(true): a rebuilt \
+         window would swallow the click that activates it"
+    );
+
+    // ...inside the macOS-only block, which is also what places the traffic
+    // lights. Tauri does not expose this on other toolkits, so an ungated call
+    // would not compile there — the gate is part of the contract, not decoration.
+    let macos_block = source
+        .split("#[cfg(target_os = \"macos\")]")
+        .find(|block| block.contains("traffic_light_position"))
+        .expect("build_document_window still has its macOS-only block");
+    assert!(
+        macos_block.contains(".accept_first_mouse(true)"),
+        "accept_first_mouse(true) moved outside build_document_window's macOS block"
+    );
+}
+
 // -- pick_reopen_workspace_root_with --------------------------------------
 
 #[test]
