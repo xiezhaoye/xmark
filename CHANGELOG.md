@@ -11,6 +11,25 @@ section as part of the version bump (`.claude/rules/40-version-bump.md`).
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-10-16
+
+### Added
+
+- Drag a group's name in the workspace rail to reorder the groups, and drag
+  a folder to reorder it within its group. A line shows where it will land;
+  Esc cancels the drag. Alt+Up/Down moves the focused group or folder one
+  slot from the keyboard.
+- Drag a folder onto another group to move it there: into the gap you point
+  at, or to the end when that group is collapsed or empty (its header is
+  highlighted). If the group already holds the folder, it only leaves the
+  group it came from.
+
+### Fixed
+
+- A single trackpad tap on the workspace rail or the file tree now selects
+  the row, even when the window was not active. Before, the first tap only
+  activated the window and had to be repeated.
+
 ## [0.1.2] - 2026-10-13
 
 ### Added
@@ -340,7 +359,8 @@ First XMark release: an unofficial fork of VMark 0.9.99 by Xiaolai Li.
 
 - Raised the `markdown-it` version floor past GHSA-253c-mchw-3w2r.
 
-[Unreleased]: https://github.com/xiezhaoye/xmark/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/xiezhaoye/xmark/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/xiezhaoye/xmark/releases/tag/v0.1.3
 [0.1.2]: https://github.com/xiezhaoye/xmark/releases/tag/v0.1.2
 [0.1.1]: https://github.com/xiezhaoye/xmark/releases/tag/v0.1.1
 [0.1.0]: https://github.com/xiezhaoye/xmark/releases/tag/v0.1.0
