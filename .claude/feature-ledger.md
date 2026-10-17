@@ -3775,6 +3775,48 @@ Two unrelated features share this area. The coherence layer is a Rust kernel (`s
 - tests: `src/components/KnowledgeBasePanel/KnowledgeBasePanel.test.tsx`, `src/components/KnowledgeBasePanel/KnowledgeBasePanel.runtime.test.tsx`, `src/components/KnowledgeBasePanel/KnowledgeBaseOverlay.test.tsx`, `src/components/KnowledgeBasePanel/runtimeState.test.ts`, `src/services/contentServer/availability.test.ts`, `src/services/menu/conditionalMenuItemSync.test.ts`, `src/services/commands/viewCommands.test.ts`, `src/hooks/useContentServer.test.ts`, `src/hooks/useContentServerWorkspaceSync.test.ts`, `src/stores/contentServerStore.test.ts`, `src-tauri/src/content_server/runtime.test.rs`, `src-tauri/src/content_server/bundle_manifest.test.rs`, `src-tauri/src/menu/conditional_items.test.rs`, `e2e/journeys/39-knowledge-base-runtime-state.mjs`, `scripts/release-smoke-kb-runtime.test.mjs`; `useContentServerSupervisor.ts` has no test file of its own (its restart budget is exercised in `useContentServer.test.ts`)
 - notes: Rule 60 §12 D1 resolved as option (c), developer-mode-only (#1425). `BUNDLED_CLI_RESOURCE` is `None` and `.github/workflows/release-smoke.yml` asserts `cli=missing` on each macOS release; that assertion must flip when a runtime ships. The shortcut row stays listed in Settings → Shortcuts with "(requires Developer Mode)". The `availability.ts` header says hiding the entry points does not close an open panel; `KnowledgeBaseOverlay.tsx` does close it.
 
+### Mobile reader: iPhone app (XMark Mobile)
+- id: mobile-reader-app
+- feature: Mobile reader
+- summary: A Tauri v2 iOS app, `app.xmark.mobile`, that reads the Mac's shared workspace groups through the mobile server: a left drawer with groups/folders and a file tree, a rendered document view, outline, search and pairing. Read-only.
+- capabilities: pairing by QR (`xmark-mobile://pair?host&port&token`, barcode-scanner plugin) or manual entry, with a connection test; drawer always starts closed and is never persisted; opened by the drawer button or a swipe right, it pushes the whole document right, leaving a 44pt strip that holds the open-state drawer button; closed by that button, a tap on the strip, a swipe left or opening a file; column 1 fixed at 132pt and drawn like the Mac rail (bold group heading with folder count, coloured one-character glyph per folder from the desktop's `workspaceRailGlyphs`, accent fill and coloured left bar on the selected folder, outlined glyph when unavailable, long-press shows the full name), column 2 the lazy tree expanded in place for the session; markdown with GFM, KaTeX, GitHub alerts, highlight.js, Mermaid (lazy) and DOMPurify; relative links open in the reader, `#anchor` scrolls, http(s)/mailto open in the system browser; images fetched with the token as blob URLs; text files shown as highlighted source; image files shown whole; the top bar (drawer button, title, search, settings) scrolls away with the document; only then does a preview/source switch (markdown only) float at the top under a status-bar backdrop, and switching keeps the reading position; markdown and HTML shown as preview or highlighted source, chosen for the session (HTML previews in an `<iframe sandbox="allow-same-origin">` with no scripts, relative images as token-fetched blob URLs, relative stylesheets inlined, scripts/base/on* stripped, height fitted to the page, link taps routed by the reader); search (current workspace or all) with jump to the first match; pull-to-refresh on the document and the tree; last document restored at launch (drawer opens when there is none); Chinese and English UI chosen from the system language
+- status: dev-only
+- gate: built and installed by hand from `mobile/` with a personal Apple ID (7-day signing); talks only to `http://*.ts.net:*` and `http://100.*:*` (HTTP plugin scope)
+- surfaces: the iPhone app
+- code: `mobile/src/App.tsx`, `mobile/src/state/readerStore.ts`, `mobile/src/api/client.ts`, `mobile/src/render/markdown.ts`, `mobile/src/render/enhance.ts`, `mobile/src/components/Drawer.tsx`, `mobile/src/components/useDrawerGesture.ts`, `mobile/src/render/railIdentity.ts`, `mobile/src/components/GroupColumn.tsx`, `mobile/src/components/TreeColumn.tsx`, `mobile/src/components/DocumentView.tsx`, `mobile/src/components/MarkdownBody.tsx`, `mobile/src/components/ModeSwitch.tsx`, `mobile/src/components/HtmlPreview.tsx`, `mobile/src/render/htmlPreview.ts`, `mobile/src/components/TopBar.tsx`, `mobile/src/components/SearchPage.tsx`, `mobile/src/components/SettingsPage.tsx`, `mobile/src/gestures/drawerGesture.ts`, `mobile/src/platform.ts`
+- rust: none (the shell `mobile/src-tauri/src/lib.rs` only registers the http, opener and barcode-scanner plugins)
+- docs: none
+- tests: `mobile/src/**/*.test.{ts,tsx}` (`pnpm test:mobile-app`): store, client, pairing, paths, markdown, enhance, gestures, storage, i18n and app-level component flows; the touch gestures themselves and the native plugins are only exercised on a device
+- notes: The pairing token is kept in the app's WebView storage, not the Keychain. Wiki links are not resolved. Only markdown is searched.
+
+### Mobile reader: desktop share-file export
+- id: mobile-share-export
+- feature: Mobile reader
+- summary: Not user-facing. Every document window pushes the workspace groups to `<app data dir>/mobile-share.json`, the file the mobile server reads to decide which folders the iPhone reader may browse.
+- capabilities: debounced (500 ms) latest-wins push on every change of `workspaceGroupsStore.groups`, plus one at window start; repeats skipped in the frontend and again in Rust (byte-identical file not rewritten); atomic replace; relative or empty folder paths dropped; a failed push is logged and retried by the next change
+- status: shipped-on
+- gate: always on
+- surfaces: automatic
+- code: `src/services/mobileShare/mobileShareSync.ts`, `src/services/runtimeWiring.ts`, `src-tauri/src/mobile_share.rs`
+- rust: `write_mobile_share`; `mobile_share::{render_share, write_share}`
+- docs: none
+- tests: `src/services/mobileShare/mobileShareSync.test.ts`, `src/services/runtimeWiring.test.ts`, `src-tauri/src/mobile_share.test.rs`
+- notes: The dev build writes under `app.vmark.dev`; point the server at it with `XMARK_APP_IDENTIFIER=app.vmark.dev`. Collapsed state is not exported.
+
+### Mobile reader server (read-only workspace groups over Tailscale)
+- id: mobile-reader-server
+- feature: Mobile reader
+- summary: A standalone Node HTTP server, `xmark-mobile-server`, that lets the XMark Mobile iPhone reader browse the folders in the desktop's workspace groups, read-only, over Tailscale. Not spawned by the desktop app.
+- capabilities: bearer-token gate on every route (header only, timing-safe, follows `rotate-token` without a restart); `/api/health`, `/api/workspaces` (groups → folders with opaque `rootId`s, no absolute paths), `/api/tree` (one level, folders first, natural order, hidden/always-skipped/symlinked/unsupported entries left out), `/api/file` (UTF-8 text up to 5 MB, BOM dropped), `/api/asset` (images up to 30 MB, ETag/304, sandboxing CSP), `/api/search` (content-server walker and capped matcher across roots, 30 s walk cache); share-file reader with mtime reload and a 5 s folder re-resolve; binds only the Tailscale IPv4 and exits when that address changes; CLI `serve`, `pair` (terminal QR `xmark-mobile://pair?host&port&token`), `rotate-token`, `install-agent`/`uninstall-agent` (launchd `app.xmark.mobile-server`); default port 8740
+- status: dev-only, macos-only
+- gate: always on when run; reads `~/Library/Application Support/<XMARK_APP_IDENTIFIER or app.xmark>/mobile-share.json`
+- surfaces: CLI `xmark-mobile-server`; launchd agent
+- code: `server/mobile/src/cli.ts`, `server/mobile/src/cliMain.ts`, `server/mobile/src/createApp.ts`, `server/mobile/src/auth.ts`, `server/mobile/src/token.ts`, `server/mobile/src/registry.ts`, `server/mobile/src/shareFile.ts`, `server/mobile/src/containment.ts`, `server/mobile/src/routes/target.ts`, `server/mobile/src/routes/tree.ts`, `server/mobile/src/routes/file.ts`, `server/mobile/src/routes/asset.ts`, `server/mobile/src/routes/search.ts`, `server/mobile/src/tailscale.ts`, `server/mobile/src/launchAgent.ts`
+- rust: none
+- docs: none
+- tests: every module has a sibling `*.test.ts` under `server/mobile/src` (`createApp.test.ts`, `runtime.test.ts` and `cliMain.test.ts` bind real sockets); `pnpm test:mobile-server`
+- notes: Searches markdown only; the tree applies no `.gitignore`, search does (the content-server walker). Plain HTTP inside WireGuard; no CORS, because the phone calls through Tauri's HTTP plugin.
+
 ### Content server (knowledge base + Slidev host)
 - id: content-server
 - feature: Knowledge base & Slidev

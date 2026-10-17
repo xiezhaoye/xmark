@@ -1,0 +1,53 @@
+{
+  "name": "@xmark/mobile",
+  "version": "0.1.0",
+  "description": "XMark Mobile — read-only iPhone reader for the workspace groups on your Mac, over Tailscale.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src",
+    "tauri": "tauri",
+    "ios:sim": "tauri ios build --debug --target aarch64-sim",
+    "ios:device": "tauri ios build --debug --target aarch64 --export-method debugging"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@tauri-apps/plugin-barcode-scanner": "^2.4.0",
+    "@tauri-apps/plugin-clipboard-manager": "^2.4.1",
+    "@tauri-apps/plugin-http": "^2.5.0",
+    "@tauri-apps/plugin-opener": "^2.5.0",
+    "dompurify": "^3.4.16",
+    "highlight.js": "^11.12.0",
+    "katex": "^0.19.0",
+    "mermaid": "^12.1.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "rehype-katex": "^7.0.1",
+    "rehype-stringify": "^10.0.1",
+    "remark-frontmatter": "^5.0.0",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0",
+    "remark-parse": "^11.0.0",
+    "remark-rehype": "^11.1.2",
+    "unified": "^11.0.5",
+    "unist-util-visit": "^5.1.0",
+    "zustand": "^5.0.15"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.12.1",
+    "@testing-library/react": "^16.3.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "@vitest/coverage-v8": "^4.1.11",
+    "jsdom": "^30.1.2",
+    "typescript": "~6.0.3",
+    "vite": "^8.3.2",
+    "vitest": "^4.1.11"
+  }
+}

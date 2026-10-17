@@ -27,6 +27,9 @@ vi.mock("@/services/workflow/workflowEnginePolicySync", () => ({ startWorkflowEn
 vi.mock("@/services/menu/conditionalMenuItemSync", () => ({
   startConditionalMenuItemSync: service("menu"),
 }));
+vi.mock("@/services/mobileShare/mobileShareSync", () => ({
+  startMobileShareSync: service("mobileShare"),
+}));
 vi.mock("@/services/windowClose/tabCleanup", () => ({
   startTabStateCleanup: service("tabCleanup"),
 }));
@@ -43,12 +46,12 @@ describe("startRuntimeServices", () => {
     order.length = 0;
     const stop = startRuntimeServices();
     const starts = order.filter((e) => e.startsWith("start:"));
-    expect(starts).toHaveLength(11);
-    expect(new Set(starts).size).toBe(11);
+    expect(starts).toHaveLength(12);
+    expect(new Set(starts).size).toBe(12);
     expect(starts[0]).toBe("start:grants");
     stop();
     const stops = order.filter((e) => e.startsWith("stop:"));
-    expect(stops).toHaveLength(11);
+    expect(stops).toHaveLength(12);
     expect(stops[0]).toBe("stop:tabCleanup");
     expect(stops.at(-1)).toBe("stop:grants");
   });
@@ -99,7 +102,7 @@ describe("startRuntimeServices", () => {
     const stop = startRuntimeServices();
     expect(() => stop()).not.toThrow();
     const stops = order.filter((e) => e.startsWith("stop:"));
-    expect(stops).toHaveLength(11);
+    expect(stops).toHaveLength(12);
     expect(stops.at(-1)).toBe("stop:grants");
     expect(vi.mocked(appError)).toHaveBeenCalled();
   });

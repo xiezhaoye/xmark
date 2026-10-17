@@ -1031,6 +1031,15 @@
       "doc": "website/guide/knowledge-base.md"
     },
     {
+      "name": "Mobile reader",
+      "paths": [
+        "server/mobile/src",
+        "mobile/src",
+        "src/services/mobileShare",
+        "src-tauri/src/mobile_share.rs"
+      ]
+    },
+    {
       "name": "Workflow engine (bespoke YAML)",
       "paths": [
         "src/lib/workflow",

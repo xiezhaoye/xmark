@@ -66,6 +66,8 @@ const PRODUCTION_TREES = [
   "server/mcp/scripts",
   "server/content/src",
   "server/content/scripts",
+  "server/mobile/src",
+  "mobile/src",
   "e2e",
 ];
 /**

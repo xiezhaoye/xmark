@@ -1,0 +1,6 @@
+{
+  "identifier": "mobile",
+  "windows": ["main"],
+  "permissions": ["barcode-scanner:default"],
+  "platforms": ["iOS", "android"]
+}

@@ -23,6 +23,7 @@ import { startBrowserAiPolicySync } from "@/services/browser/browserAiPolicySync
 import { startWorkflowEnginePolicySync } from "@/services/workflow/workflowEnginePolicySync";
 import { startConditionalMenuItemSync } from "@/services/menu/conditionalMenuItemSync";
 import { startTabStateCleanup } from "@/services/windowClose/tabCleanup";
+import { startMobileShareSync } from "@/services/mobileShare/mobileShareSync";
 import { appError } from "@/utils/debug";
 
 /** Every service a document window runs for its lifetime, in start order. */
@@ -52,6 +53,9 @@ const RUNTIME_SERVICES: ReadonlyArray<() => () => void> = [
   // "Toggle Knowledge Base" (#1425) — in step with the setting that decides it.
   // Each ships off, and a permanently-dead menu row is worse than no row.
   startConditionalMenuItemSync,
+  // Publish the workspace groups to `mobile-share.json`, the only way the
+  // standalone mobile server learns which folders the iPhone reader may see.
+  startMobileShareSync,
   // A tab that leaves the tab store takes its document and every other piece of
   // per-tab state with it. This is what makes that a consequence of removal
   // rather than a step each close, detach or rollback site has to remember.

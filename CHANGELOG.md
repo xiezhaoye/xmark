@@ -11,6 +11,16 @@ section as part of the version bump (`.claude/rules/40-version-bump.md`).
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-10-17
+
+### Added
+
+- XMark now keeps a copy of your workspace groups in
+  `~/Library/Application Support/app.xmark/mobile-share.json`, updated
+  whenever a group changes. It is what the new XMark Mobile reader serves:
+  the companion `xmark-mobile-server` (in `server/mobile`) lets an iPhone on
+  your Tailscale network browse the folders in your groups, read-only, and
+  never sees folders that are not in a group.
 ## [0.1.3] - 2026-10-16
 
 ### Added
@@ -359,7 +369,8 @@ First XMark release: an unofficial fork of VMark 0.9.99 by Xiaolai Li.
 
 - Raised the `markdown-it` version floor past GHSA-253c-mchw-3w2r.
 
-[Unreleased]: https://github.com/xiezhaoye/xmark/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/xiezhaoye/xmark/compare/v0.1.4...HEAD
+[0.1.4]: https://github.com/xiezhaoye/xmark/releases/tag/v0.1.4
 [0.1.3]: https://github.com/xiezhaoye/xmark/releases/tag/v0.1.3
 [0.1.2]: https://github.com/xiezhaoye/xmark/releases/tag/v0.1.2
 [0.1.1]: https://github.com/xiezhaoye/xmark/releases/tag/v0.1.1

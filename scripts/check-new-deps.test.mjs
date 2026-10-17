@@ -247,7 +247,7 @@ describe("check-new-deps.sh — each flag condition", () => {
     expect(r.out).toContain("1 new dependency(ies) flagged");
   });
 
-  it.each(["server/mcp/package.json", "server/content/package.json", "website/package.json"])(
+  it.each(["server/mcp/package.json", "server/content/package.json", "server/mobile/package.json", "mobile/package.json", "website/package.json"])(
     "a hallucinated dependency in %s is caught",
     (manifest) => {
       const r = run(
