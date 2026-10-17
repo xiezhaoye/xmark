@@ -77,6 +77,7 @@ mod app_nap;
 mod cli_install;
 #[cfg(target_os = "macos")]
 mod dock_recent;
+mod mobile_share;
 #[cfg(target_os = "macos")]
 mod macos_menu;
 // `pub` for the `pdf_smoke` example, which is the only harness that can

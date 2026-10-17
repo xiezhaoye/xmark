@@ -191,6 +191,7 @@ macro_rules! all_commands {
             browser::commands::browser_thaw,
             #[cfg(target_os = "macos")]
             dock_recent::register_dock_recent,
+            mobile_share::write_mobile_share,
             pdf_export::commands::export_pdf,
             pdf_export::commands::print_document,
             pandoc::commands::detect_pandoc,
