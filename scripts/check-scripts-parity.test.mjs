@@ -209,6 +209,7 @@ describe("test tiers partition the test files on disk", () => {
    */
   const SEPARATELY_MANAGED = {
     server: "check:servers",
+    mobile: "check:servers",
   };
 
   /**

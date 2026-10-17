@@ -66,6 +66,17 @@
         "ignore"
       ]
     },
+    "mobile": {
+      "entry": [
+        "src/**/*.test.{ts,tsx}"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx}"
+      ],
+      "ignoreDependencies": [
+        "unist-util-visit"
+      ]
+    },
     "server/mcp": {
       "project": [
         "src/**/*.ts"

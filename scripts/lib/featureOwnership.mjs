@@ -37,7 +37,7 @@ export const INFRASTRUCTURE = "infrastructure";
  */
 export const CODE_EXTENSIONS = ["ts", "tsx", "mts", "cts", "js", "jsx", "mjs", "cjs", "rs"];
 const CODE_RE = new RegExp(`\\.(?:${CODE_EXTENSIONS.join("|")})$`);
-const ROOTS_RE = /^(?:src\/|src-tauri\/src\/|server\/[^/]+\/src\/)/;
+const ROOTS_RE = /^(?:src\/|src-tauri\/src\/|server\/[^/]+\/src\/|mobile\/src\/)/;
 /**
  * A claim that covers a whole source root (or the repository) owns every file
  * nobody else claims — including the next new module — so "every file has an
@@ -58,7 +58,7 @@ export const isTestFile = (f) =>
   /\.test\.|\.spec\.|__tests__|\/test\/|\.bench\.|^src\/bench\//.test(f) || /(?:^|\/)tests?\.rs$|_tests?\.rs$|(?:^|\/)tests\/[^/]+\.rs$/.test(f);
 export const isCodeFile = (f) => CODE_RE.test(f);
 
-/** The files that must each have an owner: production code under the app, Rust and server source roots. */
+/** The files that must each have an owner: production code under the app, Rust, server and mobile-app source roots. */
 export function ownershipUniverse(files) {
   return files.filter((f) => ROOTS_RE.test(f) && isCodeFile(f) && !isTestFile(f));
 }

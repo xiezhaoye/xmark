@@ -23,7 +23,10 @@ export async function renderPairing(info: PairInfo): Promise<string> {
   const qr = await QRCode.toString(pairUrl(info), { type: "terminal", small: true });
   return [
     qr,
-    "Scan with XMark Mobile → Settings → Pair, or enter manually:",
+    "Scan with XMark Mobile → Settings, or copy this link and tap “Paste pairing link”:",
+    `  ${pairUrl(info)}`,
+    "",
+    "Or enter manually:",
     `  Host:  ${info.host}`,
     `  Port:  ${info.port}`,
     `  Token: ${info.token}`,

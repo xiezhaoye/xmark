@@ -78,6 +78,7 @@ describe("createTokenSource", () => {
     // Force a distinct mtime so the cache sees the change on coarse clocks.
     const rotated = await rotateToken(file);
     const { utimes } = await import("node:fs/promises");
+    // timer-isolation: intentional wall clock — sets a file mtime in the future, no timer involved
     const later = new Date(Date.now() + 5_000);
     await utimes(file, later, later);
     expect(await source.current()).toBe(rotated);

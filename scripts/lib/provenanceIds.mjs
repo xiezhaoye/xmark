@@ -67,6 +67,7 @@ const PRODUCTION_TREES = [
   "server/content/src",
   "server/content/scripts",
   "server/mobile/src",
+  "mobile/src",
   "e2e",
 ];
 /**

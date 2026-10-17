@@ -10,6 +10,7 @@ packages:
   - 'server/mcp'
   - 'server/content'
   - 'server/mobile'
+  - 'mobile'
   - 'website'
 
 # Minutes. pnpm refuses to RESOLVE a version published less than a week ago,

@@ -13,6 +13,7 @@ describe("renderPairing", () => {
   it("renders a terminal QR block plus the manual fields", async () => {
     const text = await renderPairing({ host: "h.ts.net", port: 1, token: "t".repeat(64) });
     expect(text).toContain("h.ts.net");
+    expect(text).toContain(`xmark-mobile://pair?host=h.ts.net&port=1&token=${"t".repeat(64)}`);
     expect(text).toContain("t".repeat(64));
     expect(text.split("\n").length).toBeGreaterThan(10);
   });

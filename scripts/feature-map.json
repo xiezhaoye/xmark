@@ -1031,9 +1031,12 @@
       "doc": "website/guide/knowledge-base.md"
     },
     {
-      "name": "Mobile reader server",
+      "name": "Mobile reader",
       "paths": [
-        "server/mobile/src"
+        "server/mobile/src",
+        "mobile/src",
+        "src/services/mobileShare",
+        "src-tauri/src/mobile_share.rs"
       ]
     },
     {

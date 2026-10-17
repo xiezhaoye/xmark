@@ -30,7 +30,7 @@ import { isMainModule } from "./lib/isMainModule.mjs";
 // baseline entries (each over-limit gate was split instead). `.claude/hooks`
 // holds the Claude Code hooks the repo runs on every edit — code under the
 // same rule, with no baseline entries either.
-export const ROOTS = ["src", "src-tauri/src", "server/mcp/src", "server/content/src", "server/mobile/src", "scripts", ".claude/hooks"];
+export const ROOTS = ["src", "src-tauri/src", "server/mcp/src", "server/content/src", "server/mobile/src", "mobile/src", "scripts", ".claude/hooks"];
 // .js/.mjs are code too — src/export/reader/vmark-reader.js bypassed the
 // gate entirely while every .ts file ratcheted.
 export const EXTS = [".ts", ".tsx", ".rs", ".js", ".jsx", ".mjs"];

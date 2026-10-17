@@ -81,6 +81,7 @@ describe("createRegistrySource", () => {
     const source = await createRegistrySource(file);
     expect((await source.current()).groups[0].name).toBe("One");
     await writeShare([{ id: "g", name: "Two", folders: [] }]);
+    // timer-isolation: intentional wall clock — sets a file mtime in the future, no timer involved
     const later = new Date(Date.now() + 5_000);
     await utimes(file, later, later);
     expect((await source.current()).groups[0].name).toBe("Two");
@@ -91,6 +92,7 @@ describe("createRegistrySource", () => {
     const errors: string[] = [];
     const source = await createRegistrySource(file, (msg) => errors.push(msg));
     await writeFile(file, "{not json");
+    // timer-isolation: intentional wall clock — sets a file mtime in the future, no timer involved
     const later = new Date(Date.now() + 5_000);
     await utimes(file, later, later);
     expect((await source.current()).groups[0].name).toBe("Good");
