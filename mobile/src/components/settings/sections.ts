@@ -18,6 +18,6 @@ export interface SettingsSection {
 }
 
 export const SETTINGS_SECTIONS: SettingsSection[] = [
-  { id: "servers", titleKey: "settings.servers", Component: ServersSection },
   { id: "reading", titleKey: "settings.reading", Component: ReadingSection },
+  { id: "servers", titleKey: "settings.servers", Component: ServersSection },
 ];

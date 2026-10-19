@@ -287,11 +287,6 @@ export function ServersSection() {
 
   return (
     <>
-      <button type="button" className="button primary wide" disabled={adding} onClick={() => void add()}>
-        <Icon name="scan" size={18} /> {adding ? t("settings.verifying") : t("settings.scanAdd")}
-      </button>
-      <p className="muted hint">{t("settings.hint")}</p>
-
       {servers.length ? (
         <ul
           ref={list}
@@ -409,6 +404,12 @@ export function ServersSection() {
       ) : (
         <p className="muted">{t("settings.noServers")}</p>
       )}
+
+      {/* Adding sits under the list it adds to; the hint says what to scan. */}
+      <button type="button" className="button wide" disabled={adding} onClick={() => void add()}>
+        <Icon name="scan" size={18} /> {adding ? t("settings.verifying") : t("settings.addServer")}
+      </button>
+      <p className="muted hint">{t("settings.hint")}</p>
       {toast}
     </>
   );

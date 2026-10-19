@@ -173,6 +173,7 @@ describe("servers", () => {
     await useReaderStore.getState().toggleDir("r1", "sub");
     await useReaderStore.getState().openDoc("r1", "a.md");
     expect(useReaderStore.getState().trees).not.toEqual({});
+    useReaderStore.getState().setDrawer(true);
 
     vi.mocked(client.workspaces).mockClear();
     await useReaderStore.getState().switchServer(PROFILE.id);
@@ -184,7 +185,8 @@ describe("servers", () => {
     expect(s.selectedRootId).toBeNull();
     expect(s.doc).toBeNull();
     expect(s.docState).toEqual({ status: "idle" });
-    expect(s.drawerOpen).toBe(false);
+    // The drawer was open at the switch, so it stays open (nothing was restored: this server has no last document).
+    expect(s.drawerOpen).toBe(true);
     expect(client.workspaces).toHaveBeenCalled();
     // The groups are the new server's, fetched afresh rather than kept.
     expect(s.groups.map((g) => g.name)).toEqual(["Wiki"]);
@@ -200,6 +202,22 @@ describe("servers", () => {
     expect(useReaderStore.getState().doc).toEqual({ rootId: "r1", relPath: "b.md" });
     await useReaderStore.getState().switchServer(PROFILE.id);
     expect(useReaderStore.getState().doc).toEqual({ rootId: "r1", relPath: "a.md" });
+  });
+
+  it("keeps the drawer open after a switch made from the drawer, and still loads the last document behind it", async () => {
+    pairBoth();
+    saveLastDoc(PROFILE.id, { rootId: "r1", relPath: "a.md" });
+    saveLastDoc(OTHER.id, { rootId: "r1", relPath: "b.md" });
+    await useReaderStore.getState().bootstrap();
+    // The drawer is open: this switch was made from its sheet.
+    useReaderStore.getState().setDrawer(true);
+    await useReaderStore.getState().switchServer(PROFILE.id);
+    const s = useReaderStore.getState();
+    expect(s.drawerOpen).toBe(true);
+    expect(s.view).toBe("reader");
+    expect(s.doc).toEqual({ rootId: "r1", relPath: "a.md" });
+    expect(s.docState).toMatchObject({ status: "ready", content: { text: "# A" } });
+    expect(s.selectedRootId).toBe("r1");
   });
 
   it("switching to the current server does nothing", async () => {

@@ -21,7 +21,7 @@ export function useToast(): { toast: ReactElement | null; show: (text: string, t
   useEffect(() => () => clearTimeout(timer.current), []);
 
   const toast = message ? (
-    <div className={`toast ${message.tone}`} role="status">
+    <div className={`toast toast-${message.tone}`} role="status">
       {message.text}
     </div>
   ) : null;

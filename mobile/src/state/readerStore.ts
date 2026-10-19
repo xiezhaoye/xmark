@@ -106,9 +106,11 @@ interface ReaderActions {
   /**
    * Opens a document. It also brings the reader forward, unless `opts.keepView`
    * is set — a switch made from settings loads the document in the background
-   * and leaves the page the user is on.
+   * and leaves the page the user is on. It closes the drawer too, unless
+   * `opts.keepDrawer` is set — a switch made from the drawer's sheet leaves the
+   * groups, folders and their counts where the user found them.
    */
-  openDoc(rootId: string, relPath: string, revealQuery?: string | null, opts?: { keepView?: boolean }): Promise<void>;
+  openDoc(rootId: string, relPath: string, revealQuery?: string | null, opts?: { keepView?: boolean; keepDrawer?: boolean }): Promise<void>;
   reloadDoc(): Promise<void>;
   clearReveal(): void;
   setDocMode(mode: DocMode): void;
@@ -213,9 +215,10 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
   /**
    * Opens the document a Mac was last reading, if its folder is still shared.
    * `keepView` loads it without pulling the reader forward, for a switch made
-   * from another page.
+   * from another page; `keepDrawer` leaves the drawer as it is, for a switch
+   * made from the drawer itself.
    */
-  async function restoreLastDoc(serverId: string, opts: { keepView?: boolean } = {}): Promise<void> {
+  async function restoreLastDoc(serverId: string, opts: { keepView?: boolean; keepDrawer?: boolean } = {}): Promise<void> {
     const last = loadLastDoc(serverId);
     if (last && rootAvailable(last.rootId)) {
       await get().selectRoot(last.rootId);
@@ -343,8 +346,11 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
       if (id === get().activeServerId) return;
       if (!get().servers.some((p) => p.id === id)) return;
       const keepView = get().view === "settings";
+      // A switch made from the drawer's sheet keeps the drawer open: the
+      // groups and folders stay in sight while the last document loads behind.
+      const keepDrawer = get().drawerOpen;
       await activate(id);
-      await restoreLastDoc(id, { keepView });
+      await restoreLastDoc(id, { keepView, keepDrawer });
     },
 
     setView: (view) => set({ view }),
@@ -402,7 +408,7 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
       const serverId = get().activeServerId;
       const doc = { rootId, relPath };
       saveLastDoc(serverId, doc);
-      set({ doc, drawerOpen: false, revealQuery, ...(opts.keepView ? {} : { view: "reader" as const }) });
+      set({ doc, ...(opts.keepDrawer && get().drawerOpen ? {} : { drawerOpen: false }), revealQuery, ...(opts.keepView ? {} : { view: "reader" as const }) });
       if (IMAGE_EXT.test(relPath)) {
         set({ docState: { status: "image" } });
         return;

@@ -74,7 +74,7 @@ describe("App", () => {
     await flush();
     fireEvent.click(screen.getByText("Add a server"));
     scans(pairLink("m4.tailc8e51.ts.net"));
-    fireEvent.click(screen.getByText("Scan to add a server"));
+    fireEvent.click(screen.getByText("Add a server"));
     await flush();
     expect(useReaderStore.getState().servers.map((p) => p.name)).toEqual(["m4"]);
     expect(useReaderStore.getState().view).toBe("reader");
@@ -324,16 +324,22 @@ describe("server picker", () => {
     expect(client.workspaces).not.toHaveBeenCalled();
   });
 
-  it("switches to another server and closes the sheet", async () => {
+  it("switches to another server, closes the sheet and leaves the drawer open on the new server", async () => {
     saveServers([PROFILE, OTHER]);
     saveActiveServerId(PROFILE.id);
+    lastDoc({ rootId: "r1", relPath: "a.md" }, OTHER.id);
     await openSheet();
     fireEvent.click(screen.getAllByRole("radio")[1] as HTMLElement);
     await flush();
     expect(screen.queryByRole("dialog")).toBeNull();
-    expect(useReaderStore.getState().activeServerId).toBe(OTHER.id);
-    // The picker sits in the drawer, which stays open on the new server.
-    expect(useReaderStore.getState().view).toBe("reader");
+    const s = useReaderStore.getState();
+    expect(s.activeServerId).toBe(OTHER.id);
+    expect(s.view).toBe("reader");
+    // The drawer the picker sits in stays open, so the groups stay in sight.
+    expect(s.drawerOpen).toBe(true);
+    // The last document of the new server is loaded behind the drawer.
+    expect(s.doc).toEqual({ rootId: "r1", relPath: "a.md" });
+    expect(s.docState.status).toBe("ready");
     expect(screen.getByRole("button", { name: "Switch server" }).textContent).toContain("客厅 Mac");
   });
 });
@@ -428,7 +434,7 @@ describe("settings servers", () => {
     pair();
     await openSettings();
     scans(pairLink("100.66.175.80", `&name=${encodeURIComponent("客厅 Mac")}`));
-    fireEvent.click(screen.getByText("Scan to add a server"));
+    fireEvent.click(screen.getByText("Add a server"));
     await flush();
     const s = useReaderStore.getState();
     expect(s.servers.map((p) => p.name)).toEqual(["Study Mac", "客厅 Mac"]);
@@ -442,7 +448,7 @@ describe("settings servers", () => {
     pair();
     await openSettings();
     scans(pairLink("m1.tailc8e51.ts.net"));
-    fireEvent.click(screen.getByText("Scan to add a server"));
+    fireEvent.click(screen.getByText("Add a server"));
     await flush();
     expect(useReaderStore.getState().servers.map((p) => p.name)).toEqual(["Study Mac", "m1"]);
   });
@@ -453,7 +459,7 @@ describe("settings servers", () => {
     vi.mocked(client.health).mockRejectedValueOnce(new ApiError(401, "unauthorized"));
     // The probes on opening already ran; the next call is the check of the scan.
     scans(pairLink("m1.tailc8e51.ts.net"));
-    fireEvent.click(screen.getByText("Scan to add a server"));
+    fireEvent.click(screen.getByText("Add a server"));
     await flush();
     expect(useReaderStore.getState().servers).toHaveLength(1);
     expect(screen.getByRole("status").textContent).toContain("The token is not valid");
@@ -463,11 +469,11 @@ describe("settings servers", () => {
     pair();
     await openSettings();
     scans("https://example.com");
-    fireEvent.click(screen.getByText("Scan to add a server"));
+    fireEvent.click(screen.getByText("Add a server"));
     await flush();
     expect(screen.getByRole("status").textContent).toContain("not an XMark pairing QR code");
     scans(null);
-    fireEvent.click(screen.getByText("Scan to add a server"));
+    fireEvent.click(screen.getByText("Add a server"));
     await flush();
     expect(useReaderStore.getState().servers).toHaveLength(1);
   });
@@ -476,7 +482,7 @@ describe("settings servers", () => {
     pair();
     await openSettings();
     scans(`xmark-mobile://pair?host=m4.ts.net&port=8740&token=${"d".repeat(64)}&name=${encodeURIComponent("书房")}`);
-    fireEvent.click(screen.getByText("Scan to add a server"));
+    fireEvent.click(screen.getByText("Add a server"));
     await flush();
     const servers = useReaderStore.getState().servers;
     expect(servers).toHaveLength(1);
