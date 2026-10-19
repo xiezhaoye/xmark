@@ -8,7 +8,7 @@
  *
  * @module state/storage
  */
-import { newServerId, type Connection, type ServerProfile } from "../api/types";
+import { defaultServerName, newServerId, type Connection, type ServerProfile } from "../api/types";
 
 /** A single pairing; only a store from before multiple servers still has one. */
 const LEGACY_CONNECTION_KEY = "xmark-mobile.connection";
@@ -77,7 +77,7 @@ function migrateLegacy(): ServerProfile | null {
     write(LEGACY_CONNECTION_KEY, null);
     return null;
   }
-  const profile: ServerProfile = { id: newServerId(), name: legacy.host, host: legacy.host, port: legacy.port, token: legacy.token };
+  const profile: ServerProfile = { id: newServerId(), name: defaultServerName(legacy.host), host: legacy.host, port: legacy.port, token: legacy.token };
   const legacyDoc = read(LAST_DOC_KEY, isDocRef);
   write(SERVERS_KEY, [profile]);
   write(ACTIVE_SERVER_KEY, profile.id);

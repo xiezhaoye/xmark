@@ -52,10 +52,10 @@ describe("migration from the single-pairing store", () => {
     localStorage.setItem("xmark-mobile.lastDoc", JSON.stringify({ rootId: "r1", relPath: "notes/中文.md" }));
   });
 
-  it("turns the old pairing into one server named after its host, and makes it current", () => {
+  it("turns the old pairing into one server named after its machine, and makes it current", () => {
     const loaded = loadServers();
     expect(loaded.servers).toHaveLength(1);
-    expect(loaded.servers[0]).toMatchObject({ name: "m4.ts.net", host: "m4.ts.net", port: 8740, token: TOKEN });
+    expect(loaded.servers[0]).toMatchObject({ name: "m4", host: "m4.ts.net", port: 8740, token: TOKEN });
     expect(loaded.servers[0].id).toBeTruthy();
     expect(loaded.activeServerId).toBe(loaded.servers[0].id);
     // The old key is removed once it has been migrated.

@@ -27,6 +27,16 @@ export interface ServerProfile {
   token: string;
 }
 
+/**
+ * The name a server gets when nothing names it: the machine part of its
+ * Tailscale domain (`m4.tailc8e51.ts.net` → `m4`), or the address itself when
+ * it is an IP.
+ */
+export function defaultServerName(host: string): string {
+  if (/^[0-9.]+$/.test(host)) return host;
+  return host.split(".")[0] || host;
+}
+
 /** The connection a profile stands for; what the HTTP client is built from. */
 export const connectionOf = ({ host, port, token }: ServerProfile): Connection => ({ host, port, token });
 

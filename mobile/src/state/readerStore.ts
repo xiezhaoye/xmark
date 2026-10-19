@@ -19,7 +19,7 @@
  */
 import { create } from "zustand";
 import { ApiError, type Client } from "../api/client";
-import { connectionOf, newServerId, sameServer, type Connection, type FileContent, type ServerProfile, type TreeEntry, type WorkspaceGroup } from "../api/types";
+import { connectionOf, defaultServerName, newServerId, sameServer, type Connection, type FileContent, type ServerProfile, type TreeEntry, type WorkspaceGroup } from "../api/types";
 import { loadLastDoc, loadServers, saveActiveServerId, saveLastDoc, saveServers, type DocRef } from "./storage";
 
 type View = "reader" | "search" | "settings";
@@ -68,12 +68,16 @@ interface ReaderActions {
   reset(makeClient: (c: Connection) => Client): void;
   bootstrap(): Promise<void>;
   /**
-   * Saves a pairing and makes it current. A Mac already paired at the same
-   * host and port is updated — its name and token — instead of being added
-   * a second time; `name` is only set when given.
+   * Saves a pairing. A Mac already paired at the same host and port is updated
+   * — its name and token — instead of being added a second time; `name` is only
+   * set when given. The first Mac ever paired becomes current and takes the
+   * reader's place; later ones are only listed, the current one stays.
    */
-  connect(c: Connection, name?: string | null): Promise<void>;
-  addServer(input: { name: string; connection: Connection }): Promise<void>;
+  connect(c: Connection, name?: string | null): Promise<{ status: "added" | "updated"; name: string }>;
+  /** Adds a Mac; `activate: false` lists it without switching to it. */
+  addServer(input: { name: string; connection: Connection; activate?: boolean }): Promise<void>;
+  /** Puts the Macs in the given order; ids it does not mention keep their place at the end. */
+  reorderServers(ids: string[]): void;
   updateServer(id: string, patch: Partial<Pick<ServerProfile, "name" | "host" | "port" | "token">>): Promise<void>;
   /** Forgets a Mac, with the last document read on it. */
   removeServer(id: string): void;
@@ -100,7 +104,7 @@ export const SERVER_NAME_MAX = 40;
 /** A server's display name, as typed: trimmed, capped, and never empty. */
 export function serverName(raw: string, fallback: Pick<ServerProfile, "host">): string {
   const name = raw.replace(/\s+/g, " ").trim().slice(0, SERVER_NAME_MAX);
-  return name || fallback.host;
+  return name || defaultServerName(fallback.host);
 }
 
 const IMAGE_EXT = /\.(png|apng|jpe?g|jfif|gif|webp|bmp|ico|avif|heic|heif|tiff?|svg)$/i;
@@ -198,11 +202,11 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
     docSeq += 1;
     switchSeq += 1;
     set({ ...profilesPatch(get().servers, id), ...noServer });
+    // The view is left alone: switching from settings stays in settings.
     if (!id) {
-      set({ view: "settings" });
+      set({ view: "reader" });
       return;
     }
-    set({ view: "reader" });
     await get().refreshWorkspaces();
   }
   return {
@@ -220,7 +224,8 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
       if (!activeServerId || !servers.length) {
         docSeq += 1;
         switchSeq += 1;
-        set({ ...noServer, view: "settings" });
+        // Nothing paired: the reader shows an "add a server" button.
+        set({ ...noServer, view: "reader" });
         return;
       }
       set({ ...noServer, view: "reader" });
@@ -232,12 +237,16 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
       const known = get().servers.find((p) => sameServer(p, connection));
       if (known) {
         await get().updateServer(known.id, { token: connection.token, ...(name ? { name: serverName(name, connection) } : {}) });
-        return;
+        return { status: "updated", name: get().servers.find((p) => p.id === known.id)?.name ?? known.name };
       }
-      await get().addServer({ name: name ? serverName(name, connection) : serverName("", connection), connection });
+      const first = !get().activeServerId;
+      const profileName = serverName(name ?? "", connection);
+      await get().addServer({ name: profileName, connection, activate: first });
+      if (first) set({ view: "reader" });
+      return { status: "added", name: profileName };
     },
 
-    async addServer({ name, connection }) {
+    async addServer({ name, connection, activate: makeCurrent = true }) {
       const profile: ServerProfile = {
         id: newServerId(),
         name: serverName(name, connection),
@@ -245,8 +254,27 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
         port: connection.port,
         token: connection.token,
       };
+      if (!makeCurrent) {
+        set((s) => profilesPatch([...s.servers, profile], s.activeServerId));
+        return;
+      }
       set((s) => profilesPatch([...s.servers, profile], profile.id));
       await activate(profile.id);
+    },
+
+    reorderServers(ids) {
+      const { servers, activeServerId } = get();
+      const byId = new Map(servers.map((p) => [p.id, p]));
+      const ordered: ServerProfile[] = [];
+      for (const id of ids) {
+        const p = byId.get(id);
+        if (p) {
+          ordered.push(p);
+          byId.delete(id);
+        }
+      }
+      ordered.push(...byId.values());
+      set(profilesPatch(ordered, activeServerId));
     },
 
     async updateServer(id, patch) {
@@ -262,7 +290,10 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
       const next: ServerProfile = { ...current, ...patch };
       next.name = serverName(next.name, next);
       set(profilesPatch(servers.map((p) => (p.id === id ? next : p)), activeServerId));
-      if (id === activeServerId) await activate(id);
+      // A rename must not reload the Mac being read; only a changed address or
+      // token does.
+      const reconnect = next.host !== current.host || next.port !== current.port || next.token !== current.token;
+      if (id === activeServerId && reconnect) await activate(id);
     },
 
     removeServer(id) {
@@ -275,10 +306,8 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
       if (activeServerId === id) {
         docSeq += 1;
         switchSeq += 1;
-        if (nextId) {
-          set({ view: "reader" });
-          void get().refreshWorkspaces().then(() => restoreLastDoc(nextId));
-        } else set({ view: "settings" });
+        // Removal happens in settings, which stays open.
+        if (nextId) void get().refreshWorkspaces().then(() => restoreLastDoc(nextId));
       }
     },
 

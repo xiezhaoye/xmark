@@ -12,7 +12,7 @@ describe("i18n", () => {
 
   it("interpolates variables", () => {
     setLanguage("en");
-    expect(t("settings.ok", { version: "0.1.0" })).toBe("Connected, server 0.1.0");
+    expect(t("settings.added", { name: "m4" })).toBe("Added “m4”");
   });
 
   it("maps known and unknown error codes", () => {

@@ -1,10 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
-import type { Client } from "../api/client";
+import { ApiError, type Client } from "../api/client";
 import { setLanguage } from "../i18n";
 import { useReaderStore } from "../state/readerStore";
 import { saveActiveServerId, saveServers } from "../state/storage";
+import { scanQrCode } from "../platform";
 import { App } from "../App";
+
+vi.mock("../platform", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../platform")>()),
+  scanQrCode: vi.fn(),
+}));
+
+const scans = (raw: string | null) => vi.mocked(scanQrCode).mockResolvedValueOnce(raw);
+const pairLink = (host: string, extra = "") => `xmark-mobile://pair?host=${host}&port=8740&token=${"c".repeat(64)}${extra}`;
 
 const TOKEN = "a".repeat(64);
 const CONN = { host: "m4.ts.net", port: 8740, token: TOKEN };
@@ -51,38 +60,25 @@ const flush = () => act(async () => {
 });
 
 describe("App", () => {
-  it("asks for pairing on first launch and rejects a malformed token", async () => {
+  it("shows an add-a-server button in the reader when nothing is paired", async () => {
     render(<App />);
     await flush();
-    expect(screen.getByText("Connect to your Mac")).toBeTruthy();
-    fireEvent.change(screen.getByLabelText("Host"), { target: { value: "m4.ts.net" } });
-    fireEvent.change(screen.getByLabelText("Token"), { target: { value: "short" } });
-    fireEvent.click(screen.getByText("Test connection"));
-    await flush();
-    expect(screen.getByRole("status").textContent).toContain("64-character");
+    expect(useReaderStore.getState().view).toBe("reader");
+    expect(screen.getByText("No servers yet")).toBeTruthy();
+    fireEvent.click(screen.getByText("Add a server"));
+    expect(useReaderStore.getState().view).toBe("settings");
   });
 
-  it("pairs from a pasted link", async () => {
-    Object.defineProperty(navigator, "clipboard", {
-      configurable: true,
-      value: { readText: async () => `xmark-mobile://pair?host=m4.ts.net&port=8740&token=${"a".repeat(64)}` },
-    });
+  it("goes to the reader by itself after the first server is added by scanning", async () => {
     render(<App />);
     await flush();
-    fireEvent.click(screen.getByText("Paste pairing link"));
+    fireEvent.click(screen.getByText("Add a server"));
+    scans(pairLink("m4.tailc8e51.ts.net"));
+    fireEvent.click(screen.getByText("Scan to add a server"));
     await flush();
-    expect((screen.getByLabelText("Host") as HTMLInputElement).value).toBe("m4.ts.net");
-    expect(screen.getByRole("status").textContent).toContain("Connected, server 0.1.0");
-  });
-
-  it("fills every field when a pairing link is pasted into one", async () => {
-    render(<App />);
-    await flush();
-    fireEvent.change(screen.getByLabelText("Token"), { target: { value: `xmark-mobile://pair?host=h.ts.net&port=9000&token=${"c".repeat(64)}` } });
-    await flush();
-    expect((screen.getByLabelText("Host") as HTMLInputElement).value).toBe("h.ts.net");
-    expect((screen.getByLabelText("Port") as HTMLInputElement).value).toBe("9000");
-    expect((screen.getByLabelText("Token") as HTMLInputElement).value).toBe("c".repeat(64));
+    expect(useReaderStore.getState().servers.map((p) => p.name)).toEqual(["m4"]);
+    expect(useReaderStore.getState().view).toBe("reader");
+    expect(client.health).toHaveBeenCalled();
   });
 
   it("starts closed; the drawer button opens it, lists groups, and opening a file closes it", async () => {
@@ -285,118 +281,159 @@ describe("server picker", () => {
 });
 
 describe("settings servers", () => {
-  const clip = (text: string) =>
-    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { readText: async () => text } });
-
-  it("lists each server with its address and marks the current one", async () => {
-    saveServers([PROFILE, OTHER]);
-    saveActiveServerId(OTHER.id);
+  const openSettings = async () => {
     render(<App />);
     await flush();
-    // Reached from the top bar; the drawer already names the current server.
     fireEvent.click(screen.getByLabelText("Settings"));
-    expect(screen.getByText("客厅 Mac")).toBeTruthy();
+    await flush();
+  };
+
+  it("is titled Settings and lists each server with its address, the current one selected", async () => {
+    saveServers([PROFILE, OTHER]);
+    saveActiveServerId(OTHER.id);
+    await openSettings();
+    expect(screen.getByRole("heading", { name: "Settings" })).toBeTruthy();
     expect(screen.getByText("100.66.175.80:8740")).toBeTruthy();
-    expect(screen.getByText("Study Mac")).toBeTruthy();
-    expect(screen.getByText("Current")).toBeTruthy();
-    expect(screen.queryAllByText("Current")).toHaveLength(1);
+    const radios = screen.getAllByRole("radio");
+    expect(radios.map((r) => r.getAttribute("aria-checked"))).toEqual(["false", "true"]);
   });
 
-  it("switches to another server from the list", async () => {
+  it("shows whether each server answers", async () => {
+    saveServers([PROFILE, OTHER]);
+    saveActiveServerId(PROFILE.id);
+    vi.mocked(client.health).mockImplementation(async () => {
+      throw new ApiError(0, "network");
+    });
+    await openSettings();
+    expect(screen.getAllByRole("img", { name: "Unreachable" })).toHaveLength(2);
+  });
+
+  it("selects a server on tap, says so, and stays on the page", async () => {
     saveServers([PROFILE, OTHER]);
     saveActiveServerId(OTHER.id);
-    render(<App />);
-    await flush();
-    fireEvent.click(screen.getByLabelText("Settings"));
-    fireEvent.click(screen.getByText("Switch"));
+    await openSettings();
+    fireEvent.click(screen.getAllByRole("radio")[0] as HTMLElement);
     await flush();
     expect(useReaderStore.getState().activeServerId).toBe(PROFILE.id);
+    expect(useReaderStore.getState().view).toBe("settings");
+    expect(screen.getByRole("status").textContent).toContain("Selected “Study Mac”");
+    expect(screen.getAllByRole("radio").map((r) => r.getAttribute("aria-checked"))).toEqual(["true", "false"]);
   });
 
-  it("asks before deleting and then switches to the remaining server", async () => {
-    saveServers([PROFILE, OTHER]);
-    saveActiveServerId(OTHER.id);
-    render(<App />);
-    await flush();
-    fireEvent.click(screen.getByLabelText("Settings"));
-    const deletes = screen.getAllByText("Delete");
-    fireEvent.click(deletes[deletes.length - 1]);
-    expect(screen.getByText("Remove “客厅 Mac” from this phone?")).toBeTruthy();
-    fireEvent.click(screen.getAllByText("Delete").at(-1) as HTMLElement);
-    await flush();
-    expect(useReaderStore.getState().servers.map((p) => p.id)).toEqual([PROFILE.id]);
-    expect(useReaderStore.getState().activeServerId).toBe(PROFILE.id);
-  });
-
-  it("adds a second server from a pasted link that names it", async () => {
+  it("adds a scanned server straight away, named by the link, without switching to it", async () => {
     pair();
-    render(<App />);
+    await openSettings();
+    scans(pairLink("100.66.175.80", `&name=${encodeURIComponent("客厅 Mac")}`));
+    fireEvent.click(screen.getByText("Scan to add a server"));
     await flush();
-    act(() => useReaderStore.getState().setView("settings"));
-    clip(`xmark-mobile://pair?host=100.66.175.80&port=9000&token=${"c".repeat(64)}&name=${encodeURIComponent("客厅 Mac")}`);
-    fireEvent.click(screen.getByText("Paste pairing link"));
+    const s = useReaderStore.getState();
+    expect(s.servers.map((p) => p.name)).toEqual(["Study Mac", "客厅 Mac"]);
+    expect(s.activeServerId).toBe(PROFILE.id);
+    expect(s.view).toBe("settings");
+    expect(screen.getByText("客厅 Mac")).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toContain("Added “客厅 Mac”");
+  });
+
+  it("names a scanned server after its machine when the link has no name", async () => {
+    pair();
+    await openSettings();
+    scans(pairLink("m1.tailc8e51.ts.net"));
+    fireEvent.click(screen.getByText("Scan to add a server"));
     await flush();
-    expect((screen.getByLabelText("Name") as HTMLInputElement).value).toBe("客厅 Mac");
-    fireEvent.click(screen.getByText("Save and connect"));
+    expect(useReaderStore.getState().servers.map((p) => p.name)).toEqual(["Study Mac", "m1"]);
+  });
+
+  it("saves nothing when the scanned server does not answer, and says why", async () => {
+    pair();
+    await openSettings();
+    vi.mocked(client.health).mockRejectedValueOnce(new ApiError(401, "unauthorized"));
+    // The probes on opening already ran; the next call is the check of the scan.
+    scans(pairLink("m1.tailc8e51.ts.net"));
+    fireEvent.click(screen.getByText("Scan to add a server"));
     await flush();
-    const servers = useReaderStore.getState().servers;
-    expect(servers.map((p) => p.name)).toEqual(["Study Mac", "客厅 Mac"]);
-    expect(useReaderStore.getState().activeServerId).toBe(servers[1].id);
+    expect(useReaderStore.getState().servers).toHaveLength(1);
+    expect(screen.getByRole("status").textContent).toContain("The token is not valid");
+  });
+
+  it("rejects a code that is not a pairing code, and a cancelled scan does nothing", async () => {
+    pair();
+    await openSettings();
+    scans("https://example.com");
+    fireEvent.click(screen.getByText("Scan to add a server"));
+    await flush();
+    expect(screen.getByRole("status").textContent).toContain("not an XMark pairing QR code");
+    scans(null);
+    fireEvent.click(screen.getByText("Scan to add a server"));
+    await flush();
+    expect(useReaderStore.getState().servers).toHaveLength(1);
   });
 
   it("updates the server already paired at the same host and port instead of adding it twice", async () => {
     pair();
-    render(<App />);
-    await flush();
-    act(() => useReaderStore.getState().setView("settings"));
-    clip(`xmark-mobile://pair?host=m4.ts.net&port=8740&token=${"d".repeat(64)}&name=${encodeURIComponent("书房")}`);
-    fireEvent.click(screen.getByText("Paste pairing link"));
-    await flush();
-    fireEvent.click(screen.getByText("Save and connect"));
+    await openSettings();
+    scans(`xmark-mobile://pair?host=m4.ts.net&port=8740&token=${"d".repeat(64)}&name=${encodeURIComponent("书房")}`);
+    fireEvent.click(screen.getByText("Scan to add a server"));
     await flush();
     const servers = useReaderStore.getState().servers;
     expect(servers).toHaveLength(1);
     expect(servers[0]).toMatchObject({ id: PROFILE.id, name: "书房", token: "d".repeat(64) });
+    expect(screen.getByRole("status").textContent).toContain("Updated “书房”");
   });
 
-  it("edits a server's name from the list", async () => {
+  it("renames a server from its menu", async () => {
     pair();
-    render(<App />);
-    await flush();
-    fireEvent.click(screen.getByLabelText("Settings"));
-    fireEvent.click(screen.getByText("Edit"));
-    expect((screen.getByLabelText("Name") as HTMLInputElement).value).toBe("Study Mac");
-    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "书房 Mac" } });
-    fireEvent.click(screen.getByText("Save and connect"));
+    await openSettings();
+    fireEvent.click(screen.getByLabelText("More"));
+    fireEvent.click(screen.getByText("Rename"));
+    const input = screen.getByLabelText("Rename") as HTMLInputElement;
+    expect(input.value).toBe("Study Mac");
+    fireEvent.change(input, { target: { value: "书房 Mac" } });
+    fireEvent.click(screen.getByText("OK"));
     await flush();
     expect(useReaderStore.getState().servers[0].name).toBe("书房 Mac");
     expect(screen.getByText("书房 Mac")).toBeTruthy();
   });
 
-  it("falls back to the host when the name is cleared", async () => {
+  it("falls back to the machine name when the name is cleared", async () => {
     pair();
-    render(<App />);
+    await openSettings();
+    fireEvent.click(screen.getByLabelText("More"));
+    fireEvent.click(screen.getByText("Rename"));
+    fireEvent.change(screen.getByLabelText("Rename"), { target: { value: "   " } });
+    fireEvent.click(screen.getByText("OK"));
     await flush();
-    fireEvent.click(screen.getByLabelText("Settings"));
-    fireEvent.click(screen.getByText("Edit"));
-    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "   " } });
-    fireEvent.click(screen.getByText("Save and connect"));
-    await flush();
-    expect(useReaderStore.getState().servers[0].name).toBe("m4.ts.net");
+    expect(useReaderStore.getState().servers[0].name).toBe("m4");
   });
 
-  it("offers a way back only once a server is paired", async () => {
-    render(<App />);
+  it("asks before deleting, then selects the remaining server", async () => {
+    saveServers([PROFILE, OTHER]);
+    saveActiveServerId(OTHER.id);
+    await openSettings();
+    fireEvent.click(screen.getAllByLabelText("More")[1] as HTMLElement);
+    fireEvent.click(screen.getByText("Delete"));
+    expect(screen.getByText("Remove “客厅 Mac” from this phone?")).toBeTruthy();
+    fireEvent.click(screen.getAllByText("Delete").at(-1) as HTMLElement);
     await flush();
+    expect(useReaderStore.getState().servers.map((p) => p.id)).toEqual([PROFILE.id]);
+    expect(useReaderStore.getState().activeServerId).toBe(PROFILE.id);
     expect(useReaderStore.getState().view).toBe("settings");
-    expect(screen.queryByLabelText("Back")).toBeNull();
   });
 
-  it("goes back to the reader from settings when a server is paired", async () => {
+  it("moves a server up or down with the arrow keys on its handle", async () => {
+    saveServers([PROFILE, OTHER]);
+    saveActiveServerId(PROFILE.id);
+    await openSettings();
+    const handles = screen.getAllByLabelText("Drag to reorder");
+    fireEvent.keyDown(handles[1] as HTMLElement, { key: "ArrowUp" });
+    expect(useReaderStore.getState().servers.map((p) => p.id)).toEqual([OTHER.id, PROFILE.id]);
+    // The first row cannot go further up.
+    fireEvent.keyDown(screen.getAllByLabelText("Drag to reorder")[0] as HTMLElement, { key: "ArrowUp" });
+    expect(useReaderStore.getState().servers.map((p) => p.id)).toEqual([OTHER.id, PROFILE.id]);
+  });
+
+  it("goes back to the reader", async () => {
     pair();
-    render(<App />);
-    await flush();
-    fireEvent.click(screen.getByLabelText("Settings"));
+    await openSettings();
     fireEvent.click(screen.getByLabelText("Back"));
     expect(useReaderStore.getState().view).toBe("reader");
   });

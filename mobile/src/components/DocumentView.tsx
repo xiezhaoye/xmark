@@ -74,6 +74,7 @@ export function DocumentView() {
   const doc = useReaderStore((s) => s.doc);
   const docState = useReaderStore((s) => s.docState);
   const mode = useReaderStore((s) => s.docMode);
+  const hasServer = useReaderStore((s) => s.servers.length > 0);
   const docKey = `${doc?.rootId}/${doc?.relPath}`;
   // Keyed by document, so a fresh document starts with the top bar in view;
   // switching preview/source keeps the place, and the switch stays reachable.
@@ -91,7 +92,8 @@ export function DocumentView() {
   }, [docKey]);
 
   let body;
-  if (!doc) body = <StatusMessage text={t("doc.none")} />;
+  if (!hasServer) body = <StatusMessage text={t("doc.noServer")} action={{ label: t("doc.addServer"), onClick: () => useReaderStore.getState().setView("settings") }} />;
+  else if (!doc) body = <StatusMessage text={t("doc.none")} />;
   else if (docState.status === "loading" || docState.status === "idle") body = <StatusMessage text={t("doc.loading")} />;
   else if (docState.status === "error") body = <StatusMessage tone="error" text={errorText(docState.error)} onRetry={() => void useReaderStore.getState().reloadDoc()} />;
   else if (docState.status === "image") body = <ImageView key={`${doc.rootId}/${doc.relPath}`} rootId={doc.rootId} relPath={doc.relPath} />;
