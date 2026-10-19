@@ -3,10 +3,23 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import type { Client } from "../api/client";
 import { setLanguage } from "../i18n";
 import { useReaderStore } from "../state/readerStore";
-import { saveConnection } from "../state/storage";
+import { saveActiveServerId, saveServers } from "../state/storage";
 import { App } from "../App";
 
-const CONN = { host: "m4.ts.net", port: 8740, token: "a".repeat(64) };
+const TOKEN = "a".repeat(64);
+const CONN = { host: "m4.ts.net", port: 8740, token: TOKEN };
+const PROFILE = { id: "s1", name: "Study Mac", host: CONN.host, port: CONN.port, token: TOKEN };
+const OTHER = { id: "s2", name: "客厅 Mac", host: "100.66.175.80", port: 8740, token: "b".repeat(64) };
+
+/** One paired Mac, current. */
+const pair = (profile = PROFILE) => {
+  saveServers([profile]);
+  saveActiveServerId(profile.id);
+};
+
+/** Saves the last document for the current server. */
+const lastDoc = (doc: { rootId: string; relPath: string }, serverId = PROFILE.id) =>
+  localStorage.setItem("xmark-mobile.lastDoc", JSON.stringify({ [serverId]: doc }));
 
 function fakeClient(): Client {
   return {
@@ -73,7 +86,7 @@ describe("App", () => {
   });
 
   it("starts closed; the drawer button opens it, lists groups, and opening a file closes it", async () => {
-    saveConnection(CONN);
+    pair();
     render(<App />);
     await flush();
     expect(useReaderStore.getState().drawerOpen).toBe(false);
@@ -89,7 +102,7 @@ describe("App", () => {
   });
 
   it("explains an unavailable folder instead of loading it", async () => {
-    saveConnection(CONN);
+    pair();
     render(<App />);
     await flush();
     fireEvent.click(screen.getByLabelText("Open groups and files"));
@@ -100,8 +113,8 @@ describe("App", () => {
   });
 
   it("follows a relative link to another note", async () => {
-    saveConnection(CONN);
-    localStorage.setItem("xmark-mobile.lastDoc", JSON.stringify({ rootId: "r1", relPath: "notes/a.md" }));
+    pair();
+    lastDoc({ rootId: "r1", relPath: "notes/a.md" });
     render(<App />);
     await flush();
     fireEvent.click(screen.getByText("b"));
@@ -110,8 +123,8 @@ describe("App", () => {
   });
 
   it("pushes the document right while open, and the strip or the corner button closes it", async () => {
-    saveConnection(CONN);
-    localStorage.setItem("xmark-mobile.lastDoc", JSON.stringify({ rootId: "r1", relPath: "a.md" }));
+    pair();
+    lastDoc({ rootId: "r1", relPath: "a.md" });
     const { container } = render(<App />);
     await flush();
     const main = container.querySelector(".main") as HTMLElement;
@@ -126,8 +139,8 @@ describe("App", () => {
   });
 
   it("switches a markdown file between preview and source, from the switch that floats once the top bar is gone", async () => {
-    saveConnection(CONN);
-    localStorage.setItem("xmark-mobile.lastDoc", JSON.stringify({ rootId: "r1", relPath: "a.md" }));
+    pair();
+    lastDoc({ rootId: "r1", relPath: "a.md" });
     const { container } = render(<App />);
     await flush();
     expect(screen.getByRole("heading", { name: "Hello" })).toBeTruthy();
@@ -145,8 +158,8 @@ describe("App", () => {
   });
 
   it("scrolls the top bar away with the document and floats the mode switch", async () => {
-    saveConnection(CONN);
-    localStorage.setItem("xmark-mobile.lastDoc", JSON.stringify({ rootId: "r1", relPath: "a.md" }));
+    pair();
+    lastDoc({ rootId: "r1", relPath: "a.md" });
     const { container } = render(<App />);
     await flush();
     const scroller = container.querySelector(".document") as HTMLElement;
@@ -161,9 +174,9 @@ describe("App", () => {
   });
 
   it("previews an HTML file in a script-less sandbox, with source one switch away", async () => {
-    saveConnection(CONN);
+    pair();
     vi.mocked(client.file).mockResolvedValue({ text: "<h1>Page</h1>", kind: "text", size: 13, mtime: 1 });
-    localStorage.setItem("xmark-mobile.lastDoc", JSON.stringify({ rootId: "r1", relPath: "site/index.html" }));
+    lastDoc({ rootId: "r1", relPath: "site/index.html" });
     const { container } = render(<App />);
     await flush();
     const frame = container.querySelector("iframe.html-preview") as HTMLIFrameElement;
@@ -180,16 +193,16 @@ describe("App", () => {
   });
 
   it("offers no mode switch for a non-markdown file", async () => {
-    saveConnection(CONN);
+    pair();
     vi.mocked(client.file).mockResolvedValue({ text: "k: v", kind: "text", size: 4, mtime: 1 });
-    localStorage.setItem("xmark-mobile.lastDoc", JSON.stringify({ rootId: "r1", relPath: "a.yml" }));
+    lastDoc({ rootId: "r1", relPath: "a.yml" });
     render(<App />);
     await flush();
     expect(screen.queryByRole("radio", { name: "Source" })).toBeNull();
   });
 
   it("puts settings in the top bar instead of the drawer", async () => {
-    saveConnection(CONN);
+    pair();
     render(<App />);
     await flush();
     fireEvent.click(screen.getByLabelText("Settings"));
@@ -198,7 +211,7 @@ describe("App", () => {
   });
 
   it("draws each folder with its rail glyph and a group count", async () => {
-    saveConnection(CONN);
+    pair();
     const { container } = render(<App />);
     await flush();
     const glyphs = [...container.querySelectorAll(".folder .glyph")].map((g) => g.textContent);
@@ -208,7 +221,7 @@ describe("App", () => {
 
   it("search results open the file with the query to reveal", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    saveConnection(CONN);
+    pair();
     render(<App />);
     await flush();
     act(() => useReaderStore.getState().setView("search"));
@@ -221,5 +234,170 @@ describe("App", () => {
     expect(useReaderStore.getState().doc).toEqual({ rootId: "r1", relPath: "a.md" });
     expect(useReaderStore.getState().view).toBe("reader");
     vi.useRealTimers();
+  });
+});
+
+describe("server picker", () => {
+  it("shows the current server's name even when it is the only one", async () => {
+    pair();
+    render(<App />);
+    await flush();
+    fireEvent.click(screen.getByLabelText("Open groups and files"));
+    expect(screen.getByRole("button", { name: "Switch server" }).textContent).toContain("Study Mac");
+  });
+
+  it("lists every server, marks the current one and switches on tap", async () => {
+    saveServers([PROFILE, OTHER]);
+    saveActiveServerId(OTHER.id);
+    render(<App />);
+    await flush();
+    fireEvent.click(screen.getByLabelText("Open groups and files"));
+    fireEvent.click(screen.getByRole("button", { name: "Switch server" }));
+    const options = screen.getAllByRole("menuitemradio");
+    expect(options.map((o) => o.textContent)).toEqual(["Study Mac", "客厅 Mac"]);
+    expect(options[1].getAttribute("aria-checked")).toBe("true");
+    fireEvent.click(options[0]);
+    await flush();
+    expect(useReaderStore.getState().activeServerId).toBe(PROFILE.id);
+    expect(useReaderStore.getState().connection).toEqual(CONN);
+    // The list closes after a pick.
+    expect(screen.queryByRole("menuitemradio")).toBeNull();
+    expect(screen.getByRole("button", { name: "Switch server" }).textContent).toContain("Study Mac");
+  });
+
+  it("keeps the current server's name reachable from the drawer title", async () => {
+    pair();
+    render(<App />);
+    await flush();
+    fireEvent.click(screen.getByLabelText("Open groups and files"));
+    expect(screen.getByRole("button", { name: "Switch server" }).getAttribute("title")).toBe("m4.ts.net:8740");
+  });
+
+  it("offers a way to manage servers from the list", async () => {
+    pair();
+    render(<App />);
+    await flush();
+    fireEvent.click(screen.getByLabelText("Open groups and files"));
+    fireEvent.click(screen.getByRole("button", { name: "Switch server" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Manage servers" }));
+    expect(useReaderStore.getState().view).toBe("settings");
+  });
+});
+
+describe("settings servers", () => {
+  const clip = (text: string) =>
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { readText: async () => text } });
+
+  it("lists each server with its address and marks the current one", async () => {
+    saveServers([PROFILE, OTHER]);
+    saveActiveServerId(OTHER.id);
+    render(<App />);
+    await flush();
+    // Reached from the top bar; the drawer already names the current server.
+    fireEvent.click(screen.getByLabelText("Settings"));
+    expect(screen.getByText("客厅 Mac")).toBeTruthy();
+    expect(screen.getByText("100.66.175.80:8740")).toBeTruthy();
+    expect(screen.getByText("Study Mac")).toBeTruthy();
+    expect(screen.getByText("Current")).toBeTruthy();
+    expect(screen.queryAllByText("Current")).toHaveLength(1);
+  });
+
+  it("switches to another server from the list", async () => {
+    saveServers([PROFILE, OTHER]);
+    saveActiveServerId(OTHER.id);
+    render(<App />);
+    await flush();
+    fireEvent.click(screen.getByLabelText("Settings"));
+    fireEvent.click(screen.getByText("Switch"));
+    await flush();
+    expect(useReaderStore.getState().activeServerId).toBe(PROFILE.id);
+  });
+
+  it("asks before deleting and then switches to the remaining server", async () => {
+    saveServers([PROFILE, OTHER]);
+    saveActiveServerId(OTHER.id);
+    render(<App />);
+    await flush();
+    fireEvent.click(screen.getByLabelText("Settings"));
+    const deletes = screen.getAllByText("Delete");
+    fireEvent.click(deletes[deletes.length - 1]);
+    expect(screen.getByText("Remove “客厅 Mac” from this phone?")).toBeTruthy();
+    fireEvent.click(screen.getAllByText("Delete").at(-1) as HTMLElement);
+    await flush();
+    expect(useReaderStore.getState().servers.map((p) => p.id)).toEqual([PROFILE.id]);
+    expect(useReaderStore.getState().activeServerId).toBe(PROFILE.id);
+  });
+
+  it("adds a second server from a pasted link that names it", async () => {
+    pair();
+    render(<App />);
+    await flush();
+    act(() => useReaderStore.getState().setView("settings"));
+    clip(`xmark-mobile://pair?host=100.66.175.80&port=9000&token=${"c".repeat(64)}&name=${encodeURIComponent("客厅 Mac")}`);
+    fireEvent.click(screen.getByText("Paste pairing link"));
+    await flush();
+    expect((screen.getByLabelText("Name") as HTMLInputElement).value).toBe("客厅 Mac");
+    fireEvent.click(screen.getByText("Save and connect"));
+    await flush();
+    const servers = useReaderStore.getState().servers;
+    expect(servers.map((p) => p.name)).toEqual(["Study Mac", "客厅 Mac"]);
+    expect(useReaderStore.getState().activeServerId).toBe(servers[1].id);
+  });
+
+  it("updates the server already paired at the same host and port instead of adding it twice", async () => {
+    pair();
+    render(<App />);
+    await flush();
+    act(() => useReaderStore.getState().setView("settings"));
+    clip(`xmark-mobile://pair?host=m4.ts.net&port=8740&token=${"d".repeat(64)}&name=${encodeURIComponent("书房")}`);
+    fireEvent.click(screen.getByText("Paste pairing link"));
+    await flush();
+    fireEvent.click(screen.getByText("Save and connect"));
+    await flush();
+    const servers = useReaderStore.getState().servers;
+    expect(servers).toHaveLength(1);
+    expect(servers[0]).toMatchObject({ id: PROFILE.id, name: "书房", token: "d".repeat(64) });
+  });
+
+  it("edits a server's name from the list", async () => {
+    pair();
+    render(<App />);
+    await flush();
+    fireEvent.click(screen.getByLabelText("Settings"));
+    fireEvent.click(screen.getByText("Edit"));
+    expect((screen.getByLabelText("Name") as HTMLInputElement).value).toBe("Study Mac");
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "书房 Mac" } });
+    fireEvent.click(screen.getByText("Save and connect"));
+    await flush();
+    expect(useReaderStore.getState().servers[0].name).toBe("书房 Mac");
+    expect(screen.getByText("书房 Mac")).toBeTruthy();
+  });
+
+  it("falls back to the host when the name is cleared", async () => {
+    pair();
+    render(<App />);
+    await flush();
+    fireEvent.click(screen.getByLabelText("Settings"));
+    fireEvent.click(screen.getByText("Edit"));
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "   " } });
+    fireEvent.click(screen.getByText("Save and connect"));
+    await flush();
+    expect(useReaderStore.getState().servers[0].name).toBe("m4.ts.net");
+  });
+
+  it("offers a way back only once a server is paired", async () => {
+    render(<App />);
+    await flush();
+    expect(useReaderStore.getState().view).toBe("settings");
+    expect(screen.queryByLabelText("Back")).toBeNull();
+  });
+
+  it("goes back to the reader from settings when a server is paired", async () => {
+    pair();
+    render(<App />);
+    await flush();
+    fireEvent.click(screen.getByLabelText("Settings"));
+    fireEvent.click(screen.getByLabelText("Back"));
+    expect(useReaderStore.getState().view).toBe("reader");
   });
 });
