@@ -48,6 +48,13 @@ h1 { font-size: 40px; line-height: 1.2; margin: 16px 0 8px; letter-spacing: -0.5
 .notice { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; margin: 32px 0 0; }
 .notice h2 { font-size: 17px; margin: 0 0 6px; }
 .notice ol { margin: 0; padding-left: 20px; color: var(--muted); font-size: 15px; }
+.mobile { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin: 32px 0 0; overflow-wrap: break-word; }
+.mobile h2 { font-size: 17px; margin: 0 0 6px; }
+.mobile .lead { margin: 0 0 12px; font-size: 15px; }
+.mobile ul { margin: 0; padding-left: 20px; color: var(--muted); font-size: 15px; }
+.mobile li + li { margin-top: 4px; }
+.mobile ul a, .mobile .note a { color: var(--text); }
+.mobile .note { margin: 14px 0 0; color: var(--muted); font-size: 13px; }
 code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: var(--line); padding: 2px 6px; border-radius: 6px; word-break: break-all; }
 .shot { margin: 40px 0 0; }
 .shot img, .gallery img { display: block; width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--line); background: var(--card); }
@@ -98,6 +105,18 @@ footer a { color: var(--muted); }
     <li><h2>工作区分组</h2><p>把常用文件夹归进分组，重启后依然保留，点一下就能打开。</p></li>
     <li><h2>为 AI 而生</h2><p>通过 MCP 连接 Claude、Codex 等助手，和你在同一批文件上协作。</p></li>
   </ul>
+
+  <section class="mobile">
+    <h2>手机阅读器 · XMark Mobile</h2>
+    <p class="lead">在 iPhone 上只读浏览你自己电脑里的 Markdown 和 HTML 文档。</p>
+    <ul>
+      <li>通过 Tailscale 连接你自己的电脑或服务器，数据只在你的设备之间传输。</li>
+      <li>可添加多台服务器（Mac 或 Linux），扫码即可添加，在抽屉里一键切换。</li>
+      <li>支持 Markdown 与 HTML 预览、全文搜索，正文字号可调。</li>
+      <li>只读，不会修改你的任何文件。</li>
+    </ul>
+    <p class="note">目前不提供下载。需要自行用 Xcode 构建并安装到你的 iPhone（使用免费 Apple ID 签名时，每 7 天需要重新安装一次）。源码在项目的 <a href="https://github.com/xiezhaoye/xmark">GitHub 仓库</a>里。</p>
+  </section>
 
   <section class="notice">
     <h2>第一次打开</h2>
