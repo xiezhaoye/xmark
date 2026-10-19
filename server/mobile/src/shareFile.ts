@@ -10,13 +10,21 @@
  * at the top (an unknown version or missing `groups` is an error), so a newer
  * desktop never gets half-understood by an older server.
  *
+ * `share add` / `share remove` write the same format back. They refuse to
+ * touch a file that does not parse, and write atomically (temp file + rename,
+ * 0600) so a running server never reads a half-written file.
+ *
  * @module shareFile
  */
+import { chmod, mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import * as path from "node:path";
 
 const SHARE_FILE_VERSION = 1;
 
-interface SharedGroup {
+/** The file is user-private: it lists personal absolute paths. */
+const SHARE_FILE_MODE = 0o600;
+
+export interface SharedGroup {
   id: string;
   name: string;
   folders: string[];
@@ -45,4 +53,45 @@ export function parseShareFile(raw: unknown): ShareFile {
     groups.push({ id: g.id, name: g.name, folders });
   }
   return { groups };
+}
+
+/** Serialise back to the on-disk format the desktop app writes. */
+export function serializeShareFile(share: ShareFile): string {
+  const groups = share.groups.map((g) => ({ id: g.id, name: g.name, folders: [...g.folders] }));
+  return `${JSON.stringify({ version: SHARE_FILE_VERSION, groups }, null, 2)}\n`;
+}
+
+/**
+ * Read and parse the share file. A missing file is an empty list; a file that
+ * exists but does not parse is an error, never silently replaced.
+ */
+export async function readShareFile(file: string): Promise<ShareFile> {
+  let raw: string;
+  try {
+    raw = await readFile(file, "utf8");
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return { groups: [] };
+    throw err;
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new Error(`${file} is not valid JSON; fix or remove it before changing shared folders`);
+  }
+  try {
+    return parseShareFile(parsed);
+  } catch (err) {
+    const reason = (err as Error).message;
+    throw new Error(`${file} is corrupt (${reason}); fix or remove it before changing shared folders`, { cause: err });
+  }
+}
+
+/** Write the share file atomically: a temp file in the same directory, then a rename. */
+export async function writeShareFile(file: string, share: ShareFile): Promise<void> {
+  await mkdir(path.dirname(file), { recursive: true, mode: 0o700 });
+  const tmp = `${file}.${process.pid}.tmp`;
+  await writeFile(tmp, serializeShareFile(share), { mode: SHARE_FILE_MODE });
+  await chmod(tmp, SHARE_FILE_MODE);
+  await rename(tmp, file);
 }

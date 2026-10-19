@@ -88,3 +88,63 @@ describe("resolveConfig port 0", () => {
     expect(resolveConfig({ XMARK_MOBILE_PORT: "0" }, HOME).port).toBe(0);
   });
 });
+
+describe("resolveConfig platform-aware data directory", () => {
+  const LINUX_HOME = "/home/me";
+
+  it("keeps macOS on the desktop app's Application Support directory", () => {
+    const cfg = resolveConfig({}, HOME, "darwin");
+    expect(cfg.shareFile).toBe("/Users/me/Library/Application Support/app.xmark/mobile-share.json");
+    expect(cfg.tokenFile).toBe("/Users/me/Library/Application Support/app.xmark/mobile-server/token");
+  });
+
+  it("uses ~/.local/share on Linux when XDG_DATA_HOME is unset", () => {
+    const cfg = resolveConfig({}, LINUX_HOME, "linux");
+    expect(cfg.shareFile).toBe("/home/me/.local/share/app.xmark/mobile-share.json");
+    expect(cfg.tokenFile).toBe("/home/me/.local/share/app.xmark/mobile-server/token");
+  });
+
+  it("prefers an absolute XDG_DATA_HOME on Linux", () => {
+    const cfg = resolveConfig({ XDG_DATA_HOME: "/srv/data" }, LINUX_HOME, "linux");
+    expect(cfg.shareFile).toBe("/srv/data/app.xmark/mobile-share.json");
+    expect(cfg.tokenFile).toBe("/srv/data/app.xmark/mobile-server/token");
+  });
+
+  it("ignores a relative XDG_DATA_HOME, which the XDG spec says is invalid", () => {
+    for (const raw of ["rel/data", "", " "]) {
+      expect(resolveConfig({ XDG_DATA_HOME: raw }, LINUX_HOME, "linux").shareFile).toBe(
+        "/home/me/.local/share/app.xmark/mobile-share.json",
+      );
+    }
+  });
+
+  it("honours the app identifier on Linux too", () => {
+    expect(resolveConfig({ XMARK_APP_IDENTIFIER: "app.vmark.dev" }, LINUX_HOME, "linux").shareFile).toBe(
+      "/home/me/.local/share/app.vmark.dev/mobile-share.json",
+    );
+  });
+
+  it("treats every non-macOS platform as Linux", () => {
+    for (const platform of ["win32", "freebsd", "openbsd", "aix"] as NodeJS.Platform[]) {
+      expect(resolveConfig({}, "/home/me", platform).shareFile).toBe("/home/me/.local/share/app.xmark/mobile-share.json");
+    }
+  });
+
+  it("still lets explicit paths win on any platform", () => {
+    const env = { XMARK_MOBILE_SHARE_FILE: "/s.json", XMARK_MOBILE_TOKEN_FILE: "/t", XDG_DATA_HOME: "/srv/data" };
+    expect(resolveConfig(env, LINUX_HOME, "linux")).toMatchObject({ shareFile: "/s.json", tokenFile: "/t" });
+    expect(resolveConfig(env, HOME, "darwin")).toMatchObject({ shareFile: "/s.json", tokenFile: "/t" });
+  });
+
+  it("rejects an identifier that would escape the data directory on Linux", () => {
+    expect(() => resolveConfig({ XMARK_APP_IDENTIFIER: "../x" }, LINUX_HOME, "linux")).toThrow(/identifier/i);
+  });
+
+  it("defaults the platform to the running one", () => {
+    const cfg = resolveConfig({}, LINUX_HOME);
+    const expected = process.platform === "darwin"
+      ? "/home/me/Library/Application Support/app.xmark/mobile-share.json"
+      : "/home/me/.local/share/app.xmark/mobile-share.json";
+    expect(cfg.shareFile).toBe(expected);
+  });
+});

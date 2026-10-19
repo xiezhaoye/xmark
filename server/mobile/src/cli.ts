@@ -22,6 +22,7 @@ const code = await runCli(process.argv.slice(2), {
   nodePath: process.execPath,
   cliPath: fileURLToPath(import.meta.url),
   uid: process.getuid?.() ?? 501,
+  platform: process.platform,
   exit: (c) => process.exit(c),
 });
 if (code !== 0) process.exit(code);

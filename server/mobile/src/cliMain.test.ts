@@ -37,6 +37,8 @@ beforeEach(async () => {
     nodePath: "/opt/node",
     cliPath: "/opt/xmark/dist/cli.js",
     uid: 501,
+    platform: "darwin",
+    userName: () => "me",
     exit: vi.fn(),
     onStop: (stop) => stops.push(stop),
   };
@@ -197,6 +199,166 @@ describe("runCli", () => {
     expect(await runCli(["uninstall-agent"], deps)).toBe(0);
     expect(deps.run).toHaveBeenCalledWith("launchctl", ["bootout", `gui/501/${LAUNCH_AGENT_LABEL}`]);
     await expect(readFile(path.join(dir, "Library", "LaunchAgents", `${LAUNCH_AGENT_LABEL}.plist`))).rejects.toThrow();
+  });
+});
+
+/** A fake `run` that records every call, for the platform-dispatch tests. */
+function recordingRun(): { run: CliDeps["run"]; calls: string[][] } {
+  const calls: string[][] = [];
+  const run = async (cmd: string, args: string[]) => {
+    calls.push([cmd, ...args]);
+    return "";
+  };
+  return { run, calls };
+}
+
+describe("runCli install-agent on Linux", () => {
+  let calls: string[][];
+
+  beforeEach(() => {
+    deps.platform = "linux";
+    const recording = recordingRun();
+    calls = recording.calls;
+    deps.run = recording.run;
+  });
+
+  it("writes the systemd user unit and enables it, in order", async () => {
+    expect(await runCli(["install-agent"], deps)).toBe(0);
+    const unitPath = path.join(dir, ".config", "systemd", "user", "xmark-mobile-server.service");
+    const unit = await readFile(unitPath, "utf8");
+    expect(unit).toContain("ExecStart=/opt/node /opt/xmark/dist/cli.js serve");
+    expect(unit).toContain("WantedBy=default.target");
+    expect(calls).toEqual([
+      ["systemctl", "--user", "daemon-reload"],
+      ["systemctl", "--user", "enable", "--now", "xmark-mobile-server.service"],
+    ]);
+  });
+
+  it("never touches launchd or the real user directory", async () => {
+    await runCli(["install-agent"], deps);
+    expect(calls.some((c) => c[0] === "launchctl")).toBe(false);
+    await expect(readFile(path.join(dir, "Library", "LaunchAgents", `${LAUNCH_AGENT_LABEL}.plist`))).rejects.toThrow();
+  });
+
+  it("prints the unit path, the journalctl command and the linger hint", async () => {
+    await runCli(["install-agent"], deps);
+    const text = out.join("");
+    expect(text).toContain(path.join(dir, ".config", "systemd", "user", "xmark-mobile-server.service"));
+    expect(text).toContain("journalctl --user -u xmark-mobile-server -f");
+    expect(text).toContain("sudo loginctl enable-linger me");
+    // Advice only: the installer must not run loginctl itself.
+    expect(calls.some((c) => c[0] === "loginctl")).toBe(false);
+  });
+
+  it("fails when systemctl fails, surfacing the error", async () => {
+    deps.run = async () => {
+      throw new Error("systemctl: not found");
+    };
+    expect(await runCli(["install-agent"], deps)).toBe(1);
+    expect(err.join("")).toContain("systemctl");
+  });
+
+  it("disables, removes the unit and reloads on uninstall", async () => {
+    await runCli(["install-agent"], deps);
+    calls.length = 0;
+    expect(await runCli(["uninstall-agent"], deps)).toBe(0);
+    expect(calls).toEqual([
+      ["systemctl", "--user", "disable", "--now", "xmark-mobile-server.service"],
+      ["systemctl", "--user", "daemon-reload"],
+    ]);
+    await expect(
+      readFile(path.join(dir, ".config", "systemd", "user", "xmark-mobile-server.service")),
+    ).rejects.toThrow();
+    expect(out.join("")).toContain("Removed ");
+  });
+
+  it("still removes the unit and reloads when systemctl fails", async () => {
+    await runCli(["install-agent"], deps);
+    calls.length = 0;
+    deps.run = async (cmd: string, args: string[]) => {
+      calls.push([cmd, ...args]);
+      throw new Error("no systemd");
+    };
+    expect(await runCli(["uninstall-agent"], deps)).toBe(0);
+    expect(calls).toHaveLength(2);
+    await expect(
+      readFile(path.join(dir, ".config", "systemd", "user", "xmark-mobile-server.service")),
+    ).rejects.toThrow();
+  });
+});
+
+describe("runCli install-agent on an unsupported platform", () => {
+  it("refuses and names the platform, for both commands", async () => {
+    deps.platform = "win32";
+    const { run, calls } = recordingRun();
+    deps.run = run;
+    expect(await runCli(["install-agent"], deps)).toBe(1);
+    expect(await runCli(["uninstall-agent"], deps)).toBe(1);
+    expect(err.join("")).toContain("win32");
+    expect(calls).toHaveLength(0);
+  });
+});
+
+describe("runCli install-agent on macOS", () => {
+  it("keeps using launchd and never calls systemctl", async () => {
+    deps.run = async (cmd: string) => {
+      if (cmd !== "launchctl") throw new Error(`unexpected ${cmd}`);
+      return "";
+    };
+    expect(await runCli(["install-agent"], deps)).toBe(0);
+    expect(out.join("")).toContain(path.join(dir, "Library", "LaunchAgents", `${LAUNCH_AGENT_LABEL}.plist`));
+  });
+});
+
+describe("runCli share", () => {
+  it("adds, lists and removes through the configured share file", async () => {
+    const folder = path.join(dir, "wiki");
+    const { mkdir } = await import("node:fs/promises");
+    await mkdir(folder, { recursive: true });
+
+    expect(await runCli(["share", "add", "测试", folder], deps)).toBe(0);
+    const saved = JSON.parse(await readFile(deps.env.XMARK_MOBILE_SHARE_FILE!, "utf8")) as {
+      version: number;
+      groups: Array<{ name: string; folders: string[] }>;
+    };
+    expect(saved.version).toBe(1);
+    expect(saved.groups[0]).toMatchObject({ name: "测试", folders: [folder] });
+
+    out.length = 0;
+    expect(await runCli(["share", "list"], deps)).toBe(0);
+    expect(out.join("")).toContain(folder);
+
+    expect(await runCli(["share", "remove", "测试"], deps)).toBe(0);
+    const after = JSON.parse(await readFile(deps.env.XMARK_MOBILE_SHARE_FILE!, "utf8")) as { groups: unknown[] };
+    expect(after.groups).toEqual([]);
+  });
+
+  it("resolves the share file from the data directory when no override is set", async () => {
+    deps.platform = "linux";
+    delete deps.env.XMARK_MOBILE_SHARE_FILE;
+    const folder = path.join(dir, "kb");
+    const { mkdir } = await import("node:fs/promises");
+    await mkdir(folder, { recursive: true });
+    expect(await runCli(["share", "add", "KB", folder], deps)).toBe(0);
+    const file = path.join(dir, ".local", "share", "app.xmark", "mobile-share.json");
+    expect(JSON.parse(await readFile(file, "utf8"))).toHaveProperty("groups.0.name", "KB");
+  });
+
+  it("documents the subcommand in help", async () => {
+    await runCli(["help"], deps);
+    const text = out.join("");
+    expect(text).toMatch(/share list \| add/);
+    expect(text).toMatch(/Linux/);
+  });
+
+  it("reports a share error with code 1", async () => {
+    expect(await runCli(["share", "add", "G", "relative"], deps)).toBe(1);
+    expect(err.join("")).toMatch(/absolute/i);
+  });
+
+  it("reports usage for a bare `share` with code 0", async () => {
+    expect(await runCli(["share"], deps)).toBe(0);
+    expect(out.join("")).toMatch(/share add <group> <path>/);
   });
 });
 

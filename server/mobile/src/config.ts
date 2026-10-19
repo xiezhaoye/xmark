@@ -5,6 +5,11 @@
  * build with `XMARK_APP_IDENTIFIER=app.vmark.dev`. `XMARK_MOBILE_HOST`
  * replaces the Tailscale bind and is meant for local testing only.
  *
+ * The default data directory is platform-aware: macOS keeps the desktop app's
+ * `~/Library/Application Support/<appId>/`, Linux (and anything else) uses the
+ * XDG data directory `$XDG_DATA_HOME/<appId>/` (`~/.local/share` when unset).
+ * The file layout inside it is the same on both.
+ *
  * `XMARK_MOBILE_CORS_ORIGINS` is the one web-facing knob: a comma-separated
  * list of origins a browser version of the reader may call from. Empty (the
  * default) keeps the server browser-hostile, which is the shipped behaviour.
@@ -65,12 +70,26 @@ function parseOrigin(item: string): string | null {
   }
 }
 
-export function resolveConfig(env: Env, home: string): Config {
+/**
+ * The per-app data directory the desktop app writes into.
+ *
+ * macOS keeps the Application Support location the desktop app uses; every
+ * other platform gets the XDG data directory, where a Linux box has no
+ * desktop app to share a convention with.
+ */
+export function defaultDataDir(env: Env, home: string, platform: NodeJS.Platform = process.platform): string {
   const identifier = env.XMARK_APP_IDENTIFIER ?? "app.xmark";
   if (!/^[A-Za-z0-9.-]+$/.test(identifier) || identifier.includes("..")) {
     throw new Error(`Invalid XMARK_APP_IDENTIFIER ${JSON.stringify(identifier)}`);
   }
-  const support = path.join(home, "Library", "Application Support", identifier);
+  if (platform === "darwin") return path.join(home, "Library", "Application Support", identifier);
+  const xdg = env.XDG_DATA_HOME;
+  const dataHome = xdg && path.isAbsolute(xdg) ? xdg : path.join(home, ".local", "share");
+  return path.join(dataHome, identifier);
+}
+
+export function resolveConfig(env: Env, home: string, platform: NodeJS.Platform = process.platform): Config {
+  const support = defaultDataDir(env, home, platform);
   return {
     shareFile: env.XMARK_MOBILE_SHARE_FILE ?? path.join(support, "mobile-share.json"),
     tokenFile: env.XMARK_MOBILE_TOKEN_FILE ?? path.join(support, "mobile-server", "token"),
