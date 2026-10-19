@@ -1,15 +1,18 @@
 /**
- * Pairing with the Mac: scan the QR from `xmark-mobile-server pair`, or type
- * host, port and token; test, then save.
+ * Settings: the Macs paired with this phone, and the form that pairs another
+ * one. Scan the QR from `xmark-mobile-server pair`, paste its link, or type
+ * host, port and token, then test and save. A Mac already in the list at the
+ * same host and port is updated instead of listed twice; a pairing link's
+ * `name` fills the name field.
  *
  * @module components/SettingsPage
  */
 import { useState } from "react";
 import { ApiError } from "../api/client";
-import type { Connection } from "../api/types";
-import { parsePairUrl } from "../pairing/parsePairUrl";
+import { sameServer, type Connection, type ServerProfile } from "../api/types";
+import { parsePairLink, type PairLink } from "../pairing/parsePairUrl";
 import { readClipboardText, scanQrCode } from "../platform";
-import { useReaderStore } from "../state/readerStore";
+import { SERVER_NAME_MAX, serverName, useReaderStore } from "../state/readerStore";
 import { errorText, t } from "../i18n";
 import { Icon } from "./Icon";
 
@@ -20,54 +23,79 @@ function validate(host: string, port: string, token: string): Connection | null 
   return { host: host.trim(), port: p, token: token.trim() };
 }
 
-export function SettingsPage() {
-  const existing = useReaderStore((s) => s.connection);
-  const [host, setHost] = useState(existing?.host ?? "");
-  const [port, setPort] = useState(String(existing?.port ?? 8740));
-  const [token, setToken] = useState(existing?.token ?? "");
-  const [message, setMessage] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
+/** What the form is editing: a new Mac, or one already listed. */
+type Draft = {
+  id: string | null;
+  name: string;
+  host: string;
+  port: string;
+  token: string;
+  /** The name came from a pairing link, so a link without one clears it. */
+  fromLink: boolean;
+};
 
-  const apply = (c: Connection) => {
-    setHost(c.host);
-    setPort(String(c.port));
-    setToken(c.token);
+const blankDraft = (): Draft => ({ id: null, name: "", host: "", port: "8740", token: "", fromLink: false });
+
+const draftOf = (p: ServerProfile): Draft => ({ id: p.id, name: p.name, host: p.host, port: String(p.port), token: p.token, fromLink: false });
+
+export function SettingsPage() {
+  const servers = useReaderStore((s) => s.servers);
+  const activeId = useReaderStore((s) => s.activeServerId);
+  const [draft, setDraft] = useState<Draft>(blankDraft);
+  const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
+  const [message, setMessage] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
+  const editing = draft.id !== null || draft.host !== "" || draft.token !== "" || draft.name !== "";
+
+  const apply = (link: PairLink) => {
+    const c = link.connection;
+    setDraft((d) => ({
+      ...d,
+      // A name in the link wins; a link without one only clears a name this
+      // form filled from an earlier link, and a name too long to have
+      // travelled whole keeps the current one.
+      name: link.name || (link.nameTooLong ? d.name : d.fromLink ? "" : d.name),
+      fromLink: !!link.name || link.nameTooLong,
+      host: c.host,
+      port: String(c.port),
+      token: c.token,
+    }));
   };
 
   const scan = async () => {
     try {
       const raw = await scanQrCode();
       if (raw === null) return;
-      const c = parsePairUrl(raw);
-      if (!c) setMessage({ tone: "error", text: t("settings.badQr") });
+      const link = parsePairLink(raw);
+      if (!link) setMessage({ tone: "error", text: t("settings.badQr") });
       else {
-        apply(c);
-        await test(c);
+        apply(link);
+        await test(link.connection);
       }
     } catch (err) {
       setMessage({ tone: "error", text: String(err) });
     }
   };
 
-  /** A full pairing link typed or pasted into any field fills all three. */
-  const onField = (value: string, set: (v: string) => void) => {
-    const c = parsePairUrl(value);
-    if (c) {
-      apply(c);
-      void test(c);
-    } else set(value);
+  /** A full pairing link typed or pasted into any field fills the rest. */
+  const onField = (value: string, field: keyof Omit<Draft, "id">) => {
+    const link = parsePairLink(value);
+    if (link) {
+      apply(link);
+      void test(link.connection);
+    } else setDraft((d) => ({ ...d, [field]: value }));
   };
 
   const paste = async () => {
-    const c = parsePairUrl(await readClipboardText());
-    if (!c) {
+    const link = parsePairLink(await readClipboardText());
+    if (!link) {
       setMessage({ tone: "error", text: t("settings.badQr") });
       return;
     }
-    apply(c);
-    await test(c);
+    apply(link);
+    await test(link.connection);
   };
 
-  const test = async (c = validate(host, port, token)): Promise<boolean> => {
+  const test = async (c = validate(draft.host, draft.port, draft.token)): Promise<boolean> => {
     if (!c) {
       setMessage({ tone: "error", text: t("settings.invalid") });
       return false;
@@ -83,14 +111,30 @@ export function SettingsPage() {
   };
 
   const save = async () => {
-    const c = validate(host, port, token);
-    if (c && (await test(c))) await useReaderStore.getState().connect(c);
+    const c = validate(draft.host, draft.port, draft.token);
+    if (!c || !(await test(c))) return;
+    const store = useReaderStore.getState();
+    const name = serverName(draft.name, c);
+    const twin = store.servers.find((p) => p.id !== draft.id && sameServer(p, c));
+    if (draft.id && !twin) await store.updateServer(draft.id, { name, ...c });
+    else if (twin) {
+      // Same host and port: this is the same Mac, with a fresh name or token.
+      await store.updateServer(twin.id, { name, token: c.token });
+    } else await store.addServer({ name, connection: c });
+    setDraft(blankDraft());
+    setMessage(null);
+  };
+
+  const startEdit = (p: ServerProfile) => {
+    setDraft(draftOf(p));
+    setConfirmRemove(null);
+    setMessage(null);
   };
 
   return (
     <div className="page">
       <header className="topbar">
-        {existing ? (
+        {servers.length > 0 ? (
           <button type="button" className="icon-button" aria-label={t("settings.back")} onClick={() => useReaderStore.getState().setView("reader")}>
             <Icon name="back" />
           </button>
@@ -101,6 +145,61 @@ export function SettingsPage() {
         <span className="icon-button" />
       </header>
       <div className="scroll settings">
+        <h2 className="section-title">{t("settings.servers")}</h2>
+        {servers.length ? (
+          <ul className="servers" aria-label={t("settings.servers")}>
+            {servers.map((p) => (
+              <li key={p.id} className={`server ${p.id === activeId ? "current" : ""}`}>
+                <div className="server-main">
+                  <span className="server-name">{p.name}</span>
+                  <span className="server-address">
+                    {p.host}:{p.port}
+                  </span>
+                </div>
+                <div className="server-actions">
+                  {p.id === activeId ? (
+                    <span className="server-badge">{t("settings.current")}</span>
+                  ) : (
+                    <button type="button" className="button small" onClick={() => void useReaderStore.getState().switchServer(p.id)}>
+                      {t("settings.use")}
+                    </button>
+                  )}
+                  <button type="button" className="button small" onClick={() => startEdit(p)}>
+                    {t("settings.edit")}
+                  </button>
+                  <button type="button" className="button small danger" onClick={() => setConfirmRemove(p.id)}>
+                    {t("settings.remove")}
+                  </button>
+                </div>
+                {confirmRemove === p.id && (
+                  <div className="server-confirm" role="group" aria-label={t("settings.removeConfirm", { name: p.name })}>
+                    <p>{t("settings.removeConfirm", { name: p.name })}</p>
+                    <div className="row">
+                      <button type="button" className="button small" onClick={() => setConfirmRemove(null)}>
+                        {t("settings.cancel")}
+                      </button>
+                      <button
+                        type="button"
+                        className="button small danger"
+                        onClick={() => {
+                          useReaderStore.getState().removeServer(p.id);
+                          setConfirmRemove(null);
+                          setDraft(blankDraft());
+                        }}
+                      >
+                        {t("settings.removeYes")}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="muted">{t("settings.noServers")}</p>
+        )}
+
+        <h2 className="section-title">{draft.id ? t("settings.editTitle") : t("settings.newTitle")}</h2>
         <p className="muted">{t("settings.intro")}</p>
         <button type="button" className="button primary wide" onClick={() => void scan()}>
           <Icon name="scan" size={18} /> {t("settings.scan")}
@@ -109,16 +208,20 @@ export function SettingsPage() {
           {t("settings.paste")}
         </button>
         <label>
+          {t("settings.name")}
+          <input value={draft.name} maxLength={SERVER_NAME_MAX} onChange={(e) => onField(e.target.value, "name")} placeholder={t("settings.namePlaceholder")} />
+        </label>
+        <label>
           {t("settings.host")}
-          <input value={host} onChange={(e) => onField(e.target.value, setHost)} autoCapitalize="off" autoCorrect="off" spellCheck={false} placeholder="m4.tailnet.ts.net" />
+          <input value={draft.host} onChange={(e) => onField(e.target.value, "host")} autoCapitalize="off" autoCorrect="off" spellCheck={false} placeholder="m4.tailnet.ts.net" />
         </label>
         <label>
           {t("settings.port")}
-          <input value={port} onChange={(e) => onField(e.target.value, setPort)} inputMode="numeric" />
+          <input value={draft.port} onChange={(e) => onField(e.target.value, "port")} inputMode="numeric" />
         </label>
         <label>
           {t("settings.token")}
-          <input value={token} onChange={(e) => onField(e.target.value, setToken)} autoCapitalize="off" autoCorrect="off" spellCheck={false} />
+          <input value={draft.token} onChange={(e) => onField(e.target.value, "token")} autoCapitalize="off" autoCorrect="off" spellCheck={false} />
         </label>
         {message && (
           <p className={message.tone === "ok" ? "ok" : "error"} role="status">
@@ -133,6 +236,18 @@ export function SettingsPage() {
             {t("settings.save")}
           </button>
         </div>
+        {editing && (
+          <button
+            type="button"
+            className="button wide"
+            onClick={() => {
+              setDraft(blankDraft());
+              setMessage(null);
+            }}
+          >
+            {t("settings.cancel")}
+          </button>
+        )}
       </div>
     </div>
   );

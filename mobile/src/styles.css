@@ -127,6 +127,19 @@ input { font: inherit; color: inherit; }
 .drawer-groups { width: var(--groups-col); flex: none; border-right: 1px solid var(--border-color); background: var(--bg-tertiary); }
 .drawer-tree { flex: 1; min-width: 0; }
 
+/* The server picker heads the groups column: the current Mac, and the list
+   of the others, opened in place above the groups. */
+.server-picker { flex: none; padding: 4px 4px 0; border-bottom: 1px solid var(--border-color); }
+.server-picker-toggle { width: 100%; display: flex; align-items: center; gap: 4px; min-height: 36px; padding: 0 4px 0 6px; border-radius: 6px; font-size: 13px; font-weight: 600; color: var(--text-color); }
+.server-picker-toggle:active { background: var(--bg-color); }
+.server-picker-toggle .chevron { transform: rotate(90deg); }
+.server-picker-toggle .chevron.open { transform: rotate(-90deg); }
+.server-list { padding: 0 0 4px; }
+.server-option { width: 100%; display: flex; align-items: center; gap: 4px; min-height: 32px; padding: 0 6px; border-radius: 6px; font-size: 13px; color: var(--text-secondary); }
+.server-option.current { color: var(--text-color); background: var(--accent-bg); }
+.server-option.current .icon { color: var(--accent-primary); }
+.server-option.manage { margin-top: 2px; border-top: 1px solid var(--border-color); border-radius: 0 0 6px 6px; color: var(--accent-primary); }
+
 .groups { padding: 6px 4px; }
 .group-title, .folder, .tree-row {
   width: 100%;
@@ -188,6 +201,19 @@ input { font: inherit; color: inherit; }
 .settings input:focus { outline: none; border-bottom: 2px solid var(--accent-primary); }
 .settings .row { display: flex; gap: 10px; }
 .settings .row .button { flex: 1; padding: 12px; }
+.settings .section-title { margin: 4px 0 0; font-size: 13px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+.servers { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.server { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: var(--radius); background: var(--bg-secondary); }
+.server.current { border-color: var(--accent-primary); background: var(--accent-bg); }
+.server-main { display: flex; flex-direction: column; min-width: 0; }
+.server-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.server-address { font: 12px var(--font-mono); color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.server-actions { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+.button.small { padding: 4px 10px; font-size: 13px; }
+.button.danger { color: var(--danger); border-color: var(--danger); }
+.server-badge { font-size: 13px; font-weight: 600; color: var(--accent-primary); }
+.server-confirm { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-color); }
+.server-confirm p { margin: 0 0 8px; font-size: 13px; color: var(--text-color); }
 .ok { color: var(--ok); margin: 0; }
 .error { color: var(--danger); margin: 0; }
 

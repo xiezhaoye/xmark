@@ -7,6 +7,7 @@
  */
 import { t } from "../i18n";
 import { GroupColumn } from "./GroupColumn";
+import { ServerPicker } from "./ServerPicker";
 import { TreeColumn } from "./TreeColumn";
 
 export function Drawer({ width, offset, dragging }: { width: number; offset: number; dragging: boolean }) {
@@ -20,6 +21,7 @@ export function Drawer({ width, offset, dragging }: { width: number; offset: num
       inert={!visible}
     >
       <div className="drawer-col drawer-groups">
+        <ServerPicker />
         <div className="scroll">
           <GroupColumn />
         </div>
