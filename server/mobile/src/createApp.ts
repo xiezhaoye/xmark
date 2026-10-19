@@ -1,13 +1,15 @@
 /**
  * The mobile server's HTTP app: auth in front, read-only routes behind.
  *
- * No CORS: the phone calls through Tauri's HTTP plugin (Rust, no browser
- * origin), so a browser page elsewhere on the tailnet gets nothing it can
+ * CORS is off unless the caller passes a non-empty `corsOrigins` (the web
+ * build's origin list, from `XMARK_MOBILE_CORS_ORIGINS`). With no list the
+ * phone's Tauri HTTP plugin — which sends no browser origin — is the only
+ * client, so a browser page elsewhere on the tailnet gets nothing it can
  * read even if it guessed the token.
  *
  * @module createApp
  */
-import { Hono } from "hono";
+import { Hono, type Context, type Next } from "hono";
 import { bearerAuth } from "./auth";
 import { publicWorkspaces, type RegistrySource } from "./registry";
 import { registerAsset } from "./routes/asset";
@@ -20,10 +22,42 @@ export interface AppDeps {
   tokens: TokenSource;
   registry: RegistrySource;
   version: string;
+  /** Browser origins allowed cross-origin; empty (the default) adds no CORS middleware. */
+  corsOrigins?: string[];
 }
 
-export function createApp({ tokens, registry, version }: AppDeps): Hono {
+const ALLOWED_METHODS = "GET, OPTIONS";
+const ALLOWED_HEADERS = "Authorization";
+const EXPOSED_HEADERS = "ETag";
+const PREFLIGHT_MAX_AGE_S = "600";
+
+/**
+ * CORS for exactly the listed origins. Preflights are answered before auth —
+ * a preflight carries no `Authorization` header by design, so requiring the
+ * token there would make every cross-origin call fail.
+ */
+function cors(origins: string[]) {
+  return async (c: Context, next: Next) => {
+    const origin = c.req.header("origin");
+    const allowed = origin !== undefined && origins.includes(origin);
+    if (allowed) {
+      c.header("Access-Control-Allow-Origin", origin);
+      c.header("Vary", "Origin");
+      c.header("Access-Control-Allow-Headers", ALLOWED_HEADERS);
+      c.header("Access-Control-Allow-Methods", ALLOWED_METHODS);
+      c.header("Access-Control-Expose-Headers", EXPOSED_HEADERS);
+    }
+    if (c.req.method === "OPTIONS") {
+      if (allowed) c.header("Access-Control-Max-Age", PREFLIGHT_MAX_AGE_S);
+      return c.body(null, 204);
+    }
+    await next();
+  };
+}
+
+export function createApp({ tokens, registry, version, corsOrigins = [] }: AppDeps): Hono {
   const app = new Hono();
+  if (corsOrigins.length > 0) app.use("*", cors(corsOrigins));
   app.use("*", async (c, next) => {
     await next();
     c.header("X-Content-Type-Options", "nosniff");

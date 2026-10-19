@@ -2,7 +2,7 @@
  * The `xmark-mobile-server` commands, with every side effect injected.
  *
  *   serve            bind the Tailscale IPv4 and serve (the launchd entry point)
- *   pair             print the pairing QR code and fields
+ *   pair [--name N]  print the pairing QR code and fields
  *   rotate-token     replace the token; the phone must pair again
  *   install-agent    install and start the launchd agent
  *   uninstall-agent  stop and remove it
@@ -27,6 +27,8 @@ import type { Hono } from "hono";
 export interface CliDeps {
   env: Env;
   home: string;
+  /** This Mac's Bonjour name, used as the default server name when pairing. */
+  hostname: () => string;
   stdout: (s: string) => void;
   stderr: (s: string) => void;
   run: RunCommand;
@@ -46,7 +48,7 @@ export interface CliDeps {
 const USAGE = `Usage: xmark-mobile-server <command>
 
   serve            Serve shared workspace groups on the Tailscale address
-  pair             Show the pairing QR code for XMark Mobile
+  pair [--name N]  Show the pairing QR code for XMark Mobile (default name: this Mac's hostname)
   rotate-token     Replace the pairing token (the phone must pair again)
   install-agent    Start at login via launchd
   uninstall-agent  Remove the launchd agent
@@ -54,18 +56,38 @@ const USAGE = `Usage: xmark-mobile-server <command>
 
 const IP_CHECK_MS = 60_000;
 
+/**
+ * Read `--name <value>` / `--name=<value>` out of a command's arguments.
+ * Anything else is left alone: the CLI takes no other options.
+ */
+export function parsePairArgs(argv: string[]): { name?: string } {
+  const i = argv.indexOf("--name");
+  if (i >= 0) {
+    const value = argv[i + 1];
+    return value && !value.startsWith("--") ? { name: value } : {};
+  }
+  const inline = argv.find((a) => a.startsWith("--name="));
+  return inline ? { name: inline.slice("--name=".length) } : {};
+}
+
+/** `My-MacBook-Pro.local` → `My-MacBook-Pro`; the phone's list reads better without the suffix. */
+export function defaultServerName(hostname: string): string {
+  const name = hostname.trim().replace(/\.local\.?$/i, "");
+  return name || hostname.trim();
+}
+
 const defaultWatch = (fn: () => Promise<void>) => {
   const id = setInterval(() => void fn(), IP_CHECK_MS);
   return () => clearInterval(id);
 };
 
-async function serve(deps: CliDeps): Promise<number> {
+async function serve(_argv: string[], deps: CliDeps): Promise<number> {
   const cfg = resolveConfig(deps.env, deps.home);
   const log = (m: string) => deps.stderr(`[xmark-mobile-server] ${m}\n`);
   const tokens = await createTokenSource(cfg.tokenFile);
   const registry = await createRegistrySource(cfg.shareFile, log);
   const hostname = cfg.host ?? (await waitForTailscaleIPv4(deps.run, { sleep: deps.sleep, log }));
-  const app = createApp({ tokens, registry, version: deps.version });
+  const app = createApp({ tokens, registry, version: deps.version, corsOrigins: cfg.corsOrigins });
   const server = await (deps.startServer ?? defaultStartServer)({ app, hostname, port: cfg.port });
   deps.stdout(`xmark-mobile-server ${deps.version} listening ${server.url}\n`);
 
@@ -86,7 +108,7 @@ async function serve(deps: CliDeps): Promise<number> {
   return 0;
 }
 
-async function pair(deps: CliDeps): Promise<number> {
+async function pair(argv: string[], deps: CliDeps): Promise<number> {
   const cfg = resolveConfig(deps.env, deps.home);
   const host = (await findTailscaleDnsName(deps.run)) ?? (await findTailscaleIPv4(deps.run));
   if (!host) {
@@ -94,11 +116,12 @@ async function pair(deps: CliDeps): Promise<number> {
     return 1;
   }
   const token = await loadOrCreateToken(cfg.tokenFile);
-  deps.stdout(await renderPairing({ host, port: cfg.port, token }));
+  const { name } = parsePairArgs(argv);
+  deps.stdout(await renderPairing({ host, port: cfg.port, token, name: name || defaultServerName(deps.hostname()) }));
   return 0;
 }
 
-async function rotate(deps: CliDeps): Promise<number> {
+async function rotate(_argv: string[], deps: CliDeps): Promise<number> {
   const cfg = resolveConfig(deps.env, deps.home);
   await rotateToken(cfg.tokenFile);
   deps.stdout("Token replaced. Run `xmark-mobile-server pair` and pair again on the phone.\n");
@@ -112,7 +135,7 @@ function agentPaths(deps: CliDeps) {
   };
 }
 
-async function installAgent(deps: CliDeps): Promise<number> {
+async function installAgent(_argv: string[], deps: CliDeps): Promise<number> {
   const p = agentPaths(deps);
   const plist = buildLaunchAgentPlist({
     nodePath: deps.nodePath,
@@ -129,7 +152,7 @@ async function installAgent(deps: CliDeps): Promise<number> {
   return 0;
 }
 
-async function uninstallAgent(deps: CliDeps): Promise<number> {
+async function uninstallAgent(_argv: string[], deps: CliDeps): Promise<number> {
   const p = agentPaths(deps);
   await deps.run("launchctl", ["bootout", `gui/${deps.uid}/${LAUNCH_AGENT_LABEL}`]).catch(() => "");
   await rm(p.plist, { force: true });
@@ -137,7 +160,7 @@ async function uninstallAgent(deps: CliDeps): Promise<number> {
   return 0;
 }
 
-const COMMANDS: Record<string, (deps: CliDeps) => Promise<number>> = {
+const COMMANDS: Record<string, (argv: string[], deps: CliDeps) => Promise<number>> = {
   serve,
   pair,
   "rotate-token": rotate,
@@ -157,7 +180,7 @@ export async function runCli(argv: string[], deps: CliDeps): Promise<number> {
     return 2;
   }
   try {
-    return await command(deps);
+    return await command(argv.slice(1), deps);
   } catch (err) {
     deps.stderr(`${(err as Error).message}\n`);
     return 1;

@@ -4,7 +4,7 @@
  * @module cli
  */
 import { fileURLToPath } from "node:url";
-import { homedir } from "node:os";
+import { homedir, hostname } from "node:os";
 import { runCli } from "./cliMain";
 import { runCommand } from "./tailscale";
 
@@ -13,6 +13,7 @@ declare const __VERSION__: string | undefined;
 const code = await runCli(process.argv.slice(2), {
   env: process.env,
   home: homedir(),
+  hostname,
   stdout: (s) => process.stdout.write(s),
   stderr: (s) => process.stderr.write(s),
   run: runCommand,
