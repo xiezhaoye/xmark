@@ -4,7 +4,8 @@
  * storage; every access is guarded, so a blocked or corrupt store behaves like
  * a fresh install. A store written by a single-server build is migrated on
  * read: its connection becomes one profile named after the host, and its last
- * document becomes that profile's.
+ * document becomes that profile's. A profile still named with its whole
+ * Tailscale domain (a name nobody chose) is named after the machine instead.
  *
  * @module state/storage
  */
@@ -60,6 +61,18 @@ const isConnection = (v: unknown): v is Connection =>
 
 const isServerProfile = (v: unknown): v is ServerProfile => hasShape<ServerProfile>(v, ["id", "name", "host", "token"]) && typeof (v as ServerProfile).port === "number";
 
+/**
+ * A profile saved before names defaulted to the machine name carries the
+ * whole domain as its name (`m1.tailc8e51.ts.net`): that is the generated
+ * name, not one the user typed, so it is shortened to `m1`. Any other name is
+ * left exactly as it is.
+ */
+function shortenDomainName(s: ServerProfile): ServerProfile {
+  if (s.name.toLowerCase() !== s.host.toLowerCase()) return s;
+  const machine = defaultServerName(s.host);
+  return machine === s.name ? s : { ...s, name: machine };
+}
+
 const isDocRef = (v: unknown): v is DocRef => hasShape<DocRef>(v, ["rootId", "relPath"]);
 
 const isDocMap = (v: unknown): v is Record<string, DocRef> => !!v && typeof v === "object" && !Array.isArray(v);
@@ -94,6 +107,7 @@ export function loadServers(): StoredState {
     // Drop malformed entries; drop repeated ids, which would share its keys.
     const seen = new Set<string>();
     servers = servers.filter((s) => !seen.has(s.id) && seen.add(s.id));
+    servers = servers.map(shortenDomainName);
   }
   if (!servers.length) {
     const migrated = migrateLegacy();

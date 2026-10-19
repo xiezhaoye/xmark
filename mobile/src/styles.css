@@ -205,24 +205,26 @@ input { font: inherit; color: inherit; }
 .settings section { display: flex; flex-direction: column; gap: 14px; }
 .settings .hint { margin: -6px 0 0; font-size: 13px; }
 .servers { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.server { position: relative; border: 1px solid var(--border-color); border-radius: var(--radius); background: var(--bg-secondary); transition: transform 150ms ease; }
+/* A row is pressed and held to be dragged, so the system's long-press
+   selection, magnifier and callout stay out of the way. */
+.server { position: relative; border: 1px solid var(--border-color); border-radius: var(--radius); background: var(--bg-secondary); transition: transform 150ms ease; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .server.current { border-color: var(--accent-primary); background: var(--accent-bg); }
 .server.dragging { z-index: 2; transition: none; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18); }
 .server-row { display: flex; align-items: center; }
-.server-select { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 10px 4px 10px 12px; text-align: left; }
+.server-select { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 10px 4px 10px 12px; text-align: left; touch-action: pan-y; }
 .server-select .radio { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border-color); display: grid; place-items: center; }
 .server-select[aria-checked="true"] .radio { border-color: var(--accent-primary); }
 .server-select[aria-checked="true"] .radio::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--accent-primary); }
 .server-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-.server-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.server-address { font: 12px var(--font-mono); color: var(--text-secondary); }
+/* The name takes what fits and truncates; the dot beside it never shrinks. */
+.server-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.server-name { flex: 0 1 auto; min-width: 0; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.server-address { font: 12px var(--font-mono); color: var(--text-secondary); opacity: 0.75; }
 .status-dot { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--text-secondary); opacity: 0.45; }
 .status-dot.online { background: var(--ok); opacity: 1; }
 .status-dot.unauthorized { background: var(--danger); opacity: 1; }
 .status-dot.checking { animation: pulse 1s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: 0.15; } }
-.icon-button.grip { touch-action: none; cursor: grab; color: var(--text-secondary); -webkit-user-select: none; user-select: none; }
-.server.dragging .icon-button.grip { cursor: grabbing; }
 .server-menu, .server-rename, .server-confirm { margin: 0 12px 10px; padding-top: 10px; border-top: 1px solid var(--border-color); }
 .server-menu { display: flex; gap: 8px; }
 .server-rename { display: flex; gap: 8px; align-items: center; }

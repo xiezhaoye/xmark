@@ -282,10 +282,11 @@ describe("server picker", () => {
 
 describe("settings servers", () => {
   const openSettings = async () => {
-    render(<App />);
+    const result = render(<App />);
     await flush();
     fireEvent.click(screen.getByLabelText("Settings"));
     await flush();
+    return result;
   };
 
   it("is titled Settings and lists each server with its address, the current one selected", async () => {
@@ -308,7 +309,7 @@ describe("settings servers", () => {
     expect(screen.getAllByRole("img", { name: "Unreachable" })).toHaveLength(2);
   });
 
-  it("selects a server on tap, says so, and stays on the page", async () => {
+  it("switches a server on tap, says so, and stays on the page", async () => {
     saveServers([PROFILE, OTHER]);
     saveActiveServerId(OTHER.id);
     await openSettings();
@@ -316,8 +317,53 @@ describe("settings servers", () => {
     await flush();
     expect(useReaderStore.getState().activeServerId).toBe(PROFILE.id);
     expect(useReaderStore.getState().view).toBe("settings");
-    expect(screen.getByRole("status").textContent).toContain("Selected “Study Mac”");
+    expect(screen.getByRole("status").textContent).toBe("Switched");
     expect(screen.getAllByRole("radio").map((r) => r.getAttribute("aria-checked"))).toEqual(["true", "false"]);
+  });
+
+  it("says nothing and reloads nothing when the row tapped is already the current one", async () => {
+    saveServers([PROFILE, OTHER]);
+    saveActiveServerId(OTHER.id);
+    await openSettings();
+    await flush();
+    vi.mocked(client.workspaces).mockClear();
+    vi.mocked(client.health).mockClear();
+    fireEvent.click(screen.getAllByRole("radio")[1] as HTMLElement);
+    await flush();
+    expect(useReaderStore.getState().activeServerId).toBe(OTHER.id);
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(client.workspaces).not.toHaveBeenCalled();
+    // Only the status probes count as health calls here; tapping adds none.
+    expect(vi.mocked(client.health).mock.calls.length).toBeLessThanOrEqual(2);
+  });
+
+  it("puts the status dot beside the name, not at the row's end", async () => {
+    saveServers([PROFILE, OTHER]);
+    saveActiveServerId(PROFILE.id);
+    const { container } = await openSettings();
+    const rows = [...container.querySelectorAll(".server")];
+    expect(rows).toHaveLength(2);
+    for (const row of rows) {
+      const title = row.querySelector(".server-title");
+      expect(title).not.toBeNull();
+      expect(title?.querySelector(".server-name")).not.toBeNull();
+      expect(title?.querySelector(".status-dot")).not.toBeNull();
+      // The dot is not a sibling of the "more" button, and no row ends in one.
+      const more = row.querySelector(".icon-button");
+      expect(more?.getAttribute("aria-label")).toBe("More");
+      expect(more?.querySelector(".status-dot")).toBeNull();
+      expect(row.querySelector(".server-row")?.lastElementChild).toBe(more);
+      expect(row.querySelectorAll(".server-row > *")).toHaveLength(2);
+    }
+  });
+
+  it("shows the whole address under the name, and no drag handle", async () => {
+    saveServers([PROFILE, OTHER]);
+    saveActiveServerId(PROFILE.id);
+    const { container } = await openSettings();
+    expect(container.querySelector(".server-address")?.textContent).toBe("m4.ts.net:8740");
+    expect(screen.queryByLabelText("Drag to reorder")).toBeNull();
+    expect(container.querySelector(".grip")).toBeNull();
   });
 
   it("adds a scanned server straight away, named by the link, without switching to it", async () => {
@@ -419,16 +465,94 @@ describe("settings servers", () => {
     expect(useReaderStore.getState().view).toBe("settings");
   });
 
-  it("moves a server up or down with the arrow keys on its handle", async () => {
+  it("moves a server up or down with Alt+arrow keys on its radio button", async () => {
     saveServers([PROFILE, OTHER]);
     saveActiveServerId(PROFILE.id);
     await openSettings();
-    const handles = screen.getAllByLabelText("Drag to reorder");
-    fireEvent.keyDown(handles[1] as HTMLElement, { key: "ArrowUp" });
+    fireEvent.keyDown(screen.getAllByRole("radio")[1] as HTMLElement, { key: "ArrowUp", altKey: true });
     expect(useReaderStore.getState().servers.map((p) => p.id)).toEqual([OTHER.id, PROFILE.id]);
     // The first row cannot go further up.
-    fireEvent.keyDown(screen.getAllByLabelText("Drag to reorder")[0] as HTMLElement, { key: "ArrowUp" });
+    fireEvent.keyDown(screen.getAllByRole("radio")[0] as HTMLElement, { key: "ArrowUp", altKey: true });
     expect(useReaderStore.getState().servers.map((p) => p.id)).toEqual([OTHER.id, PROFILE.id]);
+    // Down again, from the top row.
+    fireEvent.keyDown(screen.getAllByRole("radio")[0] as HTMLElement, { key: "ArrowDown", altKey: true });
+    expect(useReaderStore.getState().servers.map((p) => p.id)).toEqual([PROFILE.id, OTHER.id]);
+  });
+
+  it("drags a row after a long press, and the click that follows does not select it", async () => {
+    saveServers([PROFILE, OTHER]);
+    saveActiveServerId(PROFILE.id);
+    // Open the page on real timers (`flush` waits on one); only the press itself runs on fake ones.
+    await openSettings();
+    vi.useFakeTimers();
+    try {
+      const first = screen.getAllByRole("radio")[0] as HTMLElement;
+      fireEvent.pointerDown(first, { pointerId: 1, pointerType: "touch", clientX: 10, clientY: 100 });
+      act(() => vi.advanceTimersByTime(400));
+      expect(first.closest(".server")?.className).toContain("dragging");
+      fireEvent.pointerMove(first, { pointerId: 1, pointerType: "touch", clientX: 10, clientY: 160 });
+      fireEvent.pointerUp(first, { pointerId: 1, pointerType: "touch", clientX: 10, clientY: 160 });
+      fireEvent.click(first);
+      expect(useReaderStore.getState().servers.map((p) => p.id)).toEqual([OTHER.id, PROFILE.id]);
+      // The tap that ended the drag did not switch servers.
+      expect(useReaderStore.getState().activeServerId).toBe(PROFILE.id);
+      expect(screen.queryByRole("status")).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("scrolls instead of dragging when the finger moves before the hold", async () => {
+    saveServers([PROFILE, OTHER]);
+    saveActiveServerId(PROFILE.id);
+    // Open the page on real timers (`flush` waits on one); only the press itself runs on fake ones.
+    await openSettings();
+    vi.useFakeTimers();
+    try {
+      const first = screen.getAllByRole("radio")[0] as HTMLElement;
+      fireEvent.pointerDown(first, { pointerId: 1, pointerType: "touch", clientX: 10, clientY: 100 });
+      fireEvent.pointerMove(first, { pointerId: 1, pointerType: "touch", clientX: 10, clientY: 160 });
+      act(() => vi.advanceTimersByTime(400));
+      expect(first.closest(".server")?.className).not.toContain("dragging");
+      fireEvent.pointerUp(first, { pointerId: 1, pointerType: "touch", clientX: 10, clientY: 160 });
+      fireEvent.click(first);
+      expect(useReaderStore.getState().servers.map((p) => p.id)).toEqual([PROFILE.id, OTHER.id]);
+      // A press that never became a drag is still an ordinary tap.
+      expect(useReaderStore.getState().activeServerId).toBe(PROFILE.id);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("keeps the page still while a row is being dragged", async () => {
+    saveServers([PROFILE, OTHER]);
+    saveActiveServerId(PROFILE.id);
+    const { container } = await openSettings();
+    vi.useFakeTimers();
+    try {
+      const list = container.querySelector(".servers") as HTMLElement;
+      const first = screen.getAllByRole("radio")[0] as HTMLElement;
+      const before = fireEvent.touchMove(list, { touches: [{ clientX: 0, clientY: 0 }] });
+      expect(before).toBe(true);
+      fireEvent.pointerDown(first, { pointerId: 1, pointerType: "touch", clientX: 10, clientY: 100 });
+      act(() => vi.advanceTimersByTime(400));
+      const during = fireEvent.touchMove(list, { touches: [{ clientX: 0, clientY: 20 }] });
+      expect(during).toBe(false);
+      fireEvent.pointerUp(first, { pointerId: 1, pointerType: "touch", clientX: 10, clientY: 100 });
+      const after = fireEvent.touchMove(list, { touches: [{ clientX: 0, clientY: 30 }] });
+      expect(after).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("leaves plain arrow keys alone", async () => {
+    saveServers([PROFILE, OTHER]);
+    saveActiveServerId(PROFILE.id);
+    await openSettings();
+    fireEvent.keyDown(screen.getAllByRole("radio")[1] as HTMLElement, { key: "ArrowUp" });
+    fireEvent.keyDown(screen.getAllByRole("radio")[1] as HTMLElement, { key: "ArrowDown" });
+    expect(useReaderStore.getState().servers.map((p) => p.id)).toEqual([PROFILE.id, OTHER.id]);
   });
 
   it("goes back to the reader", async () => {

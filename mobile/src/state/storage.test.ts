@@ -33,6 +33,26 @@ describe("servers", () => {
     expect(loadServers()).toEqual({ servers: [PROFILE], activeServerId: "s1" });
   });
 
+  it("renames a saved server still named with its whole domain, and keeps the name it was given", () => {
+    const wholeDomain = { ...PROFILE, id: "s2", name: "m1.tailc8e51.ts.net", host: "m1.tailc8e51.ts.net" };
+    const custom = { ...PROFILE, id: "s3", name: "书房", host: "m2.tailc8e51.ts.net" };
+    const ip = { ...PROFILE, id: "s4", name: "100.66.175.80", host: "100.66.175.80" };
+    localStorage.setItem("xmark-mobile.servers", JSON.stringify([wholeDomain, custom, ip]));
+    saveActiveServerId("s2");
+    const loaded = loadServers();
+    expect(loaded.servers.map((s) => s.name)).toEqual(["m1", "书房", "100.66.175.80"]);
+    // Only the name changes; the id, address and token stay.
+    expect(loaded.servers[0]).toEqual({ ...wholeDomain, name: "m1" });
+    expect(loaded.activeServerId).toBe("s2");
+  });
+
+  it("matches a whole-domain name case-insensitively and leaves a name that is not the domain alone", () => {
+    const upper = { ...PROFILE, id: "s2", name: "M1.TailC8E51.TS.Net", host: "m1.tailc8e51.ts.net" };
+    const partial = { ...PROFILE, id: "s3", name: "m1.tailc8e51", host: "m1.tailc8e51.ts.net" };
+    localStorage.setItem("xmark-mobile.servers", JSON.stringify([upper, partial]));
+    expect(loadServers().servers.map((s) => s.name)).toEqual(["m1", "m1.tailc8e51"]);
+  });
+
   it("treats a corrupt store as a fresh install", () => {
     localStorage.setItem("xmark-mobile.servers", "{oops");
     expect(loadServers()).toEqual({ servers: [], activeServerId: null });

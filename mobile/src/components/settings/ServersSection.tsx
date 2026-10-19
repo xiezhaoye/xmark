@@ -4,14 +4,16 @@
  *
  * Adding is automatic: a scan that does not work leaves nothing behind (the
  * reason appears as a message), one that does lists the server and says so,
- * without leaving the page. Choosing a row says "selected" and also stays on
- * the page. A row can be renamed or deleted from its "more" menu, and dragged
- * by its handle (or moved with the arrow keys) to change the order, which is
- * also the order of the drawer's server picker.
+ * without leaving the page. Choosing a row says "switched" and also stays on
+ * the page; a row already current says nothing and reloads nothing. A row can
+ * be renamed or deleted from its "more" menu, and reordered by pressing and
+ * holding it (or with Alt+arrow keys), which is also the order of the
+ * drawer's server picker. A press that moves before it becomes a hold is an
+ * ordinary scroll, never a drag.
  *
  * @module components/settings/ServersSection
  */
-import { Fragment, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import { Fragment, useEffect, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent, type TouchEvent } from "react";
 import { ApiError } from "../../api/client";
 import { defaultServerName, type ServerProfile } from "../../api/types";
 import { parsePairLink } from "../../pairing/parsePairUrl";
@@ -20,12 +22,14 @@ import { SERVER_NAME_MAX, useReaderStore } from "../../state/readerStore";
 import { errorText, t } from "../../i18n";
 import { Icon } from "../Icon";
 import { useToast } from "../Toast";
+import { createLongPress, type LongPress } from "./longPress";
 import { dragTarget, moveItem, rowOffset, rowShift, type RowRect } from "./reorder";
 import { useServerStatus, type ServerState } from "./useServerStatus";
 
 /** A drag in progress: which row, how far the finger has moved, and where every row started. */
 interface Drag {
   from: number;
+  /** Screen y where the drag began. */
   startY: number;
   dy: number;
   rects: RowRect[];
@@ -58,6 +62,13 @@ function Address({ host, port }: { host: string; port: number }) {
   );
 }
 
+/** Where each row starts on screen, so a drag knows what it is passing. */
+const rowRects = (servers: ServerProfile[], rows: Map<string, HTMLLIElement>): RowRect[] =>
+  servers.map((p) => {
+    const r = rows.get(p.id)?.getBoundingClientRect();
+    return { top: r?.top ?? 0, height: r?.height ?? 0 };
+  });
+
 export function ServersSection() {
   const servers = useReaderStore((s) => s.servers);
   const activeId = useReaderStore((s) => s.activeServerId);
@@ -69,6 +80,7 @@ export function ServersSection() {
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [drag, setDrag] = useState<Drag | null>(null);
   const rows = useRef(new Map<string, HTMLLIElement>());
+  const list = useRef<HTMLUListElement | null>(null);
   const store = useReaderStore.getState;
 
   const add = async () => {
@@ -97,9 +109,11 @@ export function ServersSection() {
     }
   };
 
+  /** Picking the current row again is not a switch: no message, no reload. */
   const select = (p: ServerProfile) => {
+    if (p.id === store().activeServerId) return;
     void store().switchServer(p.id);
-    show(t("settings.selected", { name: p.name }));
+    show(t("settings.switched"));
   };
 
   const commitRename = () => {
@@ -116,33 +130,156 @@ export function ServersSection() {
 
   const ids = servers.map((p) => p.id);
 
-  const startDrag = (e: PointerEvent<HTMLButtonElement>, index: number) => {
-    const rects = servers.map((p) => {
-      const r = rows.current.get(p.id)?.getBoundingClientRect();
-      return { top: r?.top ?? 0, height: r?.height ?? 0 };
-    });
-    e.currentTarget.setPointerCapture(e.pointerId);
-    setMenuId(null);
-    setConfirmId(null);
-    setDrag({ from: index, startY: e.clientY, dy: 0, rects });
+  const reorder = (from: number, to: number) => {
+    if (to !== from) store().reorderServers(moveItem(ids, from, to));
   };
 
-  const moveDrag = (e: PointerEvent<HTMLButtonElement>) => {
-    setDrag((d) => (d ? { ...d, dy: e.clientY - d.startY } : d));
+  // --- Long press to drag -------------------------------------------------
+
+  const dragRef = useRef<Drag | null>(null);
+  const fromIndex = useRef<number | null>(null);
+  const pressPointer = useRef<{ id: number; el: Element } | null>(null);
+  const pressY = useRef(0);
+  const swallowClick = useRef(false);
+  // The controller in use: the one built at mount, until an effect replaces it
+  // with one that sees the current rows.
+  const longPress = useRef<LongPress>({ down: () => {}, move: () => {}, up: () => false, cancel: () => {}, active: false });
+
+  const setDragged = (next: Drag | null) => {
+    dragRef.current = next;
+    setDrag(next);
+  };
+
+  /** Keeping the pointer on the row lets it keep reporting moves past its edges. */
+  const takeCapture = () => {
+    const held = pressPointer.current;
+    try {
+      (held?.el as (Element & { setPointerCapture?: (id: number) => void }) | undefined)?.setPointerCapture?.(held?.id as number);
+    } catch {
+      // Capture is a convenience: the arrow keys still reorder without it.
+    }
+  };
+
+  const releaseCapture = () => {
+    const held = pressPointer.current;
+    pressPointer.current = null;
+    try {
+      (held?.el as (Element & { releasePointerCapture?: (id: number) => void }) | undefined)?.releasePointerCapture?.(held?.id as number);
+    } catch {
+      // Already released by the browser.
+    }
+  };
+
+  /** The hold has become a drag: freeze where every row is, and follow the finger from here. */
+  const onHold = () => {
+    const from = fromIndex.current;
+    fromIndex.current = null;
+    if (from === null) return;
+    takeCapture();
+    setMenuId(null);
+    setConfirmId(null);
+    // Nobody has moved yet: the drag starts from where the finger went down.
+    setDragged({ from, startY: pressY.current, dy: 0, rects: rowRects(servers, rows.current) });
   };
 
   const endDrag = (cancel: boolean) => {
-    if (!drag) return;
-    const to = cancel ? drag.from : dragTarget(drag.rects, drag.from, drag.dy);
-    setDrag(null);
-    if (to !== drag.from) store().reorderServers(moveItem(ids, drag.from, to));
+    releaseCapture();
+    const d = dragRef.current;
+    if (!d) return;
+    const to = cancel ? d.from : dragTarget(d.rects, d.from, d.dy);
+    setDragged(null);
+    reorder(d.from, to);
   };
 
+  const pressDown = (e: PointerEvent<HTMLButtonElement>, index: number) => {
+    if (e.pointerType === "mouse") return;
+    fromIndex.current = index;
+    pressPointer.current = { id: e.pointerId, el: e.currentTarget };
+    pressY.current = e.clientY;
+    longPress.current.down(e.clientX, e.clientY);
+  };
+
+  const pressMove = (e: PointerEvent<HTMLButtonElement>) => {
+    const d = dragRef.current;
+    if (d) {
+      setDragged({ ...d, dy: e.clientY - d.startY });
+      return;
+    }
+    longPress.current.move(e.clientX, e.clientY);
+  };
+
+  const pressUp = () => {
+    fromIndex.current = null;
+    releaseCapture();
+    const dragged = longPress.current.up() || dragRef.current !== null;
+    if (dragRef.current) endDrag(false);
+    if (dragged) swallowClick.current = true;
+  };
+
+  const pressCancel = () => {
+    fromIndex.current = null;
+    releaseCapture();
+    longPress.current.cancel();
+    endDrag(true);
+  };
+
+  const onSelectClick = (e: MouseEvent<HTMLButtonElement>, p: ServerProfile) => {
+    if (swallowClick.current) {
+      swallowClick.current = false;
+      e.preventDefault();
+      return;
+    }
+    select(p);
+  };
+
+  // A second finger or an interrupted gesture gives up, and the click that
+  // follows a drag must not pick the row.
+  const onListTouchStart = (e: TouchEvent<HTMLElement>) => {
+    if (e.touches.length > 1) {
+      fromIndex.current = null;
+      longPress.current.cancel();
+      endDrag(true);
+    }
+  };
+  const onListTouchEnd = () => {
+    fromIndex.current = null;
+    const dragged = longPress.current.up() || dragRef.current !== null;
+    if (dragRef.current) endDrag(false);
+    if (dragged) swallowClick.current = true;
+  };
+  const onListTouchCancel = () => {
+    fromIndex.current = null;
+    longPress.current.cancel();
+    endDrag(true);
+    swallowClick.current = true;
+  };
+
+  // The controller is rebuilt from what the rows are now, so a press always
+  // drags the list as the page shows it.
+  useEffect(() => {
+    longPress.current = createLongPress({ onStart: onHold });
+    return () => longPress.current.cancel();
+  });
+
+  // React's touch handlers are passive, so the page can only be kept still
+  // while dragging from a native listener.
+  useEffect(() => {
+    const el = list.current;
+    if (!el) return;
+    const onTouchMove = (e: globalThis.TouchEvent) => {
+      if (dragRef.current) e.preventDefault();
+    };
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    return () => el.removeEventListener("touchmove", onTouchMove);
+  }, []);
+
+  // Alt+arrow keys move the row, on the row's own radio button.
   const keyMove = (e: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (!e.altKey) return;
     const to = e.key === "ArrowUp" ? index - 1 : e.key === "ArrowDown" ? index + 1 : index;
     if (to === index || to < 0 || to >= ids.length) return;
     e.preventDefault();
-    store().reorderServers(moveItem(ids, index, to));
+    reorder(index, to);
   };
 
   const target = drag ? dragTarget(drag.rects, drag.from, drag.dy) : -1;
@@ -156,7 +293,15 @@ export function ServersSection() {
       <p className="muted hint">{t("settings.hint")}</p>
 
       {servers.length ? (
-        <ul className="servers" role="radiogroup" aria-label={t("settings.servers")}>
+        <ul
+          ref={list}
+          className="servers"
+          role="radiogroup"
+          aria-label={t("settings.servers")}
+          onTouchStart={onListTouchStart}
+          onTouchEnd={onListTouchEnd}
+          onTouchCancel={onListTouchCancel}
+        >
           {servers.map((p, i) => {
             const state = status[p.id] ?? "checking";
             const dragging = drag?.from === i;
@@ -172,30 +317,31 @@ export function ServersSection() {
                 style={offset ? { transform: `translateY(${offset}px)` } : undefined}
               >
                 <div className="server-row">
-                  <button type="button" role="radio" aria-checked={p.id === activeId} className="server-select" onClick={() => select(p)}>
+                  <button
+                    type="button"
+                    role="radio"
+                    aria-checked={p.id === activeId}
+                    className="server-select"
+                    onClick={(e) => onSelectClick(e, p)}
+                    onPointerDown={(e) => pressDown(e, i)}
+                    onPointerMove={pressMove}
+                    onPointerUp={pressUp}
+                    onPointerCancel={pressCancel}
+                    onKeyDown={(e) => keyMove(e, i)}
+                  >
                     <span className="radio" aria-hidden="true" />
                     <span className="server-main">
-                      <span className="server-name">{p.name}</span>
+                      <span className="server-title">
+                        <span className="server-name">{p.name}</span>
+                        <span className={`status-dot ${state}`} role="img" aria-label={t(STATE_KEY[state])} />
+                      </span>
                       <span className="server-address">
                         <Address host={p.host} port={p.port} />
                       </span>
                     </span>
-                    <span className={`status-dot ${state}`} role="img" aria-label={t(STATE_KEY[state])} />
                   </button>
                   <button type="button" className="icon-button" aria-label={t("settings.more")} aria-expanded={menuId === p.id} onClick={() => setMenuId(menuId === p.id ? null : p.id)}>
                     <Icon name="more" />
-                  </button>
-                  <button
-                    type="button"
-                    className="icon-button grip"
-                    aria-label={t("settings.drag")}
-                    onPointerDown={(e) => startDrag(e, i)}
-                    onPointerMove={moveDrag}
-                    onPointerUp={() => endDrag(false)}
-                    onPointerCancel={() => endDrag(true)}
-                    onKeyDown={(e) => keyMove(e, i)}
-                  >
-                    <Icon name="grip" />
                   </button>
                 </div>
 
