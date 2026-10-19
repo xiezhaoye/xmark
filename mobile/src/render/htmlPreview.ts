@@ -17,6 +17,16 @@
 import { loadImages, type EnhanceContext } from "./enhance";
 import { classifyHref, resolveRelative } from "./paths";
 
+/** The page `body` size the rest of the app is laid out at, in px. */
+const BASE_SIZE = 16;
+
+/**
+ * How much an HTML page is scaled for a reading size: whole, so the page's
+ * own relative sizes keep their proportions. A document shown at 16 is not
+ * scaled at all.
+ */
+export const readingScale = (readingSize: number): number => readingSize / BASE_SIZE;
+
 export interface HtmlContext extends EnhanceContext {
   fileText: (rootId: string, relPath: string) => Promise<string>;
 }

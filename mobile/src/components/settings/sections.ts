@@ -8,6 +8,7 @@
  */
 import type { ComponentType } from "react";
 import type { t } from "../../i18n";
+import { ReadingSection } from "./ReadingSection";
 import { ServersSection } from "./ServersSection";
 
 export interface SettingsSection {
@@ -16,4 +17,7 @@ export interface SettingsSection {
   Component: ComponentType;
 }
 
-export const SETTINGS_SECTIONS: SettingsSection[] = [{ id: "servers", titleKey: "settings.servers", Component: ServersSection }];
+export const SETTINGS_SECTIONS: SettingsSection[] = [
+  { id: "servers", titleKey: "settings.servers", Component: ServersSection },
+  { id: "reading", titleKey: "settings.reading", Component: ReadingSection },
+];

@@ -10,7 +10,7 @@
  *
  * @module components/DocumentView
  */
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import hljs from "highlight.js/lib/common";
 import { useReaderStore } from "../state/readerStore";
 import { errorText, t } from "../i18n";
@@ -75,6 +75,7 @@ export function DocumentView() {
   const docState = useReaderStore((s) => s.docState);
   const mode = useReaderStore((s) => s.docMode);
   const hasServer = useReaderStore((s) => s.servers.length > 0);
+  const readingSize = useReaderStore((s) => s.readingSize);
   const docKey = `${doc?.rootId}/${doc?.relPath}`;
   // Keyed by document, so a fresh document starts with the top bar in view;
   // switching preview/source keeps the place, and the switch stays reachable.
@@ -101,8 +102,12 @@ export function DocumentView() {
   else if (isHtml && mode === "preview") body = <HtmlPreview rootId={doc.rootId} relPath={doc.relPath} html={docState.content.text} />;
   else body = <SourceView text={docState.content.text} relPath={doc.relPath} />;
 
+  // The document's own type size: only the scrolling document is inside this
+  // scope, so the drawer, the settings page and the search page keep theirs.
+  const style = { "--reading-size": `${readingSize}px` } as CSSProperties;
+
   return (
-    <div ref={scroller} className="document-frame">
+    <div ref={scroller} className="document-frame" style={style}>
       <PullToRefresh
         className="document"
         onRefresh={() => useReaderStore.getState().reloadDoc()}

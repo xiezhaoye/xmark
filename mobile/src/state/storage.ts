@@ -17,6 +17,13 @@ const SERVERS_KEY = "xmark-mobile.servers";
 const ACTIVE_SERVER_KEY = "xmark-mobile.activeServerId";
 /** Last document per server, as `{[serverId]: DocRef}`. */
 const LAST_DOC_KEY = "xmark-mobile.lastDoc";
+/** The document body's type size in px; its own key, so nothing else is touched. */
+const READING_SIZE_KEY = "xmark-mobile.readingSize";
+
+/** The reading size's range, in px; `DEFAULT_READING_SIZE` is what it starts at. */
+export const MIN_READING_SIZE = 12;
+export const MAX_READING_SIZE = 24;
+export const DEFAULT_READING_SIZE = 16;
 
 export interface DocRef {
   rootId: string;
@@ -129,6 +136,17 @@ export function loadLastDoc(serverId: string | null): DocRef | null {
   const doc = map?.[serverId];
   return isDocRef(doc) ? doc : null;
 }
+
+/**
+ * The stored reading size, or the default when it is missing, unreadable or
+ * out of range. A bad value is left exactly as it is: it is only read past.
+ */
+export function loadReadingSize(): number {
+  const stored = read<number>(READING_SIZE_KEY, (v): v is number => typeof v === "number" && Number.isInteger(v) && v >= MIN_READING_SIZE && v <= MAX_READING_SIZE);
+  return stored ?? DEFAULT_READING_SIZE;
+}
+
+export const saveReadingSize = (size: number) => write(READING_SIZE_KEY, size);
 
 export function saveLastDoc(serverId: string | null, doc: DocRef | null): void {
   if (!serverId) return;

@@ -20,7 +20,19 @@
 import { create } from "zustand";
 import { ApiError, type Client } from "../api/client";
 import { connectionOf, defaultServerName, newServerId, sameServer, type Connection, type FileContent, type ServerProfile, type TreeEntry, type WorkspaceGroup } from "../api/types";
-import { loadLastDoc, loadServers, saveActiveServerId, saveLastDoc, saveServers, type DocRef } from "./storage";
+import {
+  DEFAULT_READING_SIZE,
+  MAX_READING_SIZE,
+  MIN_READING_SIZE,
+  loadLastDoc,
+  loadReadingSize,
+  loadServers,
+  saveActiveServerId,
+  saveLastDoc,
+  saveReadingSize,
+  saveServers,
+  type DocRef,
+} from "./storage";
 
 type View = "reader" | "search" | "settings";
 
@@ -58,6 +70,8 @@ export interface ReaderState {
   expanded: Record<string, boolean>;
   doc: DocRef | null;
   docState: DocState;
+  /** The document body's type size in px; the app's own chrome never changes. */
+  readingSize: number;
   /** Text to find and reveal once the document renders (from search). */
   revealQuery: string | null;
   /** Preview or source for markdown; kept for the session, across documents. */
@@ -89,10 +103,19 @@ interface ReaderActions {
   selectRoot(rootId: string): Promise<void>;
   toggleDir(rootId: string, relPath: string): Promise<void>;
   refreshTree(): Promise<void>;
-  openDoc(rootId: string, relPath: string, revealQuery?: string | null): Promise<void>;
+  /**
+   * Opens a document. It also brings the reader forward, unless `opts.keepView`
+   * is set — a switch made from settings loads the document in the background
+   * and leaves the page the user is on.
+   */
+  openDoc(rootId: string, relPath: string, revealQuery?: string | null, opts?: { keepView?: boolean }): Promise<void>;
   reloadDoc(): Promise<void>;
   clearReveal(): void;
   setDocMode(mode: DocMode): void;
+  /** Sets the document type size, kept within its range and remembered. */
+  setReadingSize(size: number): void;
+  /** Moves the document type size by `delta` px. */
+  changeReadingSize(delta: number): void;
 }
 
 /** A tree level is cached per Mac: two machines may share a root id. */
@@ -138,6 +161,7 @@ function initialState(makeClient: (c: Connection) => Client): ReaderState {
     view: "reader",
     drawerOpen: false,
     ...noServer,
+    readingSize: DEFAULT_READING_SIZE,
     docMode: "preview",
   };
 }
@@ -186,12 +210,16 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
     }
   }
 
-  /** Opens the document a Mac was last reading, if its folder is still shared. */
-  async function restoreLastDoc(serverId: string): Promise<void> {
+  /**
+   * Opens the document a Mac was last reading, if its folder is still shared.
+   * `keepView` loads it without pulling the reader forward, for a switch made
+   * from another page.
+   */
+  async function restoreLastDoc(serverId: string, opts: { keepView?: boolean } = {}): Promise<void> {
     const last = loadLastDoc(serverId);
     if (last && rootAvailable(last.rootId)) {
       await get().selectRoot(last.rootId);
-      await get().openDoc(last.rootId, last.relPath);
+      await get().openDoc(last.rootId, last.relPath, null, opts);
     } else if (last && !get().groupsError) {
       saveLastDoc(serverId, null);
     }
@@ -220,7 +248,7 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
 
     async bootstrap() {
       const { servers, activeServerId } = loadServers();
-      set(profilesPatch(servers, activeServerId));
+      set({ ...profilesPatch(servers, activeServerId), readingSize: loadReadingSize() });
       if (!activeServerId || !servers.length) {
         docSeq += 1;
         switchSeq += 1;
@@ -307,15 +335,16 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
         docSeq += 1;
         switchSeq += 1;
         // Removal happens in settings, which stays open.
-        if (nextId) void get().refreshWorkspaces().then(() => restoreLastDoc(nextId));
+        if (nextId) void get().refreshWorkspaces().then(() => restoreLastDoc(nextId, { keepView: true }));
       }
     },
 
     async switchServer(id) {
       if (id === get().activeServerId) return;
       if (!get().servers.some((p) => p.id === id)) return;
+      const keepView = get().view === "settings";
       await activate(id);
-      await restoreLastDoc(id);
+      await restoreLastDoc(id, { keepView });
     },
 
     setView: (view) => set({ view }),
@@ -368,12 +397,12 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
       await Promise.all(paths.map((p) => loadLevel(rootId, p)));
     },
 
-    async openDoc(rootId, relPath, revealQuery = null) {
+    async openDoc(rootId, relPath, revealQuery = null, opts = {}) {
       const seq = ++docSeq;
       const serverId = get().activeServerId;
       const doc = { rootId, relPath };
       saveLastDoc(serverId, doc);
-      set({ doc, drawerOpen: false, view: "reader", revealQuery });
+      set({ doc, drawerOpen: false, revealQuery, ...(opts.keepView ? {} : { view: "reader" as const }) });
       if (IMAGE_EXT.test(relPath)) {
         set({ docState: { status: "image" } });
         return;
@@ -396,6 +425,17 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
 
     clearReveal: () => set({ revealQuery: null }),
     setDocMode: (docMode) => set({ docMode }),
+
+    setReadingSize(size) {
+      const next = Math.min(MAX_READING_SIZE, Math.max(MIN_READING_SIZE, Math.round(size)));
+      if (next === get().readingSize) return;
+      saveReadingSize(next);
+      set({ readingSize: next });
+    },
+
+    changeReadingSize(delta) {
+      get().setReadingSize(get().readingSize + delta);
+    },
   };
 });
 

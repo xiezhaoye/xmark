@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { prepareHtml } from "./htmlPreview";
+import { prepareHtml, readingScale } from "./htmlPreview";
 
 beforeEach(() => {
   globalThis.URL.createObjectURL = vi.fn(() => "blob:img");
@@ -65,5 +65,14 @@ describe("prepareHtml", () => {
   it("handles an empty file", async () => {
     const { srcdoc } = await prepareHtml("", ctx());
     expect(parse(srcdoc).body.textContent).toBe("");
+  });
+});
+
+describe("readingScale", () => {
+  it("scales against the 16px base, and not at all at 16", () => {
+    expect(readingScale(16)).toBe(1);
+    expect(readingScale(24)).toBe(1.5);
+    expect(readingScale(12)).toBe(0.75);
+    expect(readingScale(20)).toBe(1.25);
   });
 });

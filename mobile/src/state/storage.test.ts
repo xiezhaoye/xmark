@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { loadLastDoc, loadServers, saveActiveServerId, saveLastDoc, saveServers } from "./storage";
+import { DEFAULT_READING_SIZE, loadLastDoc, loadReadingSize, loadServers, saveActiveServerId, saveLastDoc, saveReadingSize, saveServers } from "./storage";
 
 const TOKEN = "a".repeat(64);
 const OTHER_TOKEN = "b".repeat(64);
@@ -140,5 +140,48 @@ describe("writing with storage unavailable", () => {
     } finally {
       localStorage.setItem = setItem;
     }
+  });
+});
+
+describe("reading size", () => {
+  const KEY = "xmark-mobile.readingSize";
+
+  it("falls back to 16 when nothing is stored", () => {
+    expect(DEFAULT_READING_SIZE).toBe(16);
+    expect(loadReadingSize()).toBe(16);
+    expect(localStorage.getItem(KEY)).toBeNull();
+  });
+
+  it("falls back to 16 for a value it cannot use, and leaves that value exactly as it was", () => {
+    for (const stored of ['"abc"', "11", "25", "16.5", '""', "null", "{}"]) {
+      localStorage.clear();
+      localStorage.setItem(KEY, stored);
+      expect(loadReadingSize()).toBe(16);
+      // Read past, never written back or deleted.
+      expect(localStorage.getItem(KEY)).toBe(stored);
+    }
+  });
+
+  it("reads back a size in range", () => {
+    saveReadingSize(12);
+    expect(loadReadingSize()).toBe(12);
+    saveReadingSize(24);
+    expect(loadReadingSize()).toBe(24);
+  });
+
+  it("writes its own key and touches none of the other data", () => {
+    saveServers([PROFILE]);
+    saveActiveServerId("s1");
+    saveLastDoc("s1", { rootId: "r1", relPath: "a.md" });
+    const before = {
+      servers: localStorage.getItem("xmark-mobile.servers"),
+      active: localStorage.getItem("xmark-mobile.activeServerId"),
+      lastDoc: localStorage.getItem("xmark-mobile.lastDoc"),
+    };
+    saveReadingSize(20);
+    expect(localStorage.getItem(KEY)).toBe("20");
+    expect(localStorage.getItem("xmark-mobile.servers")).toBe(before.servers);
+    expect(localStorage.getItem("xmark-mobile.activeServerId")).toBe(before.active);
+    expect(localStorage.getItem("xmark-mobile.lastDoc")).toBe(before.lastDoc);
   });
 });

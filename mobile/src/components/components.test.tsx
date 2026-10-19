@@ -249,15 +249,15 @@ describe("server picker", () => {
     await flush();
     fireEvent.click(screen.getByLabelText("Open groups and files"));
     fireEvent.click(screen.getByRole("button", { name: "Switch server" }));
-    const options = screen.getAllByRole("menuitemradio");
-    expect(options.map((o) => o.textContent)).toEqual(["Study Mac", "客厅 Mac"]);
+    const options = screen.getAllByRole("radio");
+    expect(options.map((o) => o.querySelector(".sheet-option-name")?.textContent)).toEqual(["Study Mac", "客厅 Mac"]);
     expect(options[1].getAttribute("aria-checked")).toBe("true");
     fireEvent.click(options[0]);
     await flush();
     expect(useReaderStore.getState().activeServerId).toBe(PROFILE.id);
     expect(useReaderStore.getState().connection).toEqual(CONN);
-    // The list closes after a pick.
-    expect(screen.queryByRole("menuitemradio")).toBeNull();
+    // The sheet closes after a pick.
+    expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.getByRole("button", { name: "Switch server" }).textContent).toContain("Study Mac");
   });
 
@@ -269,14 +269,72 @@ describe("server picker", () => {
     expect(screen.getByRole("button", { name: "Switch server" }).getAttribute("title")).toBe("m4.ts.net:8740");
   });
 
-  it("offers a way to manage servers from the list", async () => {
+  it("offers a way to add a server from the sheet", async () => {
     pair();
     render(<App />);
     await flush();
     fireEvent.click(screen.getByLabelText("Open groups and files"));
     fireEvent.click(screen.getByRole("button", { name: "Switch server" }));
-    fireEvent.click(screen.getByRole("menuitem", { name: "Manage servers" }));
+    fireEvent.click(screen.getByRole("button", { name: "＋ Add server" }));
     expect(useReaderStore.getState().view).toBe("settings");
+  });
+
+  const openSheet = async () => {
+    const result = render(<App />);
+    await flush();
+    fireEvent.click(screen.getByLabelText("Open groups and files"));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Switch server" }));
+    await flush();
+    return result;
+  };
+
+  it("opens the sheet as a dialog, and Esc closes it", async () => {
+    pair();
+    await openSheet();
+    const dialog = screen.getByRole("dialog");
+    expect(dialog.getAttribute("aria-modal")).toBe("true");
+    // A class of its own: the other sheets keep `.sheet-backdrop`.
+    expect(dialog.parentElement?.className).toBe("server-sheet-backdrop");
+    fireEvent.keyDown(dialog, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("closes when the backdrop behind the card is tapped, and stays open for a tap on the card", async () => {
+    pair();
+    const { container } = await openSheet();
+    const dialog = screen.getByRole("dialog");
+    const backdrop = () => container.ownerDocument.body;
+    fireEvent.click(dialog);
+    expect(screen.queryByRole("dialog")).not.toBeNull();
+    fireEvent.click(backdrop().querySelector(".server-sheet-backdrop") as HTMLElement);
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("closes without refetching when the current server is tapped", async () => {
+    saveServers([PROFILE, OTHER]);
+    saveActiveServerId(PROFILE.id);
+    await openSheet();
+    await flush();
+    vi.mocked(client.workspaces).mockClear();
+    fireEvent.click(screen.getAllByRole("radio")[0] as HTMLElement);
+    await flush();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(useReaderStore.getState().activeServerId).toBe(PROFILE.id);
+    expect(client.workspaces).not.toHaveBeenCalled();
+  });
+
+  it("switches to another server and closes the sheet", async () => {
+    saveServers([PROFILE, OTHER]);
+    saveActiveServerId(PROFILE.id);
+    await openSheet();
+    fireEvent.click(screen.getAllByRole("radio")[1] as HTMLElement);
+    await flush();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(useReaderStore.getState().activeServerId).toBe(OTHER.id);
+    // The picker sits in the drawer, which stays open on the new server.
+    expect(useReaderStore.getState().view).toBe("reader");
+    expect(screen.getByRole("button", { name: "Switch server" }).textContent).toContain("客厅 Mac");
   });
 });
 
@@ -553,6 +611,40 @@ describe("settings servers", () => {
     fireEvent.keyDown(screen.getAllByRole("radio")[1] as HTMLElement, { key: "ArrowUp" });
     fireEvent.keyDown(screen.getAllByRole("radio")[1] as HTMLElement, { key: "ArrowDown" });
     expect(useReaderStore.getState().servers.map((p) => p.id)).toEqual([PROFILE.id, OTHER.id]);
+  });
+
+  it("shows the reading size and moves it one px per tap", async () => {
+    pair();
+    await openSettings();
+    const value = () => document.querySelector(".stepper-value")?.textContent;
+    expect(value()).toBe("16");
+    fireEvent.click(screen.getByLabelText("Larger text"));
+    expect(value()).toBe("17");
+    expect(useReaderStore.getState().readingSize).toBe(17);
+    expect(localStorage.getItem("xmark-mobile.readingSize")).toBe("17");
+    fireEvent.click(screen.getByLabelText("Smaller text"));
+    fireEvent.click(screen.getByLabelText("Smaller text"));
+    expect(value()).toBe("15");
+    expect(useReaderStore.getState().readingSize).toBe(15);
+  });
+
+  it("disables the step that would leave the size's range", async () => {
+    pair();
+    await openSettings();
+    const minus = () => screen.getByLabelText("Smaller text") as HTMLButtonElement;
+    const plus = () => screen.getByLabelText("Larger text") as HTMLButtonElement;
+    act(() => useReaderStore.getState().setReadingSize(12));
+    expect((document.querySelector(".stepper-value") as HTMLElement).textContent).toBe("12");
+    expect(minus().disabled).toBe(true);
+    expect(plus().disabled).toBe(false);
+    fireEvent.click(minus());
+    expect(useReaderStore.getState().readingSize).toBe(12);
+    act(() => useReaderStore.getState().setReadingSize(24));
+    expect((document.querySelector(".stepper-value") as HTMLElement).textContent).toBe("24");
+    expect(plus().disabled).toBe(true);
+    expect(minus().disabled).toBe(false);
+    fireEvent.click(plus());
+    expect(useReaderStore.getState().readingSize).toBe(24);
   });
 
   it("goes back to the reader", async () => {

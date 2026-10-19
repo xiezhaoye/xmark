@@ -28,7 +28,7 @@ export function TopBar() {
         <Icon name="search" />
       </button>
       <button type="button" className="icon-button" aria-label={t("settings.open")} onClick={() => useReaderStore.getState().setView("settings")}>
-        <Icon name="settings" />
+        <Icon name="settings" size={20} />
       </button>
     </header>
   );

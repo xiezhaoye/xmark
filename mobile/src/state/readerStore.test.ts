@@ -272,17 +272,27 @@ describe("servers", () => {
     expect(useReaderStore.getState().trees[treeKey(PROFILE.id, "r1", "")]?.status).toBe("ready");
   });
 
-  it("removing the current server moves to the first remaining one", async () => {
+  it("removing the current server moves to the first remaining one, stays on the settings page and opens its last document", async () => {
     pairBoth();
     await useReaderStore.getState().bootstrap();
+    // The server that stays was last reading this document.
+    saveLastDoc(PROFILE.id, { rootId: "r1", relPath: "a.md" });
+    useReaderStore.getState().setView("settings");
+    // OTHER is current, so this removes the server being read.
+    expect(useReaderStore.getState().activeServerId).toBe(OTHER.id);
     useReaderStore.getState().removeServer(OTHER.id);
     const s = useReaderStore.getState();
     expect(s.servers.map((p) => p.id)).toEqual([PROFILE.id]);
     expect(s.activeServerId).toBe(PROFILE.id);
     expect(s.connection).toEqual(CONN);
-    expect(s.view).toBe("reader");
+    // Deleting happens on the settings page, which does not throw the user out.
+    expect(s.view).toBe("settings");
     expect(loadLastDoc(OTHER.id)).toBeNull();
     await vi.waitFor(() => expect(useReaderStore.getState().groups).toHaveLength(1));
+    // The remaining server's own last document is loaded, in the background.
+    await vi.waitFor(() => expect(useReaderStore.getState().doc).toEqual({ rootId: "r1", relPath: "a.md" }));
+    expect(useReaderStore.getState().docState.status).toBe("ready");
+    expect(useReaderStore.getState().view).toBe("settings");
   });
 
   it("removing a server that is not current leaves the current one alone", async () => {
@@ -435,6 +445,61 @@ describe("view mode", () => {
     await useReaderStore.getState().bootstrap();
     await useReaderStore.getState().openDoc("r1", "a.md");
     expect(useReaderStore.getState().docMode).toBe("source");
+  });
+});
+
+describe("reading size", () => {
+  it("rounds to a whole px and keeps it within 12–24", () => {
+    useReaderStore.getState().setReadingSize(16.5);
+    expect(useReaderStore.getState().readingSize).toBe(17);
+    useReaderStore.getState().setReadingSize(2);
+    expect(useReaderStore.getState().readingSize).toBe(12);
+    useReaderStore.getState().setReadingSize(99);
+    expect(useReaderStore.getState().readingSize).toBe(24);
+    useReaderStore.getState().setReadingSize(18);
+    expect(useReaderStore.getState().readingSize).toBe(18);
+  });
+
+  it("does not go past either end when moved one step at a time", () => {
+    useReaderStore.getState().setReadingSize(12);
+    useReaderStore.getState().changeReadingSize(-1);
+    expect(useReaderStore.getState().readingSize).toBe(12);
+    useReaderStore.getState().changeReadingSize(1);
+    expect(useReaderStore.getState().readingSize).toBe(13);
+    useReaderStore.getState().setReadingSize(24);
+    useReaderStore.getState().changeReadingSize(1);
+    expect(useReaderStore.getState().readingSize).toBe(24);
+    useReaderStore.getState().changeReadingSize(-1);
+    expect(useReaderStore.getState().readingSize).toBe(23);
+  });
+
+  it("writes the chosen size to its own key and to nothing else", () => {
+    pairFirst();
+    saveActiveServerId(PROFILE.id);
+    saveLastDoc(PROFILE.id, { rootId: "r1", relPath: "a.md" });
+    const before = {
+      servers: localStorage.getItem("xmark-mobile.servers"),
+      active: localStorage.getItem("xmark-mobile.activeServerId"),
+      lastDoc: localStorage.getItem("xmark-mobile.lastDoc"),
+    };
+    useReaderStore.getState().setReadingSize(20);
+    expect(localStorage.getItem("xmark-mobile.readingSize")).toBe("20");
+    expect(localStorage.getItem("xmark-mobile.servers")).toBe(before.servers);
+    expect(localStorage.getItem("xmark-mobile.activeServerId")).toBe(before.active);
+    expect(localStorage.getItem("xmark-mobile.lastDoc")).toBe(before.lastDoc);
+  });
+
+  it("starts at the stored size", async () => {
+    localStorage.setItem("xmark-mobile.readingSize", "22");
+    pairFirst();
+    await useReaderStore.getState().bootstrap();
+    expect(useReaderStore.getState().readingSize).toBe(22);
+  });
+
+  it("starts at the default when nothing is stored", async () => {
+    pairFirst();
+    await useReaderStore.getState().bootstrap();
+    expect(useReaderStore.getState().readingSize).toBe(16);
   });
 });
 

@@ -26,6 +26,12 @@
   --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
   --topbar-h: 48px;
   --groups-col: 132px;
+  /* The document's type size; the settings page sets it (see DocumentView). */
+  --reading-size: 16px;
+  /* The dimmed page behind a bottom sheet. */
+  --sheet-backdrop: rgba(0, 0, 0, 0.32);
+  /* The lift under the server sheet; part of the background it sits on. */
+  --server-sheet-shadow: 0 -4px 24px rgba(0, 0, 0, 0.22);
   color-scheme: light dark;
 }
 
@@ -49,6 +55,8 @@
     --error-color: #f85149;
     --strong-color: #8fb3c7;
     --emphasis-color: #e0798a;
+    --sheet-backdrop: rgba(0, 0, 0, 0.55);
+    --server-sheet-shadow: 0 -4px 24px rgba(0, 0, 0, 0.6);
   }
 }
 
@@ -90,6 +98,9 @@ input { font: inherit; color: inherit; }
 /* Document: the top bar scrolls away with the text */
 .document-frame { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .document { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+/* The document's text follows the reading size; the app's chrome, which sits
+   outside this element, keeps the body's 16px. */
+.document-body { font-size: var(--reading-size); }
 .document-body { padding: 0 16px; }
 .status-backdrop { position: absolute; top: 0; left: 0; right: 0; height: env(safe-area-inset-top); background: color-mix(in srgb, var(--bg-color) 88%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); z-index: 4; pointer-events: none; }
 .mode-switch { flex: none; display: flex; padding: 2px; border-radius: 8px; background: var(--bg-tertiary); }
@@ -104,7 +115,7 @@ input { font: inherit; color: inherit; }
 .button.primary { background: var(--accent-primary); border-color: var(--accent-primary); color: #fff; }
 .button.wide { width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; padding: 12px; }
 .image-view { display: block; max-width: 100%; margin: 16px auto; }
-.source { margin: 12px 0; font: 13px/1.5 var(--font-mono); white-space: pre; overflow-x: auto; }
+.source { margin: 12px 0; font: calc(var(--reading-size) - 3px)/1.5 var(--font-mono); white-space: pre; overflow-x: auto; }
 .source code.language-markdown { white-space: pre-wrap; word-break: break-word; }
 .html-preview { display: block; width: 100%; border: 0; margin: 8px 0; background: #fff; color-scheme: light; }
 
@@ -127,18 +138,80 @@ input { font: inherit; color: inherit; }
 .drawer-groups { width: var(--groups-col); flex: none; border-right: 1px solid var(--border-color); background: var(--bg-tertiary); }
 .drawer-tree { flex: 1; min-width: 0; }
 
-/* The server picker heads the groups column: the current Mac, and the list
-   of the others, opened in place above the groups. */
-.server-picker { flex: none; padding: 4px 4px 0; border-bottom: 1px solid var(--border-color); }
-.server-picker-toggle { width: 100%; display: flex; align-items: center; gap: 4px; min-height: 36px; padding: 0 4px 0 6px; border-radius: 6px; font-size: 13px; font-weight: 600; color: var(--text-color); }
-.server-picker-toggle:active { background: var(--bg-color); }
-.server-picker-toggle .chevron { transform: rotate(90deg); }
-.server-picker-toggle .chevron.open { transform: rotate(-90deg); }
-.server-list { padding: 0 0 4px; }
-.server-option { width: 100%; display: flex; align-items: center; gap: 4px; min-height: 32px; padding: 0 6px; border-radius: 6px; font-size: 13px; color: var(--text-secondary); }
-.server-option.current { color: var(--text-color); background: var(--accent-bg); }
-.server-option.current .icon { color: var(--accent-primary); }
-.server-option.manage { margin-top: 2px; border-top: 1px solid var(--border-color); border-radius: 0 0 6px 6px; color: var(--accent-primary); }
+/* The server picker heads the groups column: one narrow button naming the
+   current Mac. Tapping it opens the sheet below, so nothing in the column
+   moves. */
+.server-picker { flex: none; padding: 6px 5px; border-bottom: 1px solid var(--border-color); }
+.server-picker-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 30px;
+  padding: 0 4px 0 7px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--accent-primary) 35%, transparent);
+  background: var(--accent-bg);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+.server-picker-toggle:active { filter: brightness(0.96); }
+.server-picker-toggle .label { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+.server-picker-toggle .chevron { flex: none; transform: rotate(90deg); color: var(--accent-primary); }
+
+/* Switching servers: a bottom sheet over a dimmed page. It is portalled to
+   the body, because the drawer and the document carry transforms, which would
+   otherwise make this element's containing block one of them.
+
+   Its own backdrop class, not the shared `.sheet-backdrop` of the other
+   sheets: this one is full-bleed, sits above the drawer, takes its colour from
+   the colour scheme's variable, and lays its card out centred at the bottom. */
+.server-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: var(--sheet-backdrop);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  animation: sheet-fade 160ms ease-out;
+}
+.server-sheet {
+  width: calc(100% - 24px);
+  max-width: 440px;
+  margin: 0 0 calc(8px + env(safe-area-inset-bottom));
+  padding: 6px 0 calc(6px + env(safe-area-inset-bottom));
+  border-radius: 16px;
+  background: var(--bg-color);
+  box-shadow: var(--server-sheet-shadow);
+  overflow: hidden;
+  animation: sheet-rise 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.server-sheet .sheet-handle { margin: 2px auto 4px; }
+.server-sheet-title { display: block; width: 100%; margin: 0; padding: 4px 16px 8px; text-align: left; font-size: 15px; font-weight: 600; color: var(--text-color); }
+.server-sheet:focus { outline: none; }
+.server-sheet ul { list-style: none; margin: 0; padding: 0 8px; max-height: 50vh; overflow-y: auto; }
+.server-sheet li + li { margin-top: 2px; }
+.server-sheet-option { width: 100%; display: flex; align-items: center; gap: 10px; padding: 9px 8px; border-radius: 10px; text-align: left; color: var(--text-color); }
+.server-sheet-option:active { background: var(--bg-secondary); }
+.server-sheet-option.current { background: var(--accent-bg); }
+.server-sheet-option .sheet-option-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.server-sheet-option .sheet-option-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.server-sheet-option.current .sheet-option-name { font-weight: 700; }
+.server-sheet-option .sheet-option-address { font: 12px var(--font-mono); color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.server-sheet-option .icon { flex: none; color: var(--accent-primary); }
+.server-sheet-option .sheet-option-spacer { flex: none; width: 16px; }
+.server-sheet-add { display: block; width: calc(100% - 16px); margin: 6px 8px 0; padding: 11px 8px; border-top: 1px solid var(--border-color); border-radius: 0 0 10px 10px; text-align: left; font-size: 15px; color: var(--accent-primary); }
+.server-sheet-add:active { background: var(--bg-secondary); }
+@keyframes sheet-rise { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes sheet-fade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .sheet-backdrop, .sheet,
+  .server-sheet-backdrop, .server-sheet { animation: none; }
+}
 
 .groups { padding: 6px 4px; }
 .group-title, .folder, .tree-row {
@@ -201,6 +274,13 @@ input { font: inherit; color: inherit; }
 .settings input:focus { outline: none; border-bottom: 2px solid var(--accent-primary); }
 .settings .row { display: flex; gap: 10px; }
 .settings .row .button { flex: 1; padding: 12px; }
+.setting-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: var(--radius); background: var(--bg-secondary); }
+.setting-label { font-size: 15px; color: var(--text-color); }
+.stepper { display: flex; align-items: center; gap: 2px; padding: 2px; border-radius: 8px; background: var(--bg-tertiary); }
+.stepper-button { width: 34px; height: 30px; display: grid; place-items: center; border-radius: 6px; font-size: 18px; line-height: 1; color: var(--text-color); }
+.stepper-button:active { background: var(--bg-color); }
+.stepper-button:disabled { opacity: 0.3; }
+.stepper-value { min-width: 2.2em; text-align: center; font-size: 15px; font-variant-numeric: tabular-nums; color: var(--text-color); }
 .settings .section-title { margin: 4px 0 0; font-size: 13px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
 .settings section { display: flex; flex-direction: column; gap: 14px; }
 .settings .hint { margin: -6px 0 0; font-size: 13px; }
@@ -248,11 +328,11 @@ input { font: inherit; color: inherit; }
 .markdown img { max-width: 100%; height: auto; border-radius: 4px; }
 .markdown img.img-failed { display: inline-block; min-width: 48px; min-height: 32px; background: var(--bg-tertiary); }
 .markdown blockquote { margin: 1em 0; padding: 0 1em; color: var(--text-secondary); border-left: 3px solid var(--border-color); }
-.markdown table { display: block; overflow-x: auto; border-collapse: collapse; margin: 1em 0; font-size: 14px; }
+.markdown table { display: block; overflow-x: auto; border-collapse: collapse; margin: 1em 0; font-size: calc(var(--reading-size) - 2px); }
 .markdown th, .markdown td { border: 1px solid var(--border-color); padding: 6px 10px; }
 .markdown th { background: var(--bg-secondary); }
 .markdown code { font: 0.88em var(--font-mono); background: var(--code-bg); padding: 0.15em 0.35em; border-radius: 4px; }
-.markdown pre { overflow-x: auto; background: var(--code-bg); padding: 12px; border-radius: var(--radius); font-size: 13px; line-height: 1.5; }
+.markdown pre { overflow-x: auto; background: var(--code-bg); padding: 12px; border-radius: var(--radius); font-size: calc(var(--reading-size) - 3px); line-height: 1.5; }
 .markdown pre code { background: none; padding: 0; font-size: inherit; }
 .markdown ul, .markdown ol { padding-left: 1.5em; }
 .markdown li > input[type="checkbox"] { margin: 0 0.4em 0 -1.2em; }
