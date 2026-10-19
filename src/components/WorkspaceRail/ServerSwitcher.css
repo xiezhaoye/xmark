@@ -1,0 +1,156 @@
+/* ServerSwitcher — the server button at the head of the workspace rail and its
+   menu. The button is UNFRAMED by design: a glyph, a name, a chevron, and the
+   rail's own hover fill. The menu is the shared `.vm-menu` surface (rule 32),
+   placed by `useMenuPosition`. */
+
+.server-switcher {
+  display: flex;
+  width: 100%;
+  height: var(--sidebar-row-height, var(--icon-size-sm));
+  align-items: center;
+  gap: var(--space-1);
+  margin-bottom: var(--space-1);
+  padding: 0 var(--space-1);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: var(--sidebar-font-size, var(--font-size-base));
+  text-align: left;
+  cursor: var(--cursor-interactive, default);
+  /* button-shape-ok: an unframed switcher on a rail row — no padding or border, only the rail hover fill. */
+}
+
+.server-switcher:hover {
+  color: var(--text-color);
+  background: var(--hover-bg);
+}
+
+.server-switcher:active {
+  background: var(--hover-bg-strong);
+}
+
+/* Rule 33, rule D4: the one focus shape — a flat 2px bar inside the control. */
+.server-switcher:focus-visible {
+  outline: none;
+}
+
+.server-switcher:focus-visible::after {
+  content: "";
+  position: absolute;
+  right: var(--space-1);
+  bottom: 2px;
+  left: var(--space-1);
+  height: 2px;
+  border-radius: 1px;
+  background: var(--accent-primary);
+}
+
+.server-switcher {
+  position: relative;
+}
+
+.server-switcher__icon,
+.server-switcher__chevron {
+  flex: 0 0 auto;
+}
+
+.server-switcher__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Items: the platform menu idiom — hover with the accent fill and the contrast
+   label, as every `.vm-menu` elsewhere. */
+.server-switcher__menu {
+  position: fixed;
+  min-width: 180px;
+  max-width: 280px;
+}
+
+.server-switcher__item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--space-1-5);
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-color);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-sm);
+  text-align: left;
+  cursor: var(--cursor-interactive, default);
+  /* button-shape-ok: a menu row, not a control face — the dense padding every
+     `.vm-menu` item uses, so the rows match the rail's own context menu. */
+}
+
+/* The platform menu idiom (rule 32): hover is the accent fill with the contrast
+   label, exactly as `.vm-menu` items elsewhere. */
+.server-switcher__item:hover,
+.server-switcher__item:focus-visible {
+  /* ui-ok(state): menu-item hover — the platform menu idiom */
+  outline: none;
+  color: var(--contrast-text);
+  background: var(--primary-color);
+}
+
+/* The check marks the CURRENT entry; unhovered it is the indicator, so it
+   carries the accent ink and the label keeps its own (rule 30, R6). */
+.server-switcher__check {
+  flex: 0 0 12px;
+  width: 12px;
+  height: 12px;
+  color: var(--accent-primary);
+}
+
+.server-switcher__item[aria-checked="false"] .server-switcher__check {
+  visibility: hidden;
+}
+
+.server-switcher__item:hover .server-switcher__check,
+.server-switcher__item:focus-visible .server-switcher__check {
+  color: var(--contrast-text);
+}
+
+.server-switcher__item-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A server row's reachability dot — the same three colours Settings uses
+   (online / unreachable / token rejected). The fill utility sets the colour;
+   the shape and the size are this rule's, so the two surfaces agree. */
+.server-switcher__dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+}
+
+/* The row's status: the dot for the eye, the word for the screen reader (the
+   colour alone is never the message). */
+.server-switcher__status {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.server-switcher__status-text {
+  font-size: var(--font-size-xs);
+  opacity: 0.8;
+}
+
+.server-switcher__item:hover .server-switcher__status-text,
+.server-switcher__item:focus-visible .server-switcher__status-text {
+  opacity: 1;
+}

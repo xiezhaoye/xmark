@@ -48,3 +48,34 @@ export function ProviderRadio({
     </button>
   );
 }
+
+/**
+ * RadioMark — ProviderRadio's look as a NON-interactive mark.
+ *
+ * Purpose: Settings → Servers makes the WHOLE ROW the radio (`role="radio"` on
+ * the row's body), so a second focusable radio inside it would be a tab stop
+ * that does nothing the row does not already do — and two `role="radio"` nodes
+ * for one choice is a lie to a screen reader. This draws the same ring/fill as
+ * `ProviderRadio` so both lists read as one design, and states nothing: the
+ * row owns the semantics.
+ *
+ * Kept beside `ProviderRadio` because the two must not drift apart.
+ *
+ * @coordinates-with pages/settings/ServerRow.tsx — the row that renders it
+ * @module pages/settings/ProviderRadio
+ */
+export function RadioMark({ checked }: { checked: boolean }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`relative w-3.5 h-3.5 rounded-full border flex-shrink-0
+        flex items-center justify-center transition-colors
+        ${checked
+          ? "border-[var(--accent-primary)] bg-[var(--accent-primary)]"
+          : "border-[var(--text-tertiary)] bg-transparent"
+        }`}
+    >
+      {checked && <span className="w-1.5 h-1.5 rounded-full bg-[var(--contrast-text)]" />}
+    </span>
+  );
+}

@@ -1,0 +1,301 @@
+/* Remote viewer: the document column while another Mac's server is showing.
+   Typography comes from the reading tokens, so a remote note reads like a
+   local one; colours are tokens only (rule 31). */
+
+.remote-viewer {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  background: var(--bg-color);
+}
+
+.remote-viewer__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.remote-viewer__empty {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-6) var(--editor-content-padding);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-base);
+  color: var(--text-secondary);
+}
+
+/* ---- Rendered markdown ---- */
+
+/* A remote document IS a reading surface — it is the one pane whose content is
+   prose, not chrome — so it keeps the reading face and the document's own
+   heading ratios (the same exemptions the editor's own document styles carry). */
+.remote-doc {
+  /* ui-ok(font): the document column of the remote window is reading text */
+  box-sizing: border-box;
+  max-width: var(--editor-width);
+  min-height: 100%;
+  margin: 0 auto;
+  padding: var(--space-6) var(--editor-content-padding);
+  font-family: var(--font-sans);
+  font-size: var(--editor-font-size);
+  line-height: var(--editor-line-height);
+  color: var(--text-color);
+  overflow-wrap: break-word;
+}
+
+.remote-doc h1,
+.remote-doc h2,
+.remote-doc h3,
+.remote-doc h4,
+.remote-doc h5,
+.remote-doc h6 {
+  margin: var(--editor-block-spacing) 0 var(--space-3);
+  font-weight: 600;
+  line-height: var(--line-height-tight);
+}
+
+.remote-doc h1 {
+  /* ui-ok(font): document headings keep the document's ratio scale */
+  padding-bottom: var(--space-1);
+  border-bottom: var(--border-thin) solid var(--border-color);
+  font-size: 1.8em;
+}
+
+.remote-doc h2 {
+  /* ui-ok(font): document headings keep the document's ratio scale */
+  font-size: 1.45em;
+}
+
+.remote-doc h3 {
+  /* ui-ok(font): document headings keep the document's ratio scale */
+  font-size: 1.2em;
+}
+
+.remote-doc p,
+.remote-doc ul,
+.remote-doc ol,
+.remote-doc blockquote,
+.remote-doc .remote-table-scroll {
+  margin: 0 0 var(--editor-block-spacing);
+}
+
+.remote-doc ul,
+.remote-doc ol {
+  padding-left: var(--list-indent);
+}
+
+.remote-doc .remote-task-list {
+  padding-left: 0;
+  list-style: none;
+}
+
+.remote-doc .remote-task-done {
+  color: var(--text-secondary);
+}
+
+.remote-doc blockquote {
+  padding-left: var(--space-3);
+  border-left: var(--border-medium) solid var(--border-color);
+  color: var(--quote-text);
+}
+
+.remote-doc a {
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+
+.remote-doc code {
+  padding: 0.1em 0.3em;
+  border-radius: var(--radius-sm);
+  background: var(--code-bg-color);
+  color: var(--code-text-color);
+  font-family: var(--font-mono);
+  font-size: var(--editor-font-size-mono);
+}
+
+/* The wrapper owns the frame; the `pre` inside is flat (rule 31 §7). */
+.remote-doc pre {
+  margin: 0 0 var(--editor-block-spacing);
+  padding: var(--space-3);
+  overflow: auto;
+  border: var(--border-hairline) solid var(--code-border-color);
+  border-radius: var(--radius-md);
+  background: var(--code-bg-color);
+  line-height: var(--code-line-height);
+}
+
+.remote-doc pre code {
+  padding: 0;
+  background: transparent;
+  color: var(--code-text-color);
+}
+
+.remote-doc img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+}
+
+.remote-doc .remote-img-failed {
+  display: inline-block;
+  min-width: var(--space-15);
+  min-height: var(--space-7);
+  border: var(--border-hairline) dashed var(--border-color);
+}
+
+.remote-doc table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-md);
+}
+
+.remote-doc th,
+.remote-doc td {
+  padding: var(--space-1-5) var(--space-2);
+  border: var(--border-thin) solid var(--table-border-color);
+  text-align: left;
+}
+
+.remote-table-scroll {
+  overflow-x: auto;
+}
+
+.remote-doc hr {
+  margin: var(--editor-block-spacing) 0;
+  border: 0;
+  border-top: var(--border-thin) solid var(--border-color);
+}
+
+.remote-doc .remote-raw-html {
+  white-space: pre-wrap;
+  font-family: var(--font-mono);
+}
+
+/* GFM alerts — the same vocabulary as the editor's info boxes. */
+.remote-alert {
+  margin: 0 0 var(--editor-block-spacing);
+  padding: var(--space-2) var(--space-3);
+  border-left: var(--border-thick) solid var(--alert-note);
+  border-radius: var(--radius-md);
+  background: var(--subtle-bg);
+}
+
+.remote-alert-title {
+  margin: 0 0 var(--space-1);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--alert-note);
+}
+
+.remote-alert-tip {
+  border-left-color: var(--alert-tip);
+}
+
+.remote-alert-tip .remote-alert-title {
+  color: var(--alert-tip);
+}
+
+.remote-alert-important {
+  border-left-color: var(--alert-important);
+}
+
+.remote-alert-important .remote-alert-title {
+  color: var(--alert-important);
+}
+
+.remote-alert-warning {
+  border-left-color: var(--alert-warning);
+}
+
+.remote-alert-warning .remote-alert-title {
+  color: var(--alert-warning);
+}
+
+.remote-alert-caution {
+  border-left-color: var(--alert-caution);
+}
+
+.remote-alert-caution .remote-alert-title {
+  color: var(--alert-caution);
+}
+
+/* ---- Source text ---- */
+
+.remote-source {
+  box-sizing: border-box;
+  margin: 0;
+  padding: var(--space-4) var(--editor-content-padding);
+  font-family: var(--font-mono);
+  font-size: var(--editor-font-size-mono);
+  line-height: var(--code-line-height);
+  color: var(--text-color);
+  tab-size: 4;
+}
+
+.remote-source__code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Syntax roles, mapped onto the per-theme tokens the editor uses (D11). */
+.remote-source .hljs-keyword,
+.remote-source .hljs-selector-tag,
+.remote-source .hljs-literal {
+  color: var(--syntax-keyword);
+}
+
+.remote-source .hljs-string,
+.remote-source .hljs-attr {
+  color: var(--syntax-string);
+}
+
+.remote-source .hljs-number {
+  color: var(--syntax-number);
+}
+
+.remote-source .hljs-comment {
+  color: var(--syntax-comment);
+}
+
+.remote-source .hljs-title,
+.remote-source .hljs-function {
+  color: var(--syntax-function);
+}
+
+.remote-source .hljs-type,
+.remote-source .hljs-built_in {
+  color: var(--syntax-type);
+}
+
+.remote-source .hljs-property {
+  color: var(--syntax-property);
+}
+
+/* ---- Images and HTML ---- */
+
+.remote-image {
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--space-4);
+  overflow: auto;
+}
+
+.remote-image img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.remote-html {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  background: var(--bg-color);
+}

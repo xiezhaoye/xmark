@@ -111,6 +111,55 @@ export function shellSideWidth(state: ShellChromeState): number {
   return rail + sidebar + SHELL_CARD_INSET * 2;
 }
 
+export interface RemoteLeadingColumns {
+  /** The groups column: its full width, or its folded strip. */
+  railWidth: number;
+  /** The file tree column: its full width, or its folded strip. */
+  treeWidth: number;
+  /** The file tree column is folded to its strip. */
+  treeCollapsed: boolean;
+}
+
+/**
+ * The two leading columns a REMOTE server shows, in the width each will be
+ * rendered at — the one reader both the shell's width AND the remote regions'
+ * own rendering use, so the reservation and the content cannot disagree.
+ *
+ * It exists because they did: `App.tsx` sized the column from the LOCAL
+ * `sidebarVisible` (off by default in a fresh window) while `RemoteShell`
+ * painted the file tree at full width, so the tree was squeezed out of a
+ * 28px track and the window looked like it had one column.
+ *
+ * The window has ONE set of column states whether it shows this Mac or another
+ * — `workspaceRailCollapsed` folds the groups column here exactly as it does
+ * locally, `sidebarVisible` decides the file tree — so ⌘1/⌘2/⌘3 mean the same
+ * thing in both. A remote window has no rail MODE to consult: showing a server
+ * replaced the rail's content with the server's groups, so the groups column
+ * is always present and only ever folds.
+ */
+export function remoteLeadingColumns(state: {
+  railWidth: number;
+  railCollapsed: boolean;
+  sidebarVisible: boolean;
+  sidebarWidth: number;
+}): RemoteLeadingColumns {
+  return {
+    railWidth: railColumnWidth(state.railWidth, state.railCollapsed),
+    treeWidth: state.sidebarVisible ? state.sidebarWidth : COLLAPSED_STRIP_WIDTH,
+    treeCollapsed: !state.sidebarVisible,
+  };
+}
+
+/**
+ * Width of the whole leading area — the same number `shellSideWidth` gives for
+ * the same state, derived from `remoteLeadingColumns` so the remote shell and
+ * the editor's chrome maths read one answer.
+ */
+export function remoteSideWidth(state: RemoteLeadingColumns): number {
+  if (state.railWidth + state.treeWidth === 0) return 0;
+  return state.railWidth + state.treeWidth + SHELL_CARD_INSET * 2;
+}
+
 /**
  * Height of the app's own chrome strip — the title bar — in pixels.
  *

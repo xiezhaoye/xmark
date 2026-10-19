@@ -69,7 +69,7 @@ Si vous préférez conserver les fonctions système sur les touches F, vous pouv
 
 | Action | Raccourci |
 |--------|----------|
-| Titre 1-6 | `Mod + 1` à `Mod + 6` |
+| Titre 1-6 | _(customizable — unbound by default, since `Mod + 1`–`Mod + 3` are the layout presets)_ |
 | Paragraphe | `Mod + Shift + 0` |
 | Augmenter le niveau de titre | `Alt + Mod + ]` |
 | Diminuer le niveau de titre | `Alt + Mod + [` |
@@ -173,6 +173,9 @@ Si vous préférez conserver les fonctions système sur les touches F, vous pouv
 | Fermer le volet | `Alt + Mod + Shift + \` |
 | Activer l'autre volet | `Alt + Mod + Shift + O` |
 | Basculer la barre latérale | `Ctrl + Shift + 0` |
+| Une colonne (document seul) | `Mod + 1` |
+| Deux colonnes (arborescence + document) | `Mod + 2` |
+| Trois colonnes (groupes + arborescence + document) | `Mod + 3` |
 | Basculer le plan | `Ctrl + Shift + 1` |
 | Basculer l'explorateur de fichiers | `Ctrl + Shift + 2` |
 | Basculer l'historique | `Ctrl + Shift + 3` |

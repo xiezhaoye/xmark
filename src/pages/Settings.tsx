@@ -20,6 +20,7 @@ import {
   Files,
   Keyboard,
   Plug,
+  Server,
   SquareTerminal,
   Info,
 } from "lucide-react";
@@ -87,6 +88,7 @@ const navConfig = [
   { id: "integrations" as const, icon: Plug },
   { id: "language" as const, icon: Languages },
   { id: "markdown" as const, icon: FileText },
+  { id: "servers" as const, icon: Server },
   { id: "shortcuts" as const, icon: Keyboard },
   { id: "terminal" as const, icon: SquareTerminal },
   { id: "about" as const, icon: Info },
@@ -95,7 +97,7 @@ const navConfig = [
 // Valid section IDs for URL param validation
 const validSections = new Set<string>([
   "about", "appearance", "editor", "files", "formats", "integrations", "language",
-  "markdown", "shortcuts", "terminal", "advanced"
+  "markdown", "servers", "shortcuts", "terminal", "advanced"
 ]);
 
 function isValidSection(value: string): value is Section {

@@ -48,6 +48,7 @@ mod pandoc;
 mod peer_text;
 mod pty;
 mod quarantine;
+mod remote_server;
 mod quit;
 mod secret_token;
 mod secure_store;

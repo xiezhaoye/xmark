@@ -69,7 +69,7 @@ Si prefieres mantener las funciones del sistema en las teclas F, puedes personal
 
 | Acción | Atajo |
 |--------|-------|
-| Encabezado 1-6 | `Mod + 1` hasta `Mod + 6` |
+| Encabezado 1-6 | _(customizable — unbound by default, since `Mod + 1`–`Mod + 3` are the layout presets)_ |
 | Párrafo | `Mod + Shift + 0` |
 | Aumentar Nivel de Encabezado | `Alt + Mod + ]` |
 | Disminuir Nivel de Encabezado | `Alt + Mod + [` |
@@ -173,6 +173,9 @@ Si prefieres mantener las funciones del sistema en las teclas F, puedes personal
 | Cerrar panel | `Alt + Mod + Shift + \` |
 | Enfocar el otro panel | `Alt + Mod + Shift + O` |
 | Mostrar/ocultar barra lateral | `Ctrl + Shift + 0` |
+| Una columna (solo el documento) | `Mod + 1` |
+| Dos columnas (árbol de archivos + documento) | `Mod + 2` |
+| Tres columnas (grupos + árbol de archivos + documento) | `Mod + 3` |
 | Alternar Esquema | `Ctrl + Shift + 1` |
 | Alternar Explorador de Archivos | `Ctrl + Shift + 2` |
 | Alternar Historial | `Ctrl + Shift + 3` |

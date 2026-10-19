@@ -222,6 +222,15 @@ menu:
 
 errors:
 
+  # === Remote mobile server (remote_server/*.rs) ===
+  remoteServer.hostRejected: "服务器地址不在 Tailscale 上。请使用 100.x 地址、*.ts.net 名称或 localhost"
+  remoteServer.badAddress: "服务器地址或令牌不完整"
+  remoteServer.network: "无法连接到服务器"
+  remoteServer.timeout: "服务器没有及时响应"
+  remoteServer.unauthorized: "服务器拒绝了配对令牌——请重新配对以获取新链接"
+  remoteServer.http: "服务器拒绝了请求（%{status}）"
+  remoteServer.tooLarge: "文件过大，无法远程打开（上限 %{limit} 字节）"
+
   # === Coherence (coherence/command_errors.rs) ===
   coherence.workspaceUnavailable: "无法打开工作区：%{detail}"
   coherence.kernelPoisoned: "发生内部错误，一致性跟踪已停止。请重新打开工作区以继续。"

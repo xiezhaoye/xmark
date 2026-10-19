@@ -48,6 +48,10 @@
       "code": "feature-disabled",
       "message": "boom"
     },
+    "unauthorized": {
+      "code": "unauthorized",
+      "message": "boom"
+    },
     "unsupported": {
       "code": "unsupported",
       "message": "boom"

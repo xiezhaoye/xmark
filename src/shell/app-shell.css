@@ -93,6 +93,18 @@
   overflow: hidden;
 }
 
+/* A lazy chrome chunk's fallback: the column is already sized and painted, so
+   this is only the spinner, centred — not a skeleton of content it has not
+   loaded yet. */
+.vm-chunk-pending {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
 .app-sidebar-stack__rail {
   position: relative;
   width: var(--workspace-rail-width, 160px);

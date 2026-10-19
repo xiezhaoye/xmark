@@ -100,11 +100,13 @@ describe("KEYBINDINGS — view shortcut migration (WI-3.2)", () => {
     }
   });
 
-  it("has the 11 global + 5 native + 19 view + 2 explorer + 1 containment bindings", () => {
+  it("has the 11 global + 5 native + 22 view + 2 explorer + 1 containment bindings", () => {
     // The second native binding is `lastUsedTab` (WI-TNAV2.3, D7): a DOM
     // binding is dead while the embedded WKWebView browser holds first
     // responder, so the native menu accelerator owns the chord.
-    expect(KEYBINDINGS).toHaveLength(38);
+    // The view set includes the three layout presets (Mod+1/2/3), which are
+    // window bindings like toggleSidebar — no menuId, so no native-owned slice.
+    expect(KEYBINDINGS).toHaveLength(41);
   });
 
   it("owns lastUsedTab natively, not through the window DOM router", () => {

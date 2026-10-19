@@ -4,16 +4,24 @@
  * @module App
  */
 
-import { Component, lazy, Suspense, type CSSProperties, type ReactNode } from "react";
+import { lazy, Suspense, type CSSProperties } from "react";
 import { FeatureErrorBoundary } from "@/components/FeatureErrorBoundary";
-import { useTranslation, withTranslation, type WithTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
 import { Routes, Route } from "react-router-dom";
 import { ThemedToaster } from "@/components/ThemedToaster";
+import { DropOverlay, ErrorBoundary } from "@/AppChrome";
 import { DocumentSplitContainer } from "@/components/Editor";
 import { Sidebar } from "@/components/Sidebar";
 import { SidebarResizeHandle } from "@/components/Sidebar/SidebarResizeHandle";
 import { WorkspaceRail } from "@/components/WorkspaceRail";
-import { shellSideWidth, shellChromeVars, railColumnWidth, COLLAPSED_STRIP_WIDTH } from "@/shell/shellChrome";
+import {
+  shellSideWidth,
+  shellChromeVars,
+  railColumnWidth,
+  remoteLeadingColumns,
+  remoteSideWidth,
+  COLLAPSED_STRIP_WIDTH,
+} from "@/shell/shellChrome";
 import { usesOverlayTitleBar } from "@/utils/platform";
 import { BottomBar } from "@/components/BottomBar/BottomBar";
 import { AppShell, EditorArea } from "@/shell";
@@ -45,9 +53,7 @@ import {
   DocumentWindowMount,
   MainWindowRunners,
 } from "@/hooks/lifecycle";
-import { cssVars } from "@/theme";
-import { appError } from "@/utils/debug";
-import { useBrowserOccluder } from "@/hooks/useBrowserOccluder";
+import { useRemoteSessionStore } from "@/stores/remoteSessionStore";
 
 const TerminalPanel = lazy(() =>
   import("@/components/Terminal").then((m) => ({ default: m.TerminalPanel }))
@@ -56,104 +62,28 @@ const TerminalPanel = lazy(() =>
 // SettingsPage → aiProviderStore (credentials); must not evaluate in pdf-export window.
 const SettingsPage = lazy(() => import("@/pages/Settings").then(m => ({ default: m.SettingsPage })));
 const PdfExportPage = lazy(() => import("@/pages/PdfExportPage").then(m => ({ default: m.PdfExportPage })));
+// The remote shell drags the read-only document stack (markdown, katex,
+// highlight.js) behind it, so it loads when a window first switches to a
+// server — never at cold start.
+const RemoteWindowSurface = lazy(() =>
+  import("@/components/RemoteBrowser/RemoteShell").then((m) => ({ default: m.RemoteWindowSurface })),
+);
 
-// Error Boundary to catch and display React errors
-interface ErrorBoundaryState {
-  hasError: boolean;
-  error: Error | null;
-}
-
-class ErrorBoundaryInner extends Component<
-  { children: ReactNode } & WithTranslation<"dialog">,
-  ErrorBoundaryState
-> {
-  override state: ErrorBoundaryState = { hasError: false, error: null };
-
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true, error };
-  }
-
-  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    appError("Caught error:", error);
-    appError("Error info:", errorInfo);
-  }
-
-  override render() {
-    if (this.state.hasError) {
-      const { t } = this.props;
-      return (
-        <div style={{ padding: 40, fontFamily: "system-ui, sans-serif" }}>
-          <h1 style={{ color: cssVars.color.semantic.error, marginBottom: 16 }}>{t("errorBoundary.title")}</h1>
-          <pre style={{
-            padding: 16,
-            background: cssVars.color.semantic.errorBg,
-            borderRadius: 8,
-            overflow: "auto",
-            fontSize: 14,
-          }}>
-            {this.state.error?.message}
-            {"\n\n"}
-            {this.state.error?.stack}
-          </pre>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
-
-const ErrorBoundary = withTranslation("dialog")(ErrorBoundaryInner);
-
-// ADR-014 sample migration — visual values come from the typed accessor
-// in `@/theme`. Non-token literals (z-index, border width, viewport
-// margins) stay literal per the ADR's "what stays literal" exemption.
-const DROP_OVERLAY_BORDER_WIDTH = 3;
-const DROP_OVERLAY_Z = 9998;
-const DROP_OVERLAY_MARGIN = 8;
-const DROP_LABEL_FONT_SIZE = 14;
-
-function DropOverlay() {
-  const { t } = useTranslation();
-  const isDragging = useUIStore((state) => state.isDraggingFiles);
-  // The native browser view paints over all React DOM in its rect, so freeze every
-  // mounted browser tab while this overlay is up.
-  useBrowserOccluder(isDragging, "file-drop");
-  if (!isDragging) return null;
-
+/**
+ * The last argument carries the chunk's STATE, not content — which is why the
+ * pending node is built here, as a plain element, instead of being a component
+ * in the tree. No mount is added (and none leaves) when the chunk arrives: the
+ * column keeps the box it already had and the spinner goes away.
+ */
+function remotePending(label: string) {
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        backgroundColor: cssVars.color.accent.bg,
-        border: `${DROP_OVERLAY_BORDER_WIDTH}px dashed ${cssVars.color.accent.primary}`,
-        borderRadius: cssVars.radius.lg,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: DROP_OVERLAY_Z,
-        pointerEvents: "none",
-        margin: DROP_OVERLAY_MARGIN,
-      }}
-    >
-      <div
-        style={{
-          padding: `${cssVars.space[4]} ${cssVars.space[6]}`,
-          backgroundColor: cssVars.color.bg.primary,
-          borderRadius: cssVars.radius.md,
-          boxShadow: cssVars.shadow.popup,
-          color: cssVars.color.text.primary,
-          fontSize: DROP_LABEL_FONT_SIZE,
-          fontWeight: 500,
-        }}
-      >
-        {t("dropToOpen")}
-      </div>
+    <div className="vm-chunk-pending" aria-busy="true" role="status" aria-label={label}>
+      <span className="vm-spinner" aria-hidden="true" />
     </div>
   );
 }
 
-/** Exported for the composition-root test — see App.chrome.test.tsx. */
+
 export function MainLayout() {
   const { t } = useTranslation("dialog");
   // Window context + store selectors. State reads only, not lifecycle hooks.
@@ -170,9 +100,29 @@ export function MainLayout() {
   const browserWorkspaceActive = useBrowserWorkspaceActive();
   const workspaceRailMode = useSettingsStore((state) => state.general.workspaceRailMode);
   const showWorkspaceRail = isDocumentWindow && workspaceRailMode;
-  const workspaceRailWidth = useSettingsStore((s) => railColumnWidth(s.general.workspaceRailWidth, s.general.workspaceRailCollapsed));
+  // Which Mac this window shows. A remote server replaces what the three
+  // columns RENDER; it never touches the local stores, so switching back is a
+  // return to the same tabs, unsaved edits and sidebar.
+  const remoteServerId = useRemoteSessionStore((state) => state.active[windowLabel] ?? null);
+  const railSettingsWidth = useSettingsStore((s) => s.general.workspaceRailWidth);
+  const railCollapsed = useSettingsStore((s) => s.general.workspaceRailCollapsed);
+  const workspaceRailWidth = railColumnWidth(railSettingsWidth, railCollapsed);
   // A hidden sidebar folds to a strip in document windows; the shared maths knows (see shellChrome).
-  const sideWidth = shellSideWidth({ workspaceRailVisible: showWorkspaceRail, workspaceRailWidth, sidebarVisible, sidebarWidth, sidebarStrip: isDocumentWindow });
+  // A remote server sizes its leading columns from the SAME state the remote
+  // columns render at — sizing them from the LOCAL sidebar's flags (as this did)
+  // reserved a 28px strip for a file tree that was painted 240px wide, and the
+  // tree was squeezed out of the card.
+  const sideWidth =
+    remoteServerId !== null
+      ? remoteSideWidth(
+          remoteLeadingColumns({
+            railWidth: railSettingsWidth,
+            railCollapsed,
+            sidebarVisible,
+            sidebarWidth,
+          }),
+        )
+      : shellSideWidth({ workspaceRailVisible: showWorkspaceRail, workspaceRailWidth, sidebarVisible, sidebarWidth, sidebarStrip: isDocumentWindow });
   const overlayTitleBar = usesOverlayTitleBar();
 
   // T03 lifecycle composites — every per-document/per-window hook now
@@ -198,7 +148,13 @@ export function MainLayout() {
       // menu bar is the empty band reported in #1296.
       chrome={overlayTitleBar ? <AppTitleBar /> : null}
       sidebar={
-        showWorkspaceRail || sidebarVisible || isDocumentWindow ? (
+        // While remote, this column is the remote shell's — whatever the local
+        // rail mode says: the server's groups stand where the rail's did.
+        remoteServerId !== null ? (
+          <Suspense fallback={remotePending(t("sidebar:remote.loading"))}>
+            <RemoteWindowSurface serverId={remoteServerId} column="leading" windowLabel={windowLabel} />
+          </Suspense>
+        ) : showWorkspaceRail || sidebarVisible || isDocumentWindow ? (
           <div className="app-sidebar-stack">
             {showWorkspaceRail && (
               <div className="app-sidebar-stack__rail">
@@ -216,6 +172,13 @@ export function MainLayout() {
       }
       sidebarWidth={sideWidth}
       primary={
+        remoteServerId !== null ? (
+          <FeatureErrorBoundary feature={t("errorBoundary.feature.editor")}>
+            <Suspense fallback={remotePending(t("sidebar:remote.loading"))}>
+              <RemoteWindowSurface serverId={remoteServerId} column="main" windowLabel={windowLabel} />
+            </Suspense>
+          </FeatureErrorBoundary>
+        ) : (
         <EditorArea
           editor={
             <FeatureErrorBoundary feature={t("errorBoundary.feature.editor")}>
@@ -233,6 +196,7 @@ export function MainLayout() {
           panelPosition={terminalPosition}
           sidePanel={<KnowledgeBaseOverlay />}
         />
+        )
       }
       overlays={
         <>

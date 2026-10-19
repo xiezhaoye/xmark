@@ -14,6 +14,7 @@ import { createWarnLogger } from "./internals";
 
 /** Warn logger for Hot Exit operations. */
 export const hotExitWarn = createWarnLogger("[HotExit]");
+export const remoteServerWarn = createWarnLogger("[RemoteServer]");
 
 /** Warn logger for File Operations. */
 export const fileOpsWarn = createWarnLogger("[FileOps]");

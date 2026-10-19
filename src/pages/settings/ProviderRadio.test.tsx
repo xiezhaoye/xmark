@@ -11,7 +11,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ProviderRadio } from "./ProviderRadio";
+import { ProviderRadio, RadioMark } from "./ProviderRadio";
 
 describe("ProviderRadio — accessible name (audit #953)", () => {
   it("exposes the label prop as the radio's accessible name", () => {
@@ -59,5 +59,25 @@ describe("ProviderRadio — accessible name (audit #953)", () => {
     // actually reaches the DOM (not just visually styled).
     await userEvent.click(radio);
     expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("RadioMark draws the same mark but states NOTHING — the row owns the radio", () => {
+    const { container } = render(<RadioMark checked />);
+    // No role, no tab stop: a second `role="radio"` inside the row's own radio
+    // would be a duplicate node for one choice, and a second tab stop that
+    // does nothing the row does not already do.
+    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+    expect(container.querySelector("[tabindex]")).toBeNull();
+    const mark = container.firstElementChild;
+    expect(mark).toHaveAttribute("aria-hidden", "true");
+    expect(mark?.className).toContain("bg-[var(--accent-primary)]");
+  });
+
+  it("RadioMark draws an empty ring when unchecked", () => {
+    const { container } = render(<RadioMark checked={false} />);
+    const mark = container.firstElementChild;
+    expect(mark?.className).toContain("bg-transparent");
+    // The inner dot only exists when checked.
+    expect(mark?.children).toHaveLength(0);
   });
 });

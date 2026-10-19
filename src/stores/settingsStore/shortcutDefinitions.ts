@@ -64,12 +64,17 @@ export const DEFAULT_SHORTCUTS: ShortcutDefinition[] = [
   { id: "diagram", label: "Insert Diagram", category: "blocks", defaultKey: "Alt-Mod-Shift-d", menuId: "diagram", description: "Insert Mermaid diagram" },
   { id: "graphvizDiagram", label: "Insert Graphviz Diagram", category: "blocks", defaultKey: "", menuId: "graphviz-diagram", description: "Insert Graphviz DOT diagram" },
   { id: "mindmap", label: "Insert Mindmap", category: "blocks", defaultKey: "Alt-Mod-Shift-k", menuId: "mindmap", description: "Insert Markmap mindmap" },
-  { id: "heading1", label: "Heading 1", category: "blocks", defaultKey: "Mod-1", menuId: "heading-1" },
-  { id: "heading2", label: "Heading 2", category: "blocks", defaultKey: "Mod-2", menuId: "heading-2" },
-  { id: "heading3", label: "Heading 3", category: "blocks", defaultKey: "Mod-3", menuId: "heading-3" },
-  { id: "heading4", label: "Heading 4", category: "blocks", defaultKey: "Mod-4", menuId: "heading-4" },
-  { id: "heading5", label: "Heading 5", category: "blocks", defaultKey: "Mod-5", menuId: "heading-5" },
-  { id: "heading6", label: "Heading 6", category: "blocks", defaultKey: "Mod-6", menuId: "heading-6" },
+  // Headings 1-6 ship UNBOUND: `Mod-1`..`Mod-6` now belong to the three
+  // layout presets below (one/two/three columns), which every window has.
+  // The menu items stay, minus their accelerators, so the commands remain
+  // reachable from Format → Headings; a user who wants a chord back can bind
+  // one in Settings → Shortcuts (their override wins over this default).
+  { id: "heading1", label: "Heading 1", category: "blocks", defaultKey: "", menuId: "heading-1" },
+  { id: "heading2", label: "Heading 2", category: "blocks", defaultKey: "", menuId: "heading-2" },
+  { id: "heading3", label: "Heading 3", category: "blocks", defaultKey: "", menuId: "heading-3" },
+  { id: "heading4", label: "Heading 4", category: "blocks", defaultKey: "", menuId: "heading-4" },
+  { id: "heading5", label: "Heading 5", category: "blocks", defaultKey: "", menuId: "heading-5" },
+  { id: "heading6", label: "Heading 6", category: "blocks", defaultKey: "", menuId: "heading-6" },
   { id: "paragraph", label: "Paragraph", category: "blocks", defaultKey: "Mod-Shift-0", menuId: "paragraph" },
   { id: "increaseHeading", label: "Increase Heading Level", category: "blocks", defaultKey: "Mod-Alt-]", menuId: "increase-heading" },
   { id: "decreaseHeading", label: "Decrease Heading Level", category: "blocks", defaultKey: "Mod-Alt-[", menuId: "decrease-heading" },
@@ -132,7 +137,14 @@ export const DEFAULT_SHORTCUTS: ShortcutDefinition[] = [
 
   // === View ===
   // toggleSidebar: no menuId (a Rust accel would clash with `paragraph` Mod-Shift-0 on Win/Linux); owned by the window-scoped KEYBINDINGS registry, never the TipTap keymap, to avoid double-toggle.
-  { id: "toggleSidebar", label: "Toggle Sidebar", category: "view", defaultKey: "Ctrl-Shift-0", defaultKeyOther: "Alt-Shift-0" },  // Alt off macOS: `Mod` IS Ctrl there, so Ctrl-Shift-0 would be the same accelerator as `paragraph`'s Mod-Shift-0. Same resolution the transform* trio already uses.
+  { id: "toggleSidebar", label: "Toggle Sidebar", category: "view", defaultKey: "Ctrl-Shift-0", defaultKeyOther: "Alt-Shift-0" },
+  // Layout presets: three fixed shapes of the same window, applied through the
+  // mechanisms that already exist (rail fold, sidebar visibility, sidebar
+  // view). No menuId — like toggleSidebar they are window-level bindings, and
+  // a Rust accel would have to squat on a menu item that means something else.
+  { id: "layoutOneColumn", label: "One Column", category: "view", defaultKey: "Mod-1", description: "Show the document only — workspace rail folded, sidebar hidden" },
+  { id: "layoutTwoColumns", label: "Two Columns", category: "view", defaultKey: "Mod-2", description: "Show the file tree beside the document" },
+  { id: "layoutThreeColumns", label: "Three Columns", category: "view", defaultKey: "Mod-3", description: "Show workspace groups, file tree and document" },  // Alt off macOS: `Mod` IS Ctrl there, so Ctrl-Shift-0 would be the same accelerator as `paragraph`'s Mod-Shift-0. Same resolution the transform* trio already uses.
   { id: "toggleOutline", label: "Toggle Outline", category: "view", defaultKey: "Ctrl-Shift-1", menuId: "outline" },
   { id: "fileExplorer", label: "Toggle File Explorer", category: "view", defaultKey: "Ctrl-Shift-2", menuId: "file-explorer" },
   { id: "viewHistory", label: "Toggle History", category: "view", defaultKey: "Ctrl-Shift-3", menuId: "view-history" },

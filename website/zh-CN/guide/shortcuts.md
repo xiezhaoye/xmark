@@ -69,7 +69,7 @@ VMark 使用功能键（F2–F10）进行快速模式切换。在 macOS 上，�
 
 | 操作 | 快捷键 |
 |------|--------|
-| 标题 1-6 | `Mod + 1` 至 `Mod + 6` |
+| 标题 1-6 | _(customizable — unbound by default, since `Mod + 1`–`Mod + 3` are the layout presets)_ |
 | 段落 | `Mod + Shift + 0` |
 | 增加标题级别 | `Alt + Mod + ]` |
 | 降低标题级别 | `Alt + Mod + [` |
@@ -173,6 +173,9 @@ VMark 使用功能键（F2–F10）进行快速模式切换。在 macOS 上，�
 | 关闭窗格 | `Alt + Mod + Shift + \` |
 | 聚焦另一个窗格 | `Alt + Mod + Shift + O` |
 | 切换侧边栏 | `Ctrl + Shift + 0` |
+| 单栏（只看文档） | `Mod + 1` |
+| 两栏（文件树 + 文档） | `Mod + 2` |
+| 三栏（分组 + 文件树 + 文档） | `Mod + 3` |
 | 切换大纲 | `Ctrl + Shift + 1` |
 | 切换文件浏览器 | `Ctrl + Shift + 2` |
 | 切换历史记录 | `Ctrl + Shift + 3` |

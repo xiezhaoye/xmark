@@ -164,3 +164,17 @@
 .vm-btn--danger:hover:not(:disabled) {
   background: color-mix(in srgb, var(--error-color) 10%, transparent);
 }
+
+/* The row-shaped button of a radio list (Settings → Servers): one row of a
+   `radiogroup`, so its label lines up with the rows above and below it, and
+   the whole row is the hit target. Promoted onto the primitive (rule 32's
+   middle path) so a second settings list cannot re-invent it. */
+.vm-btn--row {
+  justify-content: flex-start;
+  width: 100%;
+  padding: var(--space-half) var(--space-1);
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+}

@@ -28,6 +28,7 @@ export type Section =
   | "integrations"
   | "language"
   | "markdown"
+  | "servers"
   | "shortcuts"
   | "terminal"
   | "advanced";
@@ -41,6 +42,7 @@ const SETTINGS_PANEL_LOADERS: Record<Section, () => Promise<ComponentType>> = {
   integrations: () => import("./IntegrationsSettings").then((m) => m.IntegrationsSettings),
   language: () => import("./LanguageSettings").then((m) => m.LanguageSettings),
   markdown: () => import("./MarkdownSettings").then((m) => m.MarkdownSettings),
+  servers: () => import("./ServersSettings").then((m) => m.ServersSettings),
   shortcuts: () => import("./ShortcutsSettings").then((m) => m.ShortcutsSettings),
   terminal: () => import("./TerminalSettings").then((m) => m.TerminalSettings),
   about: () => import("./AboutSettings").then((m) => m.AboutSettings),

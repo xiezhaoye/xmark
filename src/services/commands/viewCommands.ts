@@ -40,6 +40,7 @@ import { useLargeFileSessionStore } from "@/stores/documentStore";
 import i18n from "@/i18n";
 import { toggleUniversalToolbar } from "@/services/editor/universalToolbarToggle";
 import { zoomCommandSpecs } from "./viewZoomCommands";
+import { layoutCommandSpecs } from "./layoutCommands";
 
 type Ctx = { windowLabel?: string };
 
@@ -265,6 +266,7 @@ function buildViewCommandSpecs(): CommandDefinition[] {
     ...modeCommandSpecs(),
     ...sidebarCommandSpecs(),
     ...displayCommandSpecs(),
+    ...layoutCommandSpecs(),
     ...zoomCommandSpecs(),
   ];
 }

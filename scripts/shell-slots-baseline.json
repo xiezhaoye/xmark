@@ -21,6 +21,7 @@
     "KnowledgeBaseOverlay",
     "QuickLookOverlay",
     "QuickOpen",
+    "RemoteWindowSurface",
     "Sidebar",
     "SidebarResizeHandle",
     "TerminalPanel",

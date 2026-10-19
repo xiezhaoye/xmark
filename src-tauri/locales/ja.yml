@@ -222,6 +222,15 @@ menu:
 
 errors:
 
+  # === Remote mobile server (remote_server/*.rs) ===
+  remoteServer.hostRejected: "サーバーのアドレスが Tailscale 上にありません。100.x のアドレス、*.ts.net の名前、または localhost を使用してください"
+  remoteServer.badAddress: "サーバーのアドレスまたはトークンが不完全です"
+  remoteServer.network: "サーバーに接続できませんでした"
+  remoteServer.timeout: "サーバーが時間内に応答しませんでした"
+  remoteServer.unauthorized: "サーバーがペアリングトークンを拒否しました — 新しいリンクで再ペアリングしてください"
+  remoteServer.http: "サーバーがリクエストを拒否しました（%{status}）"
+  remoteServer.tooLarge: "ファイルが大きすぎるためリモートで開けません（上限 %{limit} バイト）"
+
   # === Coherence (coherence/command_errors.rs) ===
   coherence.workspaceUnavailable: "ワークスペースを開けませんでした: %{detail}"
   coherence.kernelPoisoned: "内部エラーのため整合性の追跡を停止しました。続行するにはワークスペースを開き直してください。"

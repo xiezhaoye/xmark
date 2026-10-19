@@ -6,6 +6,8 @@
 // definition both now use.
 import { describe, it, expect } from "vitest";
 import {
+  remoteLeadingColumns,
+  remoteSideWidth,
   shellSideWidth,
   shellChromeVars,
   railColumnWidth,
@@ -80,6 +82,68 @@ describe("shellSideWidth", () => {
     expect(
       shellSideWidth({ workspaceRailVisible: false, sidebarVisible: false, sidebarWidth: 260 }),
     ).toBe(0);
+  });
+});
+
+// A remote window's two leading columns. The bug: the shell sized the track
+// from the LOCAL sidebar flags while the remote shell painted the file tree at
+// full width, so the tree was squeezed out of a 28px card.
+describe("remoteLeadingColumns", () => {
+  const base = { railWidth: 200, railCollapsed: false, sidebarVisible: true, sidebarWidth: 260 };
+
+  it("counts a full rail and a full tree", () => {
+    expect(remoteLeadingColumns(base)).toEqual({ railWidth: 200, treeWidth: 260, treeCollapsed: false });
+  });
+
+  it("folds each column to its strip, independently", () => {
+    expect(remoteLeadingColumns({ ...base, railCollapsed: true })).toEqual({
+      railWidth: COLLAPSED_STRIP_WIDTH,
+      treeWidth: 260,
+      treeCollapsed: false,
+    });
+    expect(remoteLeadingColumns({ ...base, sidebarVisible: false })).toEqual({
+      railWidth: 200,
+      treeWidth: COLLAPSED_STRIP_WIDTH,
+      treeCollapsed: true,
+    });
+  });
+
+  it("never states a width the renderer would contradict", () => {
+    // One reader for both: a collapsed column's width IS the strip's, and the
+    // renderer folds on the same flag.
+    const folded = remoteLeadingColumns({ ...base, sidebarVisible: false });
+    expect(folded.treeCollapsed).toBe(true);
+    expect(folded.treeWidth).toBe(COLLAPSED_STRIP_WIDTH);
+  });
+
+  it("gives the same total as the local maths for the same state", () => {
+    // ⌘1/⌘2/⌘3 mean one thing in both surfaces: the numbers must match.
+    const cases = [
+      { railCollapsed: false, sidebarVisible: true },
+      { railCollapsed: true, sidebarVisible: true },
+      { railCollapsed: false, sidebarVisible: false },
+      { railCollapsed: true, sidebarVisible: false },
+    ];
+    for (const c of cases) {
+      const state = { ...base, ...c };
+      const remote = remoteSideWidth(remoteLeadingColumns(state));
+      // The local maths takes the rail ALREADY folded (App.tsx folds it before
+      // calling), which is the same input the remote maths folds itself.
+      const local = shellSideWidth({
+        workspaceRailVisible: true,
+        workspaceRailWidth: remoteLeadingColumns(state).railWidth,
+        sidebarVisible: state.sidebarVisible,
+        sidebarWidth: state.sidebarWidth,
+        sidebarStrip: true,
+      });
+      expect(remote).toBe(local);
+    }
+  });
+
+  it("is zero when both columns are gone", () => {
+    // Guarded, not reachable today: the groups column always renders. It keeps
+    // the "no card, no gutters" rule of `shellSideWidth` in one place.
+    expect(remoteSideWidth({ railWidth: 0, treeWidth: 0, treeCollapsed: false })).toBe(0);
   });
 });
 

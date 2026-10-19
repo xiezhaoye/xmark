@@ -1,0 +1,242 @@
+/* Remote shell columns. Each region reuses the visual language of the column it
+   replaces — the rail's group header and coloured glyph, the sidebar's row
+   height and text size — because a user who switched servers did not ask for a
+   different window. Tokens only (rule 31). */
+
+.remote-rail,
+.remote-sidebar {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  flex-direction: column;
+  background: transparent;
+  font-family: var(--font-ui);
+  font-size: var(--sidebar-font-size, var(--font-size-base));
+}
+
+/* The switcher's row at the head of the groups column — the same placement the
+   local rail gives it, so the way back to this Mac is where it always was. */
+.remote-rail__head {
+  flex: 0 0 auto;
+  padding: var(--space-1) var(--space-1-5) 0;
+}
+
+.remote-rail__list {
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-2) var(--space-1-5);
+  overflow-y: auto;
+}
+
+.remote-rail__section + .remote-rail__section {
+  margin-top: var(--space-2);
+}
+
+.remote-rail__header {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-1);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  text-align: left;
+  cursor: var(--cursor-interactive, default);
+  /* button-shape-ok: a section heading, not a control face — it matches the rail group header. */
+}
+
+.remote-rail__header:hover {
+  color: var(--text-color);
+  background: var(--hover-bg);
+}
+
+.remote-rail__header:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: -2px;
+}
+
+.remote-rail__title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.remote-rail__count {
+  flex: 0 0 auto;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.remote-rail__entries {
+  margin: var(--space-half) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A list row, not a button face (same shape as the local rail's entry). */
+.remote-rail__entry {
+  display: flex;
+  width: 100%;
+  height: var(--sidebar-row-height, var(--icon-size-lg));
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-1-5);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-base);
+  text-align: left;
+  cursor: var(--cursor-interactive, default);
+  /* button-shape-ok: a rail list row, not a control face — it matches .workspace-rail__item. */
+}
+
+.remote-rail__entry:hover {
+  color: var(--text-color);
+  background: var(--hover-bg);
+}
+
+.remote-rail__entry--active {
+  color: var(--text-color);
+  background: var(--accent-bg);
+}
+
+/* Selection keeps its ink (rule 30, R6): the row carries --accent-bg; the glyph
+   tile is the indicator, so the accent goes there. */
+.remote-rail__entry--active .remote-rail__glyph {
+  /* ui-ok(state): icon indicator — the glyph tile IS the selection indicator */
+  background: var(--accent-primary);
+}
+
+.remote-rail__entry:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: -2px;
+}
+
+.remote-rail__glyph {
+  display: inline-flex;
+  flex: 0 0 var(--size-icon-medium);
+  width: var(--size-icon-medium);
+  height: var(--size-icon-medium);
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  background: var(--accent-primary);
+  color: var(--bg-color);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.remote-rail__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.remote-rail__empty {
+  margin: 0;
+  padding: var(--space-4) var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--font-size-base);
+}
+
+/* ---- File tree column ---- */
+
+.remote-sidebar__header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-1-5);
+  min-height: var(--bar-height);
+  padding: 0 var(--space-2);
+  border-bottom: var(--border-hairline) solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.remote-sidebar__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.remote-sidebar__body {
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-1) 0;
+  overflow: auto;
+}
+
+.remote-tree__level {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.remote-tree__row {
+  display: flex;
+  width: 100%;
+  height: var(--sidebar-row-height, var(--icon-size-sm));
+  align-items: center;
+  gap: var(--space-1);
+  padding-right: var(--space-2);
+  border: 0;
+  background: transparent;
+  color: var(--text-color);
+  font-family: var(--font-ui);
+  font-size: var(--sidebar-font-size, var(--font-size-base));
+  text-align: left;
+  cursor: var(--cursor-interactive, default);
+  /* button-shape-ok: a tree row, not a control face — it matches the file explorer rows. */
+}
+
+.remote-tree__row:hover {
+  background: var(--hover-bg);
+}
+
+.remote-tree__row--active {
+  background: var(--accent-bg);
+}
+
+.remote-tree__row:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: -2px;
+}
+
+.remote-tree__arrow {
+  /* ui-ok(target): the chevron slot of a row WITHOUT a chevron — decorative,
+     not interactive; the whole row is the hit target */
+  flex: 0 0 12px;
+  width: 12px;
+}
+
+.remote-tree__icon {
+  flex: 0 0 auto;
+  color: var(--text-secondary);
+}
+
+.remote-tree__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.remote-tree__hint {
+  margin: 0;
+  padding: var(--space-1) var(--space-4);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}

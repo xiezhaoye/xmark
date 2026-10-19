@@ -8,7 +8,8 @@
  * its listener in `MainWindowRunners` after resilience startup.
  *
  * MainLayout renders `<DocumentWindowMount />` when
- * `isDocumentWindow` is true.
+ * `isDocumentWindow` is true. The remote-server selection bridge mounts here
+ * too: it is what lets a row clicked in the Settings window switch THIS one.
  *
  * @module hooks/lifecycle/DocumentWindowMount
  */
@@ -17,6 +18,7 @@ import { useDocumentLifecycle } from "./useDocumentLifecycle";
 import { useWindowLifecycle } from "./useWindowLifecycle";
 import { useFinderFileOpen } from "@/hooks/useFinderFileOpen";
 import { useWindowLabel } from "@/contexts/WindowContext";
+import { useRemoteSelectionBridge } from "@/hooks/useRemoteSelectionBridge";
 
 function SecondaryFinderFileOpenRunner(): null {
   useFinderFileOpen();
@@ -27,6 +29,7 @@ export function DocumentWindowMount(): React.ReactElement | null {
   useDocumentLifecycle();
   useWindowLifecycle();
   const windowLabel = useWindowLabel();
+  useRemoteSelectionBridge(windowLabel);
 
   return windowLabel.startsWith("doc-") ? <SecondaryFinderFileOpenRunner /> : null;
 }

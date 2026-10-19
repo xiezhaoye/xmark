@@ -53,6 +53,7 @@ export const COMMAND_ERROR_CODES = [
   "timeout",
   "cancelled",
   "feature-disabled",
+  "unauthorized",
   "unsupported",
   "internal",
 ] as const;
@@ -103,6 +104,7 @@ const CLASS_BY_CODE: Record<CommandErrorCode, CommandErrorClass> = {
   timeout: "retryable",
   cancelled: "cancelled",
   "feature-disabled": "unavailable",
+  unauthorized: "denied",
   unsupported: "unavailable",
   internal: "fatal",
 };

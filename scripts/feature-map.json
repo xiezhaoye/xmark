@@ -1036,7 +1036,17 @@
         "server/mobile/src",
         "mobile/src",
         "src/services/mobileShare",
-        "src-tauri/src/mobile_share.rs"
+        "src-tauri/src/mobile_share.rs",
+        "src-tauri/src/remote_server",
+        "src/services/remoteServers",
+        "src/stores/remoteServersStore.ts",
+        "src/stores/remoteSessionStore.ts",
+        "src/stores/remoteBrowserStore.ts",
+        "src/components/RemoteBrowser",
+        "src/components/WorkspaceRail/ServerSwitcher.tsx",
+        "src/pages/settings/ServersSettings.tsx",
+        "src/pages/settings/ServerRow.tsx",
+        "src/pages/settings/serverProbes.ts"
       ]
     },
     {
@@ -1266,7 +1276,8 @@
         "src/components/FeatureErrorBoundary.test.tsx",
         "src/components/RetryableLazy.test.tsx",
         "src/hooks/useStatusToasts.test.tsx",
-        "src/stores/quickLookStore.test.ts"
+        "src/stores/quickLookStore.test.ts",
+        "src/AppChrome.tsx"
       ],
       "flag": null,
       "flagDefault": null,

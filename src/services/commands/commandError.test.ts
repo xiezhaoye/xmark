@@ -124,6 +124,7 @@ describe("classifyCommandError", () => {
     ["timeout", "retryable"],
     ["cancelled", "cancelled"],
     ["feature-disabled", "unavailable"],
+    ["unauthorized", "denied"],
     ["unsupported", "unavailable"],
     ["internal", "fatal"],
   ];

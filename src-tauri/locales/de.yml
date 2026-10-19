@@ -222,6 +222,15 @@ menu:
 
 errors:
 
+  # === Remote mobile server (remote_server/*.rs) ===
+  remoteServer.hostRejected: "Die Serveradresse liegt nicht in Tailscale. Verwende eine 100.x-Adresse, einen *.ts.net-Namen oder localhost"
+  remoteServer.badAddress: "Serveradresse oder Token ist unvollständig"
+  remoteServer.network: "Der Server ist nicht erreichbar"
+  remoteServer.timeout: "Der Server hat nicht rechtzeitig geantwortet"
+  remoteServer.unauthorized: "Der Server hat das Kopplungs-Token abgelehnt — kopple erneut, um einen neuen Link zu erhalten"
+  remoteServer.http: "Der Server hat die Anfrage abgelehnt (%{status})"
+  remoteServer.tooLarge: "Die Datei ist zu groß für die entfernte Ansicht (Grenze %{limit} Bytes)"
+
   # === Coherence (coherence/command_errors.rs) ===
   coherence.workspaceUnavailable: "Der Arbeitsbereich konnte nicht geöffnet werden: %{detail}"
   coherence.kernelPoisoned: "Die Kohärenzverfolgung wurde nach einem internen Fehler gestoppt. Öffnen Sie den Arbeitsbereich erneut, um fortzufahren."

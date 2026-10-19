@@ -561,6 +561,54 @@ describe("WorkspaceRail", () => {
     });
   });
 });
+describe("hook order across fold / unfold / disable", () => {
+  // The layout shortcuts (⌘1/⌘2/⌘3) fold and unfold this column while it is
+  // mounted, and the rail is also disabled from Settings. A hook declared
+  // below the folded or disabled early return makes the hook count change on
+  // exactly those transitions, which React reports as "Rendered fewer hooks
+  // than expected" and which throws away the whole window.
+  it("survives folded → unfolded → folded, and disabled → enabled", () => {
+    setRailMode(true);
+    addInstance("main", "wsi-a", "/Users/xiaolai/muse");
+    const setFlag = (key: "workspaceRailCollapsed" | "workspaceRailMode", value: boolean) => {
+      useSettingsStore.setState({
+        general: { ...useSettingsStore.getState().general, [key]: value },
+      });
+    };
+
+    render(<WorkspaceRail windowLabel="main" />);
+    expect(screen.getByRole("navigation", { name: /workspaces/i })).toBeInTheDocument();
+
+    // ⌘1: fold. The strip replaces the list.
+    act(() => setFlag("workspaceRailCollapsed", true));
+    expect(screen.queryByRole("navigation", { name: /workspaces/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Expand Workspaces" })).toBeInTheDocument();
+
+    // ⌘2: unfold — the rail, and its rows, come back.
+    act(() => setFlag("workspaceRailCollapsed", false));
+    expect(screen.getByRole("button", { name: "Activate muse" })).toBeInTheDocument();
+
+    // ⌘1 again: the same transition a second time must be as cheap.
+    act(() => setFlag("workspaceRailCollapsed", true));
+    expect(screen.getByRole("button", { name: "Expand Workspaces" })).toBeInTheDocument();
+
+    // Disabled while FOLDED, then re-enabled: the strip, then the column —
+    // and no crash in between.
+    act(() => setFlag("workspaceRailMode", false));
+    expect(screen.queryByRole("navigation", { name: /workspaces/i })).not.toBeInTheDocument();
+    act(() => setFlag("workspaceRailMode", true));
+    expect(screen.getByRole("button", { name: "Expand Workspaces" })).toBeInTheDocument();
+    act(() => setFlag("workspaceRailCollapsed", false));
+    expect(screen.getByRole("button", { name: "Activate muse" })).toBeInTheDocument();
+
+    // Disabled while UNFOLDED, then re-enabled: null ↔ column.
+    act(() => setFlag("workspaceRailMode", false));
+    expect(screen.queryByRole("navigation", { name: /workspaces/i })).not.toBeInTheDocument();
+    act(() => setFlag("workspaceRailMode", true));
+    expect(screen.getByRole("navigation", { name: /workspaces/i })).toBeInTheDocument();
+  });
+});
+
 describe("stable rail automation hooks (WI-TS5.1)", () => {
   it("every rail item carries data-rail-action + data-instance-id (E2E contract)", () => {
     setRailMode(true);

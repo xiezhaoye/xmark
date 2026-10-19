@@ -222,6 +222,15 @@ menu:
 
 errors:
 
+  # === Remote mobile server (remote_server/*.rs) ===
+  remoteServer.hostRejected: "O endereço do servidor não está no Tailscale. Use um endereço 100.x, um nome *.ts.net ou localhost"
+  remoteServer.badAddress: "O endereço ou o token do servidor está incompleto"
+  remoteServer.network: "Não foi possível alcançar o servidor"
+  remoteServer.timeout: "O servidor não respondeu a tempo"
+  remoteServer.unauthorized: "O servidor recusou o token de emparelhamento — emparelhe novamente para obter um link novo"
+  remoteServer.http: "O servidor recusou a solicitação (%{status})"
+  remoteServer.tooLarge: "O arquivo é grande demais para abrir remotamente (limite de %{limit} bytes)"
+
   # === Coherence (coherence/command_errors.rs) ===
   coherence.workspaceUnavailable: "Não foi possível abrir o espaço de trabalho: %{detail}"
   coherence.kernelPoisoned: "O rastreamento de coerência parou após um erro interno. Reabra o espaço de trabalho para continuar."

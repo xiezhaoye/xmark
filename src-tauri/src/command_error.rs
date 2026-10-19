@@ -105,6 +105,10 @@ error_codes! {
     Cancelled => "cancelled", retryable = false;
     /// A feature flag is off. The dark-feature gates return exactly this.
     FeatureDisabled => "feature-disabled", retryable = false;
+    /// The remote backend answered but refused the credential (HTTP 401). Its
+    /// own class because a user ACTION fixes it — re-pair, not retry — so the
+    /// remote-server UI can say "token rejected" instead of "cannot connect".
+    Unauthorized => "unauthorized", retryable = false;
     /// Not available on this platform or not implemented yet.
     Unsupported => "unsupported", retryable = false;
     /// A bug: poisoned lock, task join failure, closed channel.

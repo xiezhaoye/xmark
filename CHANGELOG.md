@@ -11,6 +11,32 @@ section as part of the version bump (`.claude/rules/40-version-bump.md`).
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-10-19
+
+### Added
+
+- Settings → Servers lists the Macs you have paired with, and each row now
+  carries a refresh button: a server that was unreachable when the page opened
+  can be checked again without leaving the page.
+- "This Mac" is now a row like any other — same height, its own Tailscale
+  address underneath, and a status dot — instead of a header above the list.
+
+### Changed
+
+- A server's reachability is a coloured dot after its name (green online, grey
+  unreachable, orange token rejected) rather than a word beside the row. The
+  meaning is still announced to a screen reader.
+- The selected row is highlighted across its whole width, in a lighter tint,
+  with a rounded corner. "Current" is no longer printed on the row; the filled
+  radio and the fill say it, and the word remains available to screen readers.
+- The radio beside each row is drawn like the one in Integrations: an outlined
+  circle that fills when chosen.
+
+### Fixed
+
+- The "Switched" notice was read from the English bundle even in a Chinese
+  interface. It now goes through the app's own translations.
+
 ## [0.1.4] - 2026-10-17
 
 ### Added

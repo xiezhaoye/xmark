@@ -222,6 +222,15 @@ menu:
 
 errors:
 
+  # === Remote mobile server (remote_server/*.rs) ===
+  remoteServer.hostRejected: "伺服器位址不在 Tailscale 上。請使用 100.x 位址、*.ts.net 名稱或 localhost"
+  remoteServer.badAddress: "伺服器位址或權杖不完整"
+  remoteServer.network: "無法連線到伺服器"
+  remoteServer.timeout: "伺服器沒有及時回應"
+  remoteServer.unauthorized: "伺服器拒絕了配對權杖——請重新配對以取得新連結"
+  remoteServer.http: "伺服器拒絕了要求（%{status}）"
+  remoteServer.tooLarge: "檔案過大，無法遠端開啟（上限 %{limit} 位元組）"
+
   # === Coherence (coherence/command_errors.rs) ===
   coherence.workspaceUnavailable: "無法開啟工作區：%{detail}"
   coherence.kernelPoisoned: "發生內部錯誤，一致性追蹤已停止。請重新開啟工作區以繼續。"

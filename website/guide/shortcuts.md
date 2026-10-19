@@ -69,7 +69,7 @@ If you prefer keeping system functions on F-keys, you can customize VMark shortc
 
 | Action | Shortcut |
 |--------|----------|
-| Heading 1-6 | `Mod + 1` through `Mod + 6` |
+| Heading 1-6 | _(customizable — unbound by default, since `Mod + 1`–`Mod + 3` are the layout presets)_ |
 | Paragraph | `Mod + Shift + 0` |
 | Increase Heading Level | `Alt + Mod + ]` |
 | Decrease Heading Level | `Alt + Mod + [` |
@@ -173,6 +173,9 @@ If you prefer keeping system functions on F-keys, you can customize VMark shortc
 | Close Pane | `Alt + Mod + Shift + \` |
 | Focus Other Pane | `Alt + Mod + Shift + O` |
 | Toggle Sidebar | `Ctrl + Shift + 0` |
+| One Column (document only) | `Mod + 1` |
+| Two Columns (file tree + document) | `Mod + 2` |
+| Three Columns (groups + file tree + document) | `Mod + 3` |
 | Toggle Outline | `Ctrl + Shift + 1` |
 | Toggle File Explorer | `Ctrl + Shift + 2` |
 | Toggle History | `Ctrl + Shift + 3` |

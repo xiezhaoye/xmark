@@ -69,7 +69,7 @@ Se preferisci mantenere le funzioni di sistema sui tasti F, puoi personalizzare 
 
 | Azione | Scorciatoia |
 |--------|-------------|
-| Intestazione 1-6 | `Mod + 1` fino a `Mod + 6` |
+| Intestazione 1-6 | _(customizable — unbound by default, since `Mod + 1`–`Mod + 3` are the layout presets)_ |
 | Paragrafo | `Mod + Shift + 0` |
 | Aumenta livello intestazione | `Alt + Mod + ]` |
 | Diminuisci livello intestazione | `Alt + Mod + [` |
@@ -173,6 +173,9 @@ Se preferisci mantenere le funzioni di sistema sui tasti F, puoi personalizzare 
 | Chiudi riquadro | `Alt + Mod + Shift + \` |
 | Attiva l'altro riquadro | `Alt + Mod + Shift + O` |
 | Attiva/disattiva barra laterale | `Ctrl + Shift + 0` |
+| Una colonna (solo il documento) | `Mod + 1` |
+| Due colonne (albero dei file + documento) | `Mod + 2` |
+| Tre colonne (gruppi + albero dei file + documento) | `Mod + 3` |
 | Attiva/disattiva struttura | `Ctrl + Shift + 1` |
 | Attiva/disattiva esplora file | `Ctrl + Shift + 2` |
 | Attiva/disattiva cronologia | `Ctrl + Shift + 3` |

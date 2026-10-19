@@ -18,6 +18,8 @@
  *     are not draggable; the column folds to a strip (`workspaceRailCollapsed`).
  *   - Sections are derived by the pure `buildRailSections`; menus by
  *     `workspaceRailMenus`. This file wires stores and actions to them.
+ *   - The head of the column is `ServerSwitcher`: which Mac this window is
+ *     looking at ("This Mac" or a paired remote server).
  *
  * @coordinates-with workspaceRailModel.ts — sections
  * @coordinates-with workspaceRailMenus.ts — context-menu items
@@ -34,23 +36,15 @@ import { useWorkspaceInstancesStore } from "@/stores/workspaceInstancesStore";
 import { useWorkspaceGroupsStore } from "@/stores/workspaceGroupsStore";
 import { switchWorkspaceInstance } from "@/services/workspaces/switchWorkspaceInstance";
 import { resolveLegacyRootId } from "@/services/workspaces/activeWorkspaceScope";
-import { confirmAction } from "@/services/dialogs/confirmAction";
-import { workspaceRailGlyphs } from "@/utils/workspaceRailGlyphs";
 import { sidebarTextVars } from "@/utils/sidebarTextSize";
 import { CollapsedColumnStrip } from "@/components/shared/CollapsedColumnStrip";
 import { WorkspaceRailResizeHandle } from "./WorkspaceRailResizeHandle";
+import { ServerSwitcher } from "./ServerSwitcher";
 import { WorkspaceRailSection } from "./WorkspaceRailSection";
 import { WorkspaceRailEntry } from "./WorkspaceRailEntry";
-import { buildRailSections, type RailEntry, type RailInstance } from "./workspaceRailModel";
-import { buildEntryMenuItems, buildGroupMenuItems } from "./workspaceRailMenus";
 import { useRailReorder } from "./useRailReorder";
-import {
-  handleCloseWorkspace,
-  handleDuplicateWorkspace,
-  handleMoveWorkspace,
-  handleOpenGroupFolder,
-  pickFolderForGroup,
-} from "./workspaceRailHandlers";
+import { useRailWiring } from "./useRailWiring";
+import { handleOpenGroupFolder } from "./workspaceRailHandlers";
 import {
   WorkspaceRailContextMenu,
   type RailMenuItem,
@@ -100,6 +94,22 @@ export function WorkspaceRail({ windowLabel }: { windowLabel: string }) {
   // so it needs nothing from the render below it.
   const { listRef, isReordering, rowDrag, dropInto } = useRailReorder();
 
+  // The rows' and menus' wiring, declared here for the SAME reason: the layout
+  // shortcuts (⌘1/⌘2/⌘3) fold and unfold this column at any moment, so a hook
+  // below the folded/disabled returns would change the hook count on exactly
+  // that transition. Its inputs are plain data derived from the subscriptions
+  // above, so it does not need the JSX that follows.
+  const wiring = useRailWiring({
+    windowLabel,
+    instances: workspaceInstanceIds
+      .map((id) => instancesById[id])
+      .filter((instance) => instance !== undefined),
+    groups,
+    editingGroupId,
+    setEditingGroupId,
+  });
+  const { sections, groupRowCount, glyphOf, entryMenu, groupMenu, addFolderToGroup, newGroupName } = wiring;
+
   // Clear a lingering context menu when the rail is disabled (R3-11) —
   // re-enabling must not resurrect a stale menu over an instance that may be
   // gone. Render-time guarded one-way adjustment (an effect cannot run once
@@ -121,90 +131,21 @@ export function WorkspaceRail({ windowLabel }: { windowLabel: string }) {
     );
   }
 
-  const instances = workspaceInstanceIds
-    .map((id) => instancesById[id])
-    .filter((instance) => instance !== undefined);
-  const railInstances: RailInstance[] = instances.map((instance) => ({
-    workspaceInstanceId: instance.workspaceInstanceId,
-    kind: instance.kind,
-    rootId: instance.rootId,
-    rootPath: instance.rootPath,
-    // Always the folder's OWN name — two folders called "wiki" both read
-    // "wiki" (the tooltip shows the full path); no "wiki 2" numbering.
-    // Synthetic instances (loose/placeholder) carry a translation key.
-    label: instance.displayNameKey ? t(instance.displayNameKey) : instance.displayName,
-  }));
-  const sections = buildRailSections(groups, railInstances, resolveLegacyRootId, t("workspaceRail.ungrouped"));
-  // How many rows a group reorder can land among: Ungrouped is derived and not
-  // reorderable, so it is not one of them.
-  const groupRowCount = groups.length;
-  const glyphOf = (entry: RailEntry) =>
-    workspaceRailGlyphs([{ workspaceInstanceId: "x", displayName: entry.label, kind: entry.instance?.kind ?? "workspace" }]).x;
-
   const groupsApi = useWorkspaceGroupsStore.getState;
-  // The menu builders take a plain (key, options?) translator.
-  const tr = (key: string, options?: Record<string, unknown>) => (options ? t(key, options) : t(key));
-  const newGroupName = t("workspaceRail.newGroupName");
-
+  // The menu position is this component's state; the item lists come from the
+  // wiring below, which needs the opener.
   const openMenu = (event: MouseEvent<HTMLButtonElement>, name: string, items: RailMenuItem[]) => {
     event.preventDefault();
     if (items.length === 0) return;
     setMenu({ name, items, position: { x: event.clientX, y: event.clientY }, invoker: event.currentTarget });
   };
-
-  const entryMenu = (entry: RailEntry, groupId: string | null) =>
-    buildEntryMenuItems(
-      {
-        // Only folders can be grouped: loose files and placeholders have none.
-        path: entry.instance && entry.instance.kind !== "workspace" ? null : entry.path,
-        instanceId: entry.instance?.workspaceInstanceId ?? null,
-        groupId,
-      },
-      groups,
-      {
-        addToGroup: (id, path) => groupsApi().addFolder(id, path),
-        addToNewGroup: (path) => {
-          const id = groupsApi().createGroup("", newGroupName);
-          groupsApi().addFolder(id, path);
-          setEditingGroupId(id);
-        },
-        removeFromGroup: (id, path) => groupsApi().removeFolder(id, path),
-        closeWorkspace: (id) => handleCloseWorkspace(windowLabel, id, t),
-        duplicateWorkspace: (id) => handleDuplicateWorkspace(windowLabel, id, t),
-        moveWorkspace: (id) => handleMoveWorkspace(windowLabel, id, t),
-      },
-      tr,
-    );
-
-  const groupMenu = (groupId: string, name: string) =>
-    buildGroupMenuItems(
-      groupId,
-      {
-        renameGroup: (id) => setEditingGroupId(id),
-        deleteGroup: async (id) => {
-          const confirmed = await confirmAction({
-            title: t("workspaceRail.deleteGroupTitle", { group: name }),
-            message: t("workspaceRail.deleteGroupMessage"),
-            actionLabel: t("dialog:action.delete"),
-            kind: "warning",
-          });
-          if (confirmed) groupsApi().deleteGroup(id);
-        },
-      },
-      tr,
-    );
-
-  const addFolderToGroup = async (groupId: string) => {
-    const path = await pickFolderForGroup();
-    if (path) groupsApi().addFolder(groupId, path);
-  };
-
   return (
     <nav
       className={`workspace-rail${isReordering ? " workspace-rail--reordering" : ""}`}
       aria-label={t("workspaceRail.label")}
       style={sidebarTextVars(sidebarFontSize)}
     >
+      <ServerSwitcher windowLabel={windowLabel} />
       <div className="workspace-rail__list" ref={listRef}>
         {sections.map((section) => {
           // Index among the DRAGGABLE sections only: Ungrouped contributes no

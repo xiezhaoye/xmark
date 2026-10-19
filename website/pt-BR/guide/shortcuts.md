@@ -69,7 +69,7 @@ Se você preferir manter as funções do sistema nas teclas F, pode personalizar
 
 | Ação | Atalho |
 |------|--------|
-| Título 1-6 | `Mod + 1` até `Mod + 6` |
+| Título 1-6 | _(customizable — unbound by default, since `Mod + 1`–`Mod + 3` are the layout presets)_ |
 | Parágrafo | `Mod + Shift + 0` |
 | Aumentar Nível de Título | `Alt + Mod + ]` |
 | Diminuir Nível de Título | `Alt + Mod + [` |
@@ -173,6 +173,9 @@ Se você preferir manter as funções do sistema nas teclas F, pode personalizar
 | Fechar Painel | `Alt + Mod + Shift + \` |
 | Focar o Outro Painel | `Alt + Mod + Shift + O` |
 | Alternar Barra Lateral | `Ctrl + Shift + 0` |
+| Uma coluna (somente o documento) | `Mod + 1` |
+| Duas colunas (árvore de arquivos + documento) | `Mod + 2` |
+| Três colunas (grupos + árvore de arquivos + documento) | `Mod + 3` |
 | Alternar Esboço | `Ctrl + Shift + 1` |
 | Alternar Explorador de Arquivos | `Ctrl + Shift + 2` |
 | Alternar Histórico | `Ctrl + Shift + 3` |

@@ -69,7 +69,7 @@ Wenn Sie die Systemfunktionen auf F-Tasten bevorzugen, können Sie VMark-Tastatu
 
 | Aktion | Tastenkürzel |
 |--------|--------------|
-| Überschrift 1–6 | `Mod + 1` bis `Mod + 6` |
+| Überschrift 1–6 | _(customizable — unbound by default, since `Mod + 1`–`Mod + 3` are the layout presets)_ |
 | Absatz | `Mod + Umschalt + 0` |
 | Überschriften-Ebene erhöhen | `Alt + Mod + ]` |
 | Überschriften-Ebene verringern | `Alt + Mod + [` |
@@ -173,6 +173,9 @@ Wenn Sie die Systemfunktionen auf F-Tasten bevorzugen, können Sie VMark-Tastatu
 | Bereich schließen | `Alt + Mod + Umschalt + \` |
 | Anderen Bereich fokussieren | `Alt + Mod + Umschalt + O` |
 | Seitenleiste umschalten | `Strg + Umschalt + 0` |
+| Einspaltig (nur Dokument) | `Mod + 1` |
+| Zweispaltig (Dateibaum + Dokument) | `Mod + 2` |
+| Dreispaltig (Gruppen + Dateibaum + Dokument) | `Mod + 3` |
 | Gliederung umschalten | `Strg + Umschalt + 1` |
 | Datei-Explorer umschalten | `Strg + Umschalt + 2` |
 | Verlauf umschalten | `Strg + Umschalt + 3` |

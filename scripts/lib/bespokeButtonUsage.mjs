@@ -18,11 +18,33 @@ const BUTTON_EL_RE =
 export const CANONICAL_BARE = /^(vm-btn|vm-icon-btn|popup-icon-btn|universal-toolbar-btn)(--[a-z0-9-]+)?$/;
 
 /**
+ * Does this rule body carry an exemption WITH a stated reason?
+ *
+ * The reason is judged on the COMMENT text, never on the rule body: a marker
+ * with nothing after the colon is the mute button the required-reason rule
+ * exists to forbid (same reading as `bespokeButtonShape.mjs`).
+ */
+function hasExemptionReason(body) {
+  for (const m of body.matchAll(/\/\*([\s\S]*?)\*\//g)) {
+    const marker = /button-shape-ok\s*:([\s\S]*)/.exec(m[1]);
+    if (marker && /[a-z0-9]/i.test(marker[1])) return true;
+  }
+  return false;
+}
+
+/**
  * Does this rule body re-derive a button SURFACE (rather than just position or
  * colour something)? Padding plus a border or background is the shape every
  * hand-rolled button in this repo had.
+ *
+ * A rule that carries a written `button-shape-ok` reason is EXEMPT: a list row
+ * (a workspace-rail entry, a file-tree row) is a button element whose label
+ * must match the rows beside it, and the marker is how the repo records that
+ * judgement. The marker is read here, so the exemption costs a stated reason —
+ * the same currency the gate asks for everywhere else.
  */
 function stylesButtonSurface(body) {
+  if (hasExemptionReason(body)) return false;
   return /(?:^|[;{\s])padding\b/.test(body) && /(?:^|[;{\s])(?:border|background)\b/.test(body);
 }
 

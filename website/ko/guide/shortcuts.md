@@ -69,7 +69,7 @@ VMark는 빠른 모드 전환을 위해 기능 키 (F2–F10)를 사용합니다
 
 | 동작 | 단축키 |
 |------|--------|
-| 제목 1-6 | `Mod + 1` ~ `Mod + 6` |
+| 제목 1-6 | _(customizable — unbound by default, since `Mod + 1`–`Mod + 3` are the layout presets)_ |
 | 단락 | `Mod + Shift + 0` |
 | 제목 레벨 높이기 | `Alt + Mod + ]` |
 | 제목 레벨 낮추기 | `Alt + Mod + [` |
@@ -173,6 +173,9 @@ VMark는 빠른 모드 전환을 위해 기능 키 (F2–F10)를 사용합니다
 | 창 닫기 | `Alt + Mod + Shift + \` |
 | 다른 창에 포커스 | `Alt + Mod + Shift + O` |
 | 사이드바 토글 | `Ctrl + Shift + 0` |
+| 1열(문서만) | `Mod + 1` |
+| 2열(파일 트리 + 문서) | `Mod + 2` |
+| 3열(그룹 + 파일 트리 + 문서) | `Mod + 3` |
 | 아웃라인 토글 | `Ctrl + Shift + 1` |
 | 파일 탐색기 토글 | `Ctrl + Shift + 2` |
 | 히스토리 토글 | `Ctrl + Shift + 3` |

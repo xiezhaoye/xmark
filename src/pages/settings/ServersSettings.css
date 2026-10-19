@@ -1,0 +1,69 @@
+/* Settings → Servers: the ROW (a radio), its selection mark, and the status
+   dot the probe paints. Shared by the "This Mac" row and every paired server —
+   the two must read as one list, so every rule here is keyed on the row, not on
+   which kind it is.
+
+   The selected row is painted across its WHOLE width, not just the part the
+   radio button covers: the maintenance buttons live beside the radio (a button
+   inside a button is invalid HTML and unreachable by keyboard), and a highlight
+   that stops before them reads as a half-drawn selection. The fill uses the same
+   HUE as Settings → Shortcuts' customized key but a LIGHTER weight: that key's
+   20% works on a one-line chip, while the same 20% behind two lines of row text
+   read as too dark. 12% says "chosen" without competing with the ink. */
+
+.server-row {
+  border-radius: var(--radius-md);
+  transition: background-color 120ms ease;
+}
+
+/* Hover only on rows that are not chosen: the chosen row's fill is a state,
+   not a hover target, and doubling the tint makes the selected row flicker. */
+.server-row:hover:not(:has([aria-checked="true"])) {
+  background: color-mix(in srgb, var(--bg-secondary) 50%, transparent);
+}
+
+.server-row:has([aria-checked="true"]) {
+  background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+}
+
+/* The row's clickable body: everything except the maintenance buttons. It is
+   the radio (`role="radio"` on this element), so the whole text area — name,
+   address, status dot — selects the server, while the buttons beside it stay
+   their own tab stops and are never covered by the hit area. */
+.server-row__body {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: var(--space-half) var(--space-1);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-color);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-sm);
+  text-align: left;
+  cursor: var(--cursor-interactive);
+}
+
+.server-row__body:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.server-row__name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+/* The status dot: online green, unreachable grey, token rejected orange,
+   in-flight grey. It sits AFTER the name so the name stays the left edge of
+   the row and the eye reads "which Mac, and is it up" in one sweep. */
+.server-row__status {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-pill);
+}

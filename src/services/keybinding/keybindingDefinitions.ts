@@ -76,6 +76,11 @@ const VIEW_BINDINGS: Binding[] = [
   viewBinding("lintNext", "lint.next", { suppressInInput: true }),
   viewBinding("lintPrev", "lint.prev", { suppressInInput: true }),
   viewBinding("toggleSidebar", "view.toggleSidebar", { suppressInInput: true }),
+  // Layout presets. Input-suppressed like every view toggle: typing
+  // `Mod+1` in a settings field must insert nothing and toggle nothing.
+  viewBinding("layoutOneColumn", "view.layoutOneColumn", { suppressInInput: true }),
+  viewBinding("layoutTwoColumns", "view.layoutTwoColumns", { suppressInInput: true }),
+  viewBinding("layoutThreeColumns", "view.layoutThreeColumns", { suppressInInput: true }),
   viewBinding("toggleOutline", "view.toggleOutline", { suppressInInput: true }),
   viewBinding("fileExplorer", "view.toggleFileExplorer", { suppressInInput: true }),
   viewBinding("viewHistory", "view.toggleHistory", { suppressInInput: true }),

@@ -223,6 +223,15 @@ menu:
 
 errors:
 
+  # === Remote mobile server (remote_server/*.rs) ===
+  remoteServer.hostRejected: "The server address is not on Tailscale. Use a 100.x address, a *.ts.net name, or localhost"
+  remoteServer.badAddress: "The server address or token is incomplete"
+  remoteServer.network: "Could not reach the server"
+  remoteServer.timeout: "The server did not answer in time"
+  remoteServer.unauthorized: "The server rejected the pairing token — pair again to get a new link"
+  remoteServer.http: "The server refused the request (%{status})"
+  remoteServer.tooLarge: "The file is too large to open remotely (limit %{limit} bytes)"
+
   # === Coherence (coherence/command_errors.rs) ===
   coherence.workspaceUnavailable: "The workspace could not be opened: %{detail}"
   coherence.kernelPoisoned: "Coherence tracking stopped after an internal error. Reopen the workspace to continue."
