@@ -242,6 +242,17 @@ describe("server picker", () => {
     expect(screen.getByRole("button", { name: "Switch server" }).textContent).toContain("Study Mac");
   });
 
+  it("reads as a row of the column, not a button: an icon, the name, a chevron", async () => {
+    pair();
+    render(<App />);
+    await flush();
+    fireEvent.click(screen.getByLabelText("Open groups and files"));
+    const toggle = screen.getByRole("button", { name: "Switch server" });
+    expect(toggle.querySelector(".glyph-server svg")).not.toBeNull();
+    expect(toggle.querySelector(".label")?.textContent).toBe("Study Mac");
+    expect(toggle.querySelector(".chevron svg")).not.toBeNull();
+  });
+
   it("lists every server, marks the current one and switches on tap", async () => {
     saveServers([PROFILE, OTHER]);
     saveActiveServerId(OTHER.id);
@@ -383,6 +394,33 @@ describe("settings servers", () => {
     expect(useReaderStore.getState().view).toBe("settings");
     expect(screen.getByRole("status").textContent).toBe("Switched");
     expect(screen.getAllByRole("radio").map((r) => r.getAttribute("aria-checked"))).toEqual(["true", "false"]);
+  });
+
+  it("says switched for half the usual time, and other messages keep theirs", async () => {
+    saveServers([PROFILE, OTHER]);
+    saveActiveServerId(OTHER.id);
+    await openSettings();
+    // Real timers until the page is up; only the message clock is faked.
+    vi.useFakeTimers();
+    try {
+      fireEvent.click(screen.getAllByRole("radio")[0] as HTMLElement);
+      expect(screen.getByRole("status").textContent).toBe("Switched");
+      act(() => vi.advanceTimersByTime(900));
+      expect(screen.queryByRole("status")).toBeNull();
+      // An ordinary success keeps 1800ms; adding a scanned server says so at once.
+      scans(pairLink("100.66.175.80", `&name=${encodeURIComponent("客厅 Mac")}`));
+      fireEvent.click(screen.getByText("Add a server"));
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      expect(screen.getByRole("status").textContent).toContain('Updated “客厅 Mac”');
+      act(() => vi.advanceTimersByTime(900));
+      expect(screen.queryByRole("status")).not.toBeNull();
+      act(() => vi.advanceTimersByTime(901));
+      expect(screen.queryByRole("status")).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("says nothing and reloads nothing when the row tapped is already the current one", async () => {

@@ -121,6 +121,9 @@ export function ServerPicker() {
         title={active ? `${active.host}:${active.port}` : undefined}
         onClick={() => setOpen((v) => !v)}
       >
+        <span className="glyph-server" aria-hidden="true">
+          <Icon name="server" size={14} />
+        </span>
         <span className="label">{active?.name ?? ""}</span>
         <span className="chevron">
           <Icon name="chevron" size={12} />

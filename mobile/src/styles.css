@@ -138,27 +138,31 @@ input { font: inherit; color: inherit; }
 .drawer-groups { width: var(--groups-col); flex: none; border-right: 1px solid var(--border-color); background: var(--bg-tertiary); }
 .drawer-tree { flex: 1; min-width: 0; }
 
-/* The server picker heads the groups column: one narrow button naming the
-   current Mac. Tapping it opens the sheet below, so nothing in the column
-   moves. */
+/* The server picker heads the groups column: one borderless row naming the
+   current Mac — a small rack icon, the name, and a chevron pointing down at
+   the sheet it opens. It keeps the column's own fill, so it does not read as
+   a button; pressing it tints the row just enough to answer the tap. The
+   hairline under it separates the current Mac from the groups below. */
 .server-picker { flex: none; padding: 6px 5px; border-bottom: 1px solid var(--border-color); }
 .server-picker-toggle {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 6px;
   min-height: 30px;
-  padding: 0 4px 0 7px;
+  padding: 0 7px 0 7px;
+  border: 0;
   border-radius: 8px;
-  border: 1px solid color-mix(in srgb, var(--accent-primary) 35%, transparent);
-  background: var(--accent-bg);
+  background: transparent;
   font-size: 13px;
   font-weight: 600;
   color: var(--text-color);
+  text-align: left;
 }
-.server-picker-toggle:active { filter: brightness(0.96); }
+.server-picker-toggle:active { background: color-mix(in srgb, var(--text-color) 10%, transparent); }
+.server-picker-toggle .glyph-server { flex: none; display: inline-flex; align-items: center; color: var(--text-secondary); }
 .server-picker-toggle .label { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
-.server-picker-toggle .chevron { flex: none; transform: rotate(90deg); color: var(--accent-primary); }
+.server-picker-toggle .chevron { flex: none; display: inline-flex; align-items: center; transform: rotate(90deg); color: var(--text-secondary); }
 
 /* Switching servers: a bottom sheet over a dimmed page. It is portalled to
    the body, because the drawer and the document carry transforms, which would

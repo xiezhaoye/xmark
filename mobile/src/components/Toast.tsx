@@ -8,14 +8,18 @@ import { useCallback, useEffect, useRef, useState, type ReactElement } from "rea
 
 type Tone = "ok" | "error";
 
-export function useToast(): { toast: ReactElement | null; show: (text: string, tone?: Tone) => void } {
+export function useToast(): {
+  toast: ReactElement | null;
+  show: (text: string, tone?: Tone, durationMs?: number) => void;
+} {
   const [message, setMessage] = useState<{ text: string; tone: Tone } | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  const show = useCallback((text: string, tone: Tone = "ok") => {
+  // A caller can ask for a shorter or longer stay; without one, the tone decides.
+  const show = useCallback((text: string, tone: Tone = "ok", durationMs?: number) => {
     clearTimeout(timer.current);
     setMessage({ text, tone });
-    timer.current = setTimeout(() => setMessage(null), tone === "error" ? 4000 : 1800);
+    timer.current = setTimeout(() => setMessage(null), durationMs ?? (tone === "error" ? 4000 : 1800));
   }, []);
 
   useEffect(() => () => clearTimeout(timer.current), []);

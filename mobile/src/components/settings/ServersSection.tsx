@@ -113,7 +113,8 @@ export function ServersSection() {
   const select = (p: ServerProfile) => {
     if (p.id === store().activeServerId) return;
     void store().switchServer(p.id);
-    show(t("settings.switched"));
+    // Half the usual stay: the row itself already shows the new selection.
+    show(t("settings.switched"), "ok", 900);
   };
 
   const commitRename = () => {
