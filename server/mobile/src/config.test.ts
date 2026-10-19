@@ -10,6 +10,7 @@ describe("resolveConfig", () => {
       tokenFile: "/Users/me/Library/Application Support/app.xmark/mobile-server/token",
       port: DEFAULT_PORT,
       host: null,
+      corsOrigins: [],
     });
   });
 
@@ -24,7 +25,7 @@ describe("resolveConfig", () => {
         { XMARK_MOBILE_SHARE_FILE: "/s.json", XMARK_MOBILE_TOKEN_FILE: "/t", XMARK_MOBILE_PORT: "9000", XMARK_MOBILE_HOST: "127.0.0.1" },
         HOME,
       ),
-    ).toEqual({ shareFile: "/s.json", tokenFile: "/t", port: 9000, host: "127.0.0.1" });
+    ).toEqual({ shareFile: "/s.json", tokenFile: "/t", port: 9000, host: "127.0.0.1", corsOrigins: [] });
   });
 
   it.each([["65536"], ["abc"], ["80.5"], [""]])("rejects port %j", (port) => {
@@ -33,6 +34,52 @@ describe("resolveConfig", () => {
 
   it("rejects an identifier that would escape the support directory", () => {
     expect(() => resolveConfig({ XMARK_APP_IDENTIFIER: "../x" }, HOME)).toThrow(/identifier/i);
+  });
+});
+
+describe("resolveConfig CORS origins", () => {
+  it("is empty by default, so no browser may call the server", () => {
+    expect(resolveConfig({}, HOME).corsOrigins).toEqual([]);
+  });
+
+  it("is empty for an empty or comma-only value", () => {
+    for (const raw of ["", " ", ",", " , , "]) {
+      expect(resolveConfig({ XMARK_MOBILE_CORS_ORIGINS: raw }, HOME).corsOrigins).toEqual([]);
+    }
+  });
+
+  it("parses a comma-separated list, trimming and de-duplicating", () => {
+    const cfg = resolveConfig(
+      { XMARK_MOBILE_CORS_ORIGINS: " https://web.xmark.app , http://localhost:5173,https://web.xmark.app" },
+      HOME,
+    );
+    expect(cfg.corsOrigins).toEqual(["https://web.xmark.app", "http://localhost:5173"]);
+  });
+
+  it("keeps the origin exactly as a browser spells it", () => {
+    expect(resolveConfig({ XMARK_MOBILE_CORS_ORIGINS: "http://localhost:5173" }, HOME).corsOrigins).toEqual([
+      "http://localhost:5173",
+    ]);
+    expect(resolveConfig({ XMARK_MOBILE_CORS_ORIGINS: "https://web.xmark.app" }, HOME).corsOrigins).toEqual([
+      "https://web.xmark.app",
+    ]);
+  });
+
+  it("rejects an origin a browser would never send verbatim (trailing slash, path, upper-case host)", () => {
+    for (const raw of ["https://web.xmark.app/", "https://web.xmark.app/app", "https://WEB.xmark.app"]) {
+      expect(() => resolveConfig({ XMARK_MOBILE_CORS_ORIGINS: raw }, HOME)).toThrow(/cors/i);
+    }
+  });
+
+  it.each([["tauri://localhost"], ["file://"], ["web.xmark.app"], ["https://web.xmark.app/path"], ["*"], ["ftp://x"], ["https://web.xmark.app:"]])(
+    "rejects %j",
+    (raw) => {
+      expect(() => resolveConfig({ XMARK_MOBILE_CORS_ORIGINS: raw }, HOME)).toThrow(/cors/i);
+    },
+  );
+
+  it("names the offending entry", () => {
+    expect(() => resolveConfig({ XMARK_MOBILE_CORS_ORIGINS: "https://ok.app, nope" }, HOME)).toThrow(/"nope"/);
   });
 });
 
