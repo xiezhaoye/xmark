@@ -233,8 +233,12 @@ describe("servers", () => {
     pairBoth();
     await useReaderStore.getState().bootstrap();
     let release!: () => void;
+    const fast = fakeClient();
+    let calls = 0;
     client = fakeClient({
       workspaces: vi.fn(async () => {
+        // Only the first call hangs; the switch's own fetch answers at once.
+        if (calls++ > 0) return fast.workspaces();
         await new Promise<void>((r) => (release = r));
         return { groups: [{ id: "old", name: "Old server's group", folders: [] }] };
       }),
