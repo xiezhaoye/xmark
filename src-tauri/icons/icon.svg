@@ -1,22 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  XMark — application icon, the LEGACY source: the M mark (two columns and a
-  middle chevron, echoing the three-column layout) inside a 1024 canvas as an
-  824x824 squircle with 100px of transparent gutter (Apple's grid). It feeds
-  icon.icns, the PNG ladder, icon.ico and the Windows/iOS/Android sets, and is
-  what macOS 15 and earlier, Windows and Linux draw as-is.
+  XMark — application icon, the LEGACY source: the M mark (two cyan columns and
+  a mint chevron on a near-black tile) inside a 1024 canvas as an 824x824
+  squircle with 100px of transparent gutter (Apple's grid). It feeds icon.icns,
+  the PNG ladder, icon.ico and the Windows/iOS/Android sets, and is what macOS 15
+  and earlier, Windows and Linux draw as-is.
 
   macOS 26 draws `XMark.icon` compiled into `Assets.car` instead
   (scripts/build-macos-glass-icon.sh): same geometry, edge to edge, no squircle.
 
   The mark's 140-unit artboard (landing/logo.svg) maps onto the 824 squircle at
-  scale 824 / 140 = 5.885714.
+  scale 824 / 140 = 5.885714. Palette (xmark-01-cyber-cyan): tile #060A13,
+  columns #00E5FF, chevron #00FFA3.
 -->
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <rect x="100" y="100" width="824" height="824" rx="185" ry="185" fill="#1E293B"/>
+  <rect x="100" y="100" width="824" height="824" rx="185" ry="185" fill="#060A13"/>
   <g transform="translate(100 100) scale(5.885714)">
-    <rect x="30" y="36" width="18" height="70" rx="4" fill="#FFFFFF"/>
-    <rect x="92" y="36" width="18" height="70" rx="4" fill="#FFFFFF"/>
-    <polyline points="50,42 70,72 90,42" fill="none" stroke="#F59E0B" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="30" y="36" width="18" height="70" rx="4" fill="#00E5FF"/>
+    <rect x="92" y="36" width="18" height="70" rx="4" fill="#00E5FF"/>
+    <polyline points="50,42 70,72 90,42" fill="none" stroke="#00FFA3" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
 </svg>

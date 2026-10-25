@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 140" role="img" aria-label="XMark">
-  <rect width="140" height="140" rx="32" fill="#1E293B"/>
-  <rect x="30" y="36" width="18" height="70" rx="4" fill="#FFFFFF"/>
-  <rect x="92" y="36" width="18" height="70" rx="4" fill="#FFFFFF"/>
-  <polyline points="50,42 70,72 90,42" fill="none" stroke="#F59E0B" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect width="140" height="140" rx="32" fill="#060A13"/>
+  <rect x="30" y="36" width="18" height="70" rx="4" fill="#00E5FF"/>
+  <rect x="92" y="36" width="18" height="70" rx="4" fill="#00E5FF"/>
+  <polyline points="50,42 70,72 90,42" fill="none" stroke="#00FFA3" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

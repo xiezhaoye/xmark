@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  XMark — glass icon layer 2 of 2: the amber chevron in the middle of the M.
+  XMark — glass icon layer 2 of 2: the mint chevron in the middle of the M.
   Drawn as a filled outline (actool layers are shapes), same geometry as the
   stroked polyline in icons/icon.svg, scaled 1024 / 140 = 7.314286.
 -->
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
   <g transform="scale(7.314286)">
-    <polyline points="50,42 70,72 90,42" fill="none" stroke="#F59E0B" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="50,42 70,72 90,42" fill="none" stroke="#00FFA3" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
 </svg>

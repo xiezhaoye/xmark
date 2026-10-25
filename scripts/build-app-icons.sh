@@ -2,50 +2,58 @@
 #
 # Regenerate every pre-rounded icon artefact from the designer's SVGs:
 #
-#   src-tauri/icons/icon.svg           the 1024 squircle source (release)
-#   src-tauri/icons/source/vmark-*.svg  the mark and its small-size variants
+#   src-tauri/icons/icon.svg            the 1024 squircle source (release)
+#   src-tauri/icons/source/xmark-*.svg  the mark as it is drawn at 16 and 32/48 pt
 #
 # Outputs (all committed, so `cargo build` needs no tooling):
 #   src-tauri/icons/       icon.icns, icon.png (512), 32x32/64x64/128x128/128x128@2x.png,
 #                          icon.ico, Square*Logo.png, StoreLogo.png, ios/, android/
 #   src-tauri/icons-dev/   the same ladder with an orange DEV badge (macOS/Windows/Linux only)
 #   src/assets/app-icon.png            the About page's 48pt image (256px, @2x)
-#   website/public/logo.png            the site's hero image (640px: the hero shows it at
-#                                      up to 320px, so this is its @2x)
+#   landing/logo.svg                   copied from the designer; the source of the site's
+#                                      hero image (website/public/logo.png, 640px)
 #   website/public/favicon.svg         the designer's favicon, C2PA manifest stripped
 #   website/public/favicon.ico         the same mark for browsers that ask for /favicon.ico
 #
 # The .icns is hand-built with iconutil rather than taken from `tauri icon`, so the
-# 16 and 32 point representations use the designer's simplified small variants
-# (vmark-16.svg, vmark-32.svg): three wedges at 16 px read as noise, two read as
-# the mark. Every representation keeps the same 100/1024 gutter and 22.5% radius.
+# 16 and 32 point representations use the per-size variant in icons/source/: the
+# chevron's stroke is widened from 14 to 16 units so the V still separates from the
+# columns when the whole icon is a 24 px glyph. Every representation keeps the same
+# 100/1024 gutter and 22.5% radius.
 #
-# Needs: magick (ImageMagick 7), iconutil (macOS), python3 with Pillow (the .ico
-# writer and the SVG rewrites), pnpm (for `tauri icon`).
+# Needs: rsvg-convert (librsvg), magick (ImageMagick 7) for compositing and checks,
+# iconutil (macOS), python3 with Pillow (the .ico writer), pnpm (for `tauri icon`).
 
 set -euo pipefail
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 icons="$repo/src-tauri/icons"; dev="$repo/src-tauri/icons-dev"; src="$icons/source"
 work="$(mktemp -d)"; trap 'rm -rf "$work"' EXIT
 
-# A per-size squircle wrapper: the given 24-unit mark inside the 100/1024 gutter,
-# so small sizes can carry the designer's simplified geometry.
-frame() { # $1 = mark svg (24-unit), $2 = out svg
-  python3 - "$1" "$2" <<'PY'
-import re,sys
-mark=re.sub(r"<metadata>.*?</metadata>","",open(sys.argv[1]).read(),flags=re.S)
-inner="\n".join(l for l in mark.splitlines() if "<polygon" in l)
-open(sys.argv[2],"w").write(f'''<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-<defs><clipPath id="s"><rect x="100" y="100" width="824" height="824" rx="185" ry="185"/></clipPath></defs>
-<g clip-path="url(#s)"><g transform="translate(100 100) scale(34.333333)">
-{inner}
-</g></g></svg>''')
-PY
-}
-frame "$src/vmark-16.svg" "$work/mark16.svg"
-frame "$src/vmark-32.svg" "$work/mark32.svg"
-frame "$src/vmark-48.svg" "$work/mark48.svg"
+# The per-size source already carries the 100/1024 gutter and the squircle, so it
+# is rendered like icon.svg rather than wrapped here.
 cp "$icons/icon.svg" "$work/mark.svg"
+cp "$src/xmark-16.svg" "$work/mark16.svg"
+cp "$src/xmark-16.svg" "$work/mark32.svg"
+cp "$src/xmark-16.svg" "$work/mark48.svg"
+
+# SVG is rasterised by rsvg-convert directly, never through `magick file.svg`.
+# ImageMagick only delegates SVG to whatever external renderer it found at build
+# time; its internal fallback (MSVG) silently DROPS a stroked polyline, so the
+# icons came out as two bare columns — right size, right colour, nothing to see.
+# That exact failure shipped once, which is why the chevron is asserted below.
+svg_to_png() { rsvg-convert --width "$2" --height "$2" "$1" -o "$3"; }
+
+# Every rendered icon must contain the chevron: after the resample its mint has to
+# cover at least 40 pixels of the canvas. A two-column render has exactly zero.
+assert_chevron() {
+  local mint
+  mint=$(magick "$1" -alpha off -fuzz 12% -fill black +opaque "#00FFA3" -fill white -opaque black \
+    -colorspace gray -format "%[fx:mean*w*h]" info:)
+  if python3 -c "import sys; sys.exit(0 if float('$mint') < 40 else 1)"; then
+    echo "build-app-icons: $1 has no chevron ($mint mint pixels) — the SVG renderer dropped the stroked polyline" >&2
+    exit 1
+  fi
+}
 
 # Render at size, then apply the squircle as an explicit alpha mask: ImageMagick's
 # SVG renderer ignores `clip-path`, so the shape is cut here rather than trusted
@@ -60,7 +68,9 @@ cp "$icons/icon.svg" "$work/mark.svg"
 render() {
   local px="$2" g r
   g=$(python3 -c "print(round(100/1024*$px, 3))"); r=$(python3 -c "print(round(185/1024*$px, 3))")
-  magick -background none -density 384 "$1" -resize "${px}x${px}" \
+  svg_to_png "$1" "$px" "$work/render-$px.png"
+  assert_chevron "$work/render-$px.png"
+  magick "$work/render-$px.png" \
     \( -size "${px}x${px}" xc:none -fill white -draw "roundrectangle $g,$g $(python3 -c "print(round($px-100/1024*$px-1, 3))"),$(python3 -c "print(round($px-100/1024*$px-1, 3))") $r,$r" \) \
     -compose DstIn -composite -strip -depth 8 "PNG32:$3"
   assert_8bit "$3"
@@ -183,11 +193,14 @@ rm -rf "$icons/ios" "$icons/android"; cp -R "$work/tauri-icons/ios" "$work/tauri
 
 # In-app and website assets.
 cp "$work/release-256.png" "$repo/src/assets/app-icon.png"
-render "$work/mark.svg" 640 "$repo/website/public/logo.png"
-# favicon.ico mirrors favicon.svg (the two-polygon mark, full bleed, no squircle):
-# the .svg is what modern browsers load, the .ico is what the rest request by name.
+# The website hero (`src: /logo.png` in every locale's index.md) is the designer's
+# landing/logo.svg at 640px: the hero displays it at up to 320px, so this is its @2x.
+svg_to_png "$repo/landing/logo.svg" 640 "$repo/website/public/logo.png"
+# favicon.ico mirrors favicon.svg (the M mark, full bleed, no squircle): the .svg is
+# what modern browsers load, the .ico is what the rest request by name.
 for px in 16 32 48; do
-  magick -background none -density 384 "$src/favicon.svg" -resize "${px}x${px}" -strip -depth 8 "PNG32:$work/favicon-$px.png"
+  svg_to_png "$src/favicon.svg" "$px" "$work/favicon-raw-$px.png"
+  magick "$work/favicon-raw-$px.png" -background none -strip -depth 8 "PNG32:$work/favicon-$px.png"
 done
 python3 - "$repo/website/public/favicon.ico" "$work/favicon-16.png" "$work/favicon-32.png" "$work/favicon-48.png" <<'PY2'
 import sys

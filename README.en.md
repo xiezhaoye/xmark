@@ -1,5 +1,7 @@
 # XMark
 
+<p align="center"><img src="landing/logo.svg" alt="XMark" width="96" height="96"></p>
+
 [简体中文](README.md) · **English**
 
 **A plain-text workspace for you and your AI, organized around your folders.**

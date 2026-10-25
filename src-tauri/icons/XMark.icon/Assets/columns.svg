@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  XMark — glass icon layer 1 of 2: the two white columns of the M. Drawn on the
+  XMark — glass icon layer 1 of 2: the two cyan columns of the M. Drawn on the
   1024 canvas Icon Composer expects, edge to edge (macOS applies the squircle
   and inset). Same geometry as icons/icon.svg, scaled 1024 / 140 = 7.314286.
 -->
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
   <g transform="scale(7.314286)">
-    <rect x="30" y="36" width="18" height="70" rx="4" fill="#FFFFFF"/>
-    <rect x="92" y="36" width="18" height="70" rx="4" fill="#FFFFFF"/>
+    <rect x="30" y="36" width="18" height="70" rx="4" fill="#00E5FF"/>
+    <rect x="92" y="36" width="18" height="70" rx="4" fill="#00E5FF"/>
   </g>
 </svg>

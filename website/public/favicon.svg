@@ -1,4 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  XMark — favicon: the M mark full bleed on its 24-unit artboard (no gutter, no
+  transparent margin), so it reads at 16 px in a tab. The 140-unit artboard
+  scales by 24 / 140 = 0.171429; the tile radius is the icon's 32 at that scale.
+  website/public/favicon.svg and favicon.ico are generated from this file.
+-->
 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
-  <polygon points="0,0 24,0 12,24 0,24" fill="#3778D7"></polygon>
-  <polygon points="24,0 24,24 12,24" fill="#0C3164"></polygon>
+  <rect width="24" height="24" rx="5.4857" fill="#060A13"/>
+  <g transform="scale(0.171429)">
+    <rect x="30" y="36" width="18" height="70" rx="4" fill="#00E5FF"/>
+    <rect x="92" y="36" width="18" height="70" rx="4" fill="#00E5FF"/>
+    <polyline points="50,42 70,72 90,42" fill="none" stroke="#00FFA3" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
 </svg>
