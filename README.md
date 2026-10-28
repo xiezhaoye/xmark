@@ -14,6 +14,19 @@ XMark 是一款免费、数据只存在本机的 macOS 编辑器。你和 AI 助
 
 ---
 
+<!-- landing -->
+**官网：[xmark.xiezhaoye.site](https://xmark.xiezhaoye.site/)**
+
+- **文件夹，就是你的工作台**：打开项目文件夹再按习惯整理，多个工作区随手切换，分组重启后保留。
+- **你和 AI，看同一份文件**：通过 MCP 连接 Claude、Codex 等助手，在同一批文件上协作，少些来回复制。
+- **想看排版，也能回到源码**：Markdown 可视化编辑、F5 源码快看、F6 完整源码；源码与预览并排。
+
+![XMark 三栏工作台](landing/screenshots/three-columns.webp)
+
+![源码与预览并排](landing/screenshots/split-view.webp)
+
+<p><img src="landing/screenshots/rail-folded.webp" width="49%" alt="工作区栏折叠"> <img src="landing/screenshots/both-folded.webp" width="49%" alt="两侧栏都收起"></p>
+
 ## XMark 新增了什么
 
 **三栏布局**：工作区 · 文件树 · 文档
@@ -78,6 +91,17 @@ XMark 通过 [MCP](https://modelcontextprotocol.io/) 连接 AI 助手。打开 *
 XMark 在 AI 助手配置里的名字是 `xmark`，不会和已安装的 VMark 冲突。
 
 ---
+
+## 常见问题
+
+**XMark 与 VMark 是什么关系？**  
+XMark 是 Xiaolai Li 的 VMark 的非官方分支，沿用 ISC 协议，与原作者无关，也未获得其认可或背书。
+
+**文件会上传到云端吗？**  
+不会。XMark 以本机文件为基础，没有云端账号；连接 AI 助手或模型服务时，内容由你配置的服务处理。
+
+**手机端能直接下载吗？**  
+目前不能。XMark Mobile 需自行用 Xcode 构建，通过 Tailscale 连接自己的电脑，只读浏览。
 
 ## 反馈
 
