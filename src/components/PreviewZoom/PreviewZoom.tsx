@@ -53,11 +53,39 @@ export interface PreviewZoomControls {
   reset: () => void;
 }
 
+/**
+ * One write per animation frame, at most — the held-key path.
+ *
+ * The zoom lands on a container that may hold an HTML preview — an iframe, so
+ * every step relayouts and repaints a whole SUBDOCUMENT. A held arrow key fires
+ * ~30 times a second and queued those relayouts; coalescing makes the cost per
+ * frame constant instead of additive, and dropping a request that equals the
+ * pending one keeps a no-op from arriving as a relayout.
+ */
+let pendingZoom: number | null = null;
+let pendingFrame: number | null = null;
+
+function scheduleZoom(next: number, apply: (percent: number) => void): void {
+  pendingZoom = clampPreviewZoom(next);
+  if (pendingFrame !== null) return;
+  pendingFrame = requestAnimationFrame(() => {
+    pendingFrame = null;
+    const value = pendingZoom;
+    pendingZoom = null;
+    if (value === null) return;
+    if ((useSettingsStore.getState().appearance.previewZoom ?? PREVIEW_ZOOM_DEFAULT) === value) return;
+    apply(value);
+  });
+}
+
 export function usePreviewZoom(): PreviewZoomControls {
   const percent = clampPreviewZoom(
     useSettingsStore((state) => state.appearance.previewZoom ?? PREVIEW_ZOOM_DEFAULT),
   );
   const updateAppearanceSetting = useSettingsStore((state) => state.updateAppearanceSetting);
+  // A click is one discrete action: it lands immediately. Only key REPEAT is
+  // coalesced (see the keydown effect) — that is the path that can queue a
+  // relayout per repeat.
   const set = useCallback(
     (next: number) => updateAppearanceSetting("previewZoom", clampPreviewZoom(next)),
     [updateAppearanceSetting],
@@ -107,14 +135,12 @@ export function PreviewZoomBar() {
       // Read through the store, not the closure: two presses in one frame must
       // step twice, not resolve against the same stale percent.
       const current = clampPreviewZoom(
-        useSettingsStore.getState().appearance.previewZoom ?? PREVIEW_ZOOM_DEFAULT,
+        pendingZoom ?? useSettingsStore.getState().appearance.previewZoom ?? PREVIEW_ZOOM_DEFAULT,
       );
-      useSettingsStore
-        .getState()
-        .updateAppearanceSetting(
-          "previewZoom",
-          clampPreviewZoom(current + (event.key === "ArrowRight" ? PREVIEW_ZOOM_STEP : -PREVIEW_ZOOM_STEP)),
-        );
+      scheduleZoom(
+        current + (event.key === "ArrowRight" ? PREVIEW_ZOOM_STEP : -PREVIEW_ZOOM_STEP),
+        (value) => useSettingsStore.getState().updateAppearanceSetting("previewZoom", value),
+      );
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);

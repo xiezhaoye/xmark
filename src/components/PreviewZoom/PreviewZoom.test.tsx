@@ -72,12 +72,21 @@ describe("PreviewZoomBar", () => {
     expect(screen.getByRole("button", { name: "preview.zoomOut" })).toBeEnabled();
   });
 
-  it("zooms with ← and → while the pane has focus", () => {
+  it("zooms with ← and → while the pane has focus", async () => {
+    // Held keys are coalesced to one write per frame, so the assertion waits
+    // for the frame instead of for a synchronous store write.
+    const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
     render(<Harness />);
+
     fireEvent.keyDown(document.body, { key: "ArrowRight" });
+    await nextFrame();
     expect(zoom()).toBe(110);
+
     fireEvent.keyDown(document.body, { key: "ArrowLeft" });
     fireEvent.keyDown(document.body, { key: "ArrowLeft" });
+    await nextFrame();
+    // Two presses inside ONE frame still step twice: the pending value is read
+    // back, not the stale store value.
     expect(zoom()).toBe(90);
   });
 
