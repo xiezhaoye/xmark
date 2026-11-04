@@ -23,7 +23,7 @@ export function registerFile(app: Hono, registry: RegistrySource): void {
     if (target instanceof Response) return target;
     if (!target.stats.isFile()) return apiError(c, 404, "not_found");
     const kind = classifyFile(target.abs);
-    if (kind !== "markdown" && kind !== "text") return apiError(c, 415, "unsupported_kind");
+    if (kind !== "markdown" && kind !== "text" && kind !== "html") return apiError(c, 415, "unsupported_kind");
     if (target.stats.size > MAX_TEXT_BYTES) return apiError(c, 413, "too_large");
 
     let text: string;
@@ -32,6 +32,6 @@ export function registerFile(app: Hono, registry: RegistrySource): void {
     } catch {
       return apiError(c, 415, "not_utf8");
     }
-    return c.json({ text, kind, size: target.stats.size, mtime: Math.round(target.stats.mtimeMs) });
+    return c.json({ text, kind: kind === "markdown" ? "markdown" : "text", size: target.stats.size, mtime: Math.round(target.stats.mtimeMs) });
   });
 }

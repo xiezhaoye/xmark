@@ -21,6 +21,7 @@ export const httpFetch: FetchLike = async (url, init) => {
 };
 
 export async function openExternal(url: string): Promise<void> {
+  // Kept simple on purpose: sharing never opens a URL itself.
   if (!inTauri) {
     window.open(url, "_blank", "noopener");
     return;

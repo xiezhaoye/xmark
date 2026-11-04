@@ -4176,6 +4176,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "tauri-plugin-xmark-share"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 2.0.21",
+]
+
+[[package]]
 name = "tauri-runtime"
 version = "2.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5547,6 +5559,7 @@ dependencies = [
  "tauri-plugin-clipboard-manager",
  "tauri-plugin-http",
  "tauri-plugin-opener",
+ "tauri-plugin-xmark-share",
 ]
 
 [[package]]

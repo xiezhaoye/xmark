@@ -13,10 +13,10 @@ import { endDrawerGesture, isInsideHorizontalScroller, moveDrawerGesture, startD
 import { useReaderStore } from "../state/readerStore";
 
 /** The strip of document left visible beside the open drawer. */
-const EXPOSED_STRIP_PX = 44;
+const EXPOSED_STRIP_PX = 88;
 
 function drawerWidth(): number {
-  return Math.max(240, window.innerWidth - EXPOSED_STRIP_PX);
+  return Math.max(0, window.innerWidth - EXPOSED_STRIP_PX);
 }
 
 export function useDrawerGesture(enabled: boolean): { width: number; offset: number; dragging: boolean } {

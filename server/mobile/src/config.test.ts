@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_PORT, resolveConfig } from "./config";
+import { DEFAULT_PORT, DEFAULT_PUBLIC_PORT, resolveConfig } from "./config";
 
 const HOME = "/Users/me";
 
@@ -11,6 +11,9 @@ describe("resolveConfig", () => {
       port: DEFAULT_PORT,
       host: null,
       corsOrigins: [],
+      sharesDir: "/Users/me/Library/Application Support/app.xmark/mobile-server/shares",
+      publicBaseUrl: null,
+      publicPort: DEFAULT_PUBLIC_PORT,
     });
   });
 
@@ -25,7 +28,16 @@ describe("resolveConfig", () => {
         { XMARK_MOBILE_SHARE_FILE: "/s.json", XMARK_MOBILE_TOKEN_FILE: "/t", XMARK_MOBILE_PORT: "9000", XMARK_MOBILE_HOST: "127.0.0.1" },
         HOME,
       ),
-    ).toEqual({ shareFile: "/s.json", tokenFile: "/t", port: 9000, host: "127.0.0.1", corsOrigins: [] });
+    ).toEqual({
+      shareFile: "/s.json",
+      tokenFile: "/t",
+      port: 9000,
+      host: "127.0.0.1",
+      corsOrigins: [],
+      sharesDir: "/Users/me/Library/Application Support/app.xmark/mobile-server/shares",
+      publicBaseUrl: null,
+      publicPort: DEFAULT_PUBLIC_PORT,
+    });
   });
 
   it.each([["65536"], ["abc"], ["80.5"], [""]])("rejects port %j", (port) => {
@@ -146,5 +158,61 @@ describe("resolveConfig platform-aware data directory", () => {
       ? "/home/me/Library/Application Support/app.xmark/mobile-share.json"
       : "/home/me/.local/share/app.xmark/mobile-share.json";
     expect(cfg.shareFile).toBe(expected);
+  });
+});
+
+describe("resolveConfig sharing", () => {
+  it("defaults the snapshot store beside the token and the public port to 8741", () => {
+    const cfg = resolveConfig({}, HOME);
+    expect(cfg.sharesDir).toBe("/Users/me/Library/Application Support/app.xmark/mobile-server/shares");
+    expect(cfg.publicPort).toBe(8741);
+    expect(cfg.publicBaseUrl).toBeNull();
+  });
+
+  it("accepts XMARK_MOBILE_SHARES_DIR and XMARK_MOBILE_PUBLIC_PORT", () => {
+    const cfg = resolveConfig({ XMARK_MOBILE_SHARES_DIR: "/snap", XMARK_MOBILE_PUBLIC_PORT: "9000" }, HOME);
+    expect(cfg.sharesDir).toBe("/snap");
+    expect(cfg.publicPort).toBe(9000);
+  });
+
+  it("accepts 0 as a public port for tests", () => {
+    expect(resolveConfig({ XMARK_MOBILE_PUBLIC_PORT: "0" }, HOME).publicPort).toBe(0);
+  });
+
+  it.each([["65536"], ["abc"], ["-1"], [""]])("rejects public port %j", (raw) => {
+    expect(() => resolveConfig({ XMARK_MOBILE_PUBLIC_PORT: raw }, HOME)).toThrow(/XMARK_MOBILE_PUBLIC_PORT/);
+  });
+
+  it("accepts an HTTPS origin as the public base URL, without a trailing slash", () => {
+    for (const raw of ["https://box.tail1234.ts.net", "https://box.tail1234.ts.net/"]) {
+      expect(resolveConfig({ XMARK_MOBILE_PUBLIC_BASE_URL: raw }, HOME).publicBaseUrl).toBe(
+        "https://box.tail1234.ts.net",
+      );
+    }
+    expect(resolveConfig({ XMARK_MOBILE_PUBLIC_BASE_URL: "https://box.example.com:8443" }, HOME).publicBaseUrl).toBe(
+      "https://box.example.com:8443",
+    );
+  });
+
+  it.each([
+    ["http://box.tail1234.ts.net"],
+    ["box.tail1234.ts.net"],
+    ["https://user:pw@box.tail1234.ts.net"],
+    ["https://box.tail1234.ts.net/path"],
+    ["https://box.tail1234.ts.net/?a=1"],
+    ["https://box.tail1234.ts.net/#frag"],
+    ["https://"],
+    [" https://box.tail1234.ts.net "],
+  ])("rejects public base URL %j", (raw) => {
+    expect(() => resolveConfig({ XMARK_MOBILE_PUBLIC_BASE_URL: raw }, HOME)).toThrow(/XMARK_MOBILE_PUBLIC_BASE_URL/);
+  });
+
+  it("treats unset or empty as no sharing", () => {
+    expect(resolveConfig({ XMARK_MOBILE_PUBLIC_BASE_URL: undefined }, HOME).publicBaseUrl).toBeNull();
+    expect(resolveConfig({ XMARK_MOBILE_PUBLIC_BASE_URL: "" }, HOME).publicBaseUrl).toBeNull();
+  });
+
+  it("keeps the snapshot store under the app data dir on Linux", () => {
+    expect(resolveConfig({}, "/home/me", "linux").sharesDir).toBe("/home/me/.local/share/app.xmark/mobile-server/shares");
   });
 });

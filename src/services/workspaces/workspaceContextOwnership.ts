@@ -75,9 +75,10 @@ function ensureWindowInstances(
 }
 
 /**
- * Resolve the owning instance for a tab, falling back to a loose instance when
- * no workspace root contains the file. Returns the (possibly refreshed)
- * instance list alongside the owner so the caller can reassign in one pass.
+ * Claim within the selected workspace when its root contains the file, even
+ * if a nested directory is bookmarked separately. Otherwise classify by path,
+ * falling back to loose files. The resulting explicit claim keeps visibility
+ * and persistence consistent with the workspace the user selected.
  */
 function resolveTabOwner(
   windowLabel: string,
@@ -85,12 +86,18 @@ function resolveTabOwner(
   activeWorkspaceInstanceId: string | null,
 ): { owner: WorkspaceInstanceRecord; instances: WorkspaceInstanceRecord[] } | null {
   let instances = orderedWindowInstances(windowLabel);
-  let owner = classifyWorkspaceContextForTab({
+  const platform = getRuntimePlatform();
+  const selected = instances.find((instance) =>
+    instance.workspaceInstanceId === activeWorkspaceInstanceId
+    && instance.kind === "workspace"
+    && instance.rootPath && filePath
+    && isWithinRootForCompare(instance.rootPath, filePath, platform),
+  );
+  let owner = selected ?? classifyWorkspaceContextForTab({
     filePath,
     instances,
     activeWorkspaceInstanceId,
   });
-  const platform = getRuntimePlatform();
   const noContainingRoot =
     !filePath
     || instances.every(

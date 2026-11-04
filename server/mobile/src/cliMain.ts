@@ -11,20 +11,25 @@
  * `serve` re-checks the Tailscale address every minute and exits when it
  * changes, letting the supervisor restart it on the new address.
  *
+ * With `XMARK_MOBILE_PUBLIC_BASE_URL` set, `serve` also opens the public
+ * listener on `127.0.0.1:<publicPort>` for `tailscale funnel` to proxy to. It
+ * is a different app (see `publicApp`): snapshots only, no `/api`, no token.
+ * Both listeners are closed together, including when the second fails to
+ * start. Tailscale is never configured or run from here.
+ *
  * @module cliMain
  */
-import { mkdir, rm, writeFile } from "node:fs/promises";
-import { userInfo } from "node:os";
-import * as path from "node:path";
+import { installAgent, uninstallAgent } from "./agentCommands";
 import { resolveConfig, type Env } from "./config";
 import { createApp } from "./createApp";
-import { buildLaunchAgentPlist, LAUNCH_AGENT_LABEL } from "./launchAgent";
 import { renderPairing } from "./pairing";
+import { createPublicApp } from "./publicApp";
 import { createRegistrySource } from "./registry";
-import { runShareCommand } from "./shareCli";
 import { startServer as defaultStartServer, type RunningServer } from "./runtime";
+import { listenerSpecs, openListeners } from "./serveListeners";
+import { runShareCommand } from "./shareCli";
+import { createShareStore } from "./shareStore";
 import { findTailscaleDnsName, findTailscaleIPv4, waitForTailscaleIPv4, type RunCommand } from "./tailscale";
-import { buildSystemdUnit, SYSTEMD_UNIT_NAME } from "./systemdUnit";
 import { createTokenSource, loadOrCreateToken, rotateToken } from "./token";
 import type { Hono } from "hono";
 
@@ -62,6 +67,10 @@ const USAGE = `Usage: xmark-mobile-server <command>
   uninstall-agent  Remove that agent
   share list | add <group> <path> | remove <group> [path]
                    Edit the shared folders directly, for machines without the desktop app
+
+Share links need XMARK_MOBILE_PUBLIC_BASE_URL (an https origin). The public
+listener then binds 127.0.0.1:$XMARK_MOBILE_PUBLIC_PORT (default 8741) for
+tailscale funnel to proxy to; the private server keeps the Tailscale bind.
 `;
 
 const IP_CHECK_MS = 60_000;
@@ -96,10 +105,22 @@ async function serve(_argv: string[], deps: CliDeps): Promise<number> {
   const log = (m: string) => deps.stderr(`[xmark-mobile-server] ${m}\n`);
   const tokens = await createTokenSource(cfg.tokenFile);
   const registry = await createRegistrySource(cfg.shareFile, log);
+  const shares =
+    cfg.publicBaseUrl === null
+      ? undefined
+      : { store: await createShareStore(cfg.sharesDir), publicBaseUrl: cfg.publicBaseUrl };
   const hostname = cfg.host ?? (await waitForTailscaleIPv4(deps.run, { sleep: deps.sleep, log }));
-  const app = createApp({ tokens, registry, version: deps.version, corsOrigins: cfg.corsOrigins });
-  const server = await (deps.startServer ?? defaultStartServer)({ app, hostname, port: cfg.port });
-  deps.stdout(`xmark-mobile-server ${deps.version} listening ${server.url}\n`);
+  const app = createApp({ tokens, registry, version: deps.version, corsOrigins: cfg.corsOrigins, shares });
+  // Private app always; the public one only when sharing is configured, on
+  // loopback (Funnel terminates TLS). Binding, and releasing what was bound on
+  // failure, lives in `serveListeners`.
+  const publicApp = shares ? createPublicApp({ store: shares.store }) : null;
+  const specs = listenerSpecs({ cfg, privateApp: app, publicApp, hostname });
+  const opened = await openListeners(specs, deps.startServer ?? defaultStartServer);
+  deps.stdout(`xmark-mobile-server ${deps.version} listening ${opened.servers.private!.url}\n`);
+  if (opened.servers.public && cfg.publicBaseUrl) {
+    deps.stdout(`Share links: ${cfg.publicBaseUrl} → ${opened.servers.public.url}\n`);
+  }
 
   let cancel = () => {};
   if (!cfg.host) {
@@ -113,7 +134,7 @@ async function serve(_argv: string[], deps: CliDeps): Promise<number> {
   }
   deps.onStop?.(async () => {
     cancel();
-    await server.close();
+    await opened.close();
   });
   return 0;
 }
@@ -141,112 +162,6 @@ async function rotate(_argv: string[], deps: CliDeps): Promise<number> {
 async function shareCommand(argv: string[], deps: CliDeps): Promise<number> {
   const cfg = resolveConfig(deps.env, deps.home, deps.platform);
   return runShareCommand(argv, { shareFile: cfg.shareFile, stdout: deps.stdout, stderr: deps.stderr });
-}
-
-function agentPaths(deps: CliDeps) {
-  return {
-    plist: path.join(deps.home, "Library", "LaunchAgents", `${LAUNCH_AGENT_LABEL}.plist`),
-    log: path.join(deps.home, "Library", "Logs", "xmark-mobile-server.log"),
-  };
-}
-
-/**
- * PATH for the installed service. A supervisor starts with almost no
- * environment, and the server finds `tailscale` through PATH.
- */
-const LAUNCHD_PATH_ENV = "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin";
-const SYSTEMD_PATH_ENV = "/usr/local/bin:/usr/bin:/usr/sbin:/bin:/sbin";
-
-function systemdPaths(deps: CliDeps) {
-  return {
-    unit: path.join(deps.home, ".config", "systemd", "user", SYSTEMD_UNIT_NAME),
-  };
-}
-
-/** The service manager for this platform, or an error message naming it. */
-function unsupportedPlatform(platform: NodeJS.Platform): string | null {
-  return platform === "darwin" || platform === "linux" ? null : platform;
-}
-
-async function installSystemdUnit(deps: CliDeps): Promise<number> {
-  const p = systemdPaths(deps);
-  const unit = buildSystemdUnit({ nodePath: deps.nodePath, cliPath: deps.cliPath, pathEnv: SYSTEMD_PATH_ENV });
-  await mkdir(path.dirname(p.unit), { recursive: true });
-  await writeFile(p.unit, unit);
-  // `daemon-reload` first: the unit is new on disk, and `enable --now` would
-  // otherwise enable a file systemd has not read.
-  await deps.run("systemctl", ["--user", "daemon-reload"]);
-  await deps.run("systemctl", ["--user", "enable", "--now", SYSTEMD_UNIT_NAME]);
-  const user = (deps.userName ?? (() => userInfo().username))();
-  deps.stdout(
-    `Installed ${p.unit}\n` +
-      `Logs: journalctl --user -u ${SYSTEMD_UNIT_NAME.replace(/\.service$/, "")} -f\n` +
-      `To keep the service running after you log out, run: sudo loginctl enable-linger ${user}\n`,
-  );
-  return 0;
-}
-
-async function uninstallSystemdUnit(deps: CliDeps): Promise<number> {
-  const p = systemdPaths(deps);
-  await deps.run("systemctl", ["--user", "disable", "--now", SYSTEMD_UNIT_NAME]).catch(() => "");
-  await rm(p.unit, { force: true });
-  await deps.run("systemctl", ["--user", "daemon-reload"]).catch(() => "");
-  deps.stdout(`Removed ${p.unit}\n`);
-  return 0;
-}
-
-interface AgentServices {
-  install: (deps: CliDeps) => Promise<number>;
-  uninstall: (deps: CliDeps) => Promise<number>;
-}
-
-/** Each platform's service: launchd on macOS, a systemd user unit everywhere else. */
-function servicesFor(platform: NodeJS.Platform): AgentServices {
-  if (platform === "darwin") return { install: installLaunchAgent, uninstall: uninstallLaunchAgent };
-  return { install: installSystemdUnit, uninstall: uninstallSystemdUnit };
-}
-
-/** A platform with neither launchd nor systemd gets a clear refusal, not a half-install. */
-function unsupported(platform: NodeJS.Platform, command: string, deps: CliDeps): boolean {
-  const bad = unsupportedPlatform(platform);
-  if (!bad) return false;
-  deps.stderr(`${command} is not supported on ${bad}; only macOS (launchd) and Linux (systemd) are.\n`);
-  return true;
-}
-
-async function installAgent(_argv: string[], deps: CliDeps): Promise<number> {
-  if (unsupported(deps.platform, "install-agent", deps)) return 1;
-  return servicesFor(deps.platform).install(deps);
-}
-
-async function uninstallAgent(_argv: string[], deps: CliDeps): Promise<number> {
-  if (unsupported(deps.platform, "uninstall-agent", deps)) return 1;
-  return servicesFor(deps.platform).uninstall(deps);
-}
-
-async function installLaunchAgent(deps: CliDeps): Promise<number> {
-  const p = agentPaths(deps);
-  const plist = buildLaunchAgentPlist({
-    nodePath: deps.nodePath,
-    cliPath: deps.cliPath,
-    logPath: p.log,
-    pathEnv: LAUNCHD_PATH_ENV,
-  });
-  await mkdir(path.dirname(p.plist), { recursive: true });
-  await mkdir(path.dirname(p.log), { recursive: true });
-  await deps.run("launchctl", ["bootout", `gui/${deps.uid}/${LAUNCH_AGENT_LABEL}`]).catch(() => "");
-  await writeFile(p.plist, plist);
-  await deps.run("launchctl", ["bootstrap", `gui/${deps.uid}`, p.plist]);
-  deps.stdout(`Installed ${p.plist}\nLogs: ${p.log}\n`);
-  return 0;
-}
-
-async function uninstallLaunchAgent(deps: CliDeps): Promise<number> {
-  const p = agentPaths(deps);
-  await deps.run("launchctl", ["bootout", `gui/${deps.uid}/${LAUNCH_AGENT_LABEL}`]).catch(() => "");
-  await rm(p.plist, { force: true });
-  deps.stdout(`Removed ${p.plist}\n`);
-  return 0;
 }
 
 const COMMANDS: Record<string, (argv: string[], deps: CliDeps) => Promise<number>> = {

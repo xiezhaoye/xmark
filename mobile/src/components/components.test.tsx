@@ -40,6 +40,8 @@ function fakeClient(): Client {
     file: vi.fn(async () => ({ text: "# Hello\n\nsee [b](b.md)", kind: "markdown" as const, size: 1, mtime: 1 })),
     asset: vi.fn(async () => new Blob()),
     search: vi.fn(async () => ({ results: [{ rootId: "r1", relPath: "a.md", matches: [{ lineNumber: 3, lineContent: "hello world" }] }], truncated: false })),
+    download: vi.fn(async () => ({ bytes: new Uint8Array(), name: "a.md", mimeType: "text/markdown" })),
+    createShare: vi.fn(async () => ({ url: "https://box.ts.net/s/abc" })),
   };
 }
 
@@ -60,6 +62,32 @@ const flush = () => act(async () => {
 });
 
 describe("App", () => {
+  it("smoke: stops downward dragging at the top and leaves an 88px preview strip", async () => {
+    pair();
+    lastDoc({ rootId: "r1", relPath: "a.md" });
+    const { container } = render(<App />);
+    await flush();
+    const scroller = container.querySelector(".document") as HTMLElement;
+    expect(scroller.querySelector(".pull")).toBeNull();
+    fireEvent.touchStart(scroller, { touches: [{ clientX: 100, clientY: 100 }] });
+    const downward = new Event("touchmove", { bubbles: true, cancelable: true });
+    Object.defineProperty(downward, "touches", { value: [{ clientX: 100, clientY: 150 }] });
+    fireEvent(scroller, downward);
+    expect(downward.defaultPrevented).toBe(true);
+    expect(scroller.scrollTop).toBe(0);
+    fireEvent.touchEnd(scroller);
+    fireEvent.touchStart(scroller, { touches: [{ clientX: 100, clientY: 150 }] });
+    const upward = new Event("touchmove", { bubbles: true, cancelable: true });
+    Object.defineProperty(upward, "touches", { value: [{ clientX: 100, clientY: 100 }] });
+    fireEvent(scroller, upward);
+    expect(upward.defaultPrevented).toBe(false);
+    fireEvent.touchEnd(scroller);
+    fireEvent.click(screen.getByLabelText("Open groups and files"));
+    const strip = container.querySelector(".main-strip") as HTMLElement;
+    expect(window.innerWidth - Number.parseFloat(strip.style.left)).toBe(88);
+    expect(client.file).toHaveBeenCalledTimes(1);
+  });
+
   it("shows an add-a-server button in the reader when nothing is paired", async () => {
     render(<App />);
     await flush();

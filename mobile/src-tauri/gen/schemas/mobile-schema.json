@@ -2791,6 +2791,24 @@
           "type": "string",
           "const": "opener:deny-reveal-item-in-dir",
           "markdownDescription": "Denies the reveal_item_in_dir command without any pre-configured scope."
+        },
+        {
+          "description": "Allow the user to share an original file through the system share sheet.\n#### This default permission set includes:\n\n- `allow-share-file`",
+          "type": "string",
+          "const": "xmark-share:default",
+          "markdownDescription": "Allow the user to share an original file through the system share sheet.\n#### This default permission set includes:\n\n- `allow-share-file`"
+        },
+        {
+          "description": "Enables the share_file command without any pre-configured scope.",
+          "type": "string",
+          "const": "xmark-share:allow-share-file",
+          "markdownDescription": "Enables the share_file command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the share_file command without any pre-configured scope.",
+          "type": "string",
+          "const": "xmark-share:deny-share-file",
+          "markdownDescription": "Denies the share_file command without any pre-configured scope."
         }
       ]
     },

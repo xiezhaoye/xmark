@@ -97,7 +97,7 @@ input { font: inherit; color: inherit; }
 
 /* Document: the top bar scrolls away with the text */
 .document-frame { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
-.document { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+.document { overscroll-behavior-y: none; padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
 /* The document's text follows the reading size; the app's chrome, which sits
    outside this element, keeps the body's 16px. */
 .document-body { font-size: var(--reading-size); }
@@ -273,6 +273,54 @@ input { font: inherit; color: inherit; }
 
 /* Settings */
 .settings { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+/* A compact menu anchored below Settings, leaving the document in place. */
+.settings-popover {
+  position: fixed;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  min-height: min(420px, var(--popover-max-height, 100dvh));
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  background: var(--bg-color);
+  color: var(--text-color);
+  box-shadow: var(--shadow);
+  animation: settings-reveal 160ms cubic-bezier(.23, 1, .32, 1);
+  transform-origin: top right;
+}
+.settings-popover:focus { outline: none; }
+.settings-popover-head { position: relative; display: flex; flex: none; align-items: center; justify-content: center; min-height: 44px; border-bottom: 1px solid var(--border-color); padding: 0 44px; }
+.settings-popover-head .icon-button { position: absolute; right: 4px; width: 36px; height: 44px; }
+.settings-popover-title { margin: 0; width: 100%; text-align: center; font-size: 15px; font-weight: 600; }
+.settings-popover-body { flex: 1; min-height: 0; padding: 14px 12px 28px; gap: 20px; }
+.settings-popover .stepper { justify-content: space-between; }
+.settings-popover .stepper-button { width: 36px; height: 36px; }
+.settings-popover .server-row { gap: 0; }
+.settings-popover .server-select { padding: 6px; gap: 6px; min-width: 0; min-height: 36px; }
+.settings-popover .server-select .radio { width: 16px; height: 16px; }
+.settings-popover .server-name { white-space: nowrap; font-size: 14px; }
+.settings-popover .server-title { gap: 6px; }
+.settings-popover .servers { gap: 6px; }
+.settings-popover .servers .icon-button { flex: none; width: 28px; height: 36px; }
+.settings-popover .server-menu, .settings-popover .server-rename, .settings-popover .server-confirm { margin: 0 8px 8px; }
+.settings-popover .server-rename { flex-wrap: wrap; }
+.settings-popover .server-rename input { flex-basis: 100%; width: 100%; }
+.settings-popover .button { font-size: 14px; min-height: 36px; }
+.settings-popover .settings .section-title { margin: 0; letter-spacing: 0; }
+.settings-popover .settings section { gap: 6px; min-width: 0; }
+.settings-popover .settings section:last-child { gap: 14px; }
+.settings-popover .settings .servers + .button { margin-top: 8px; }
+.settings-popover .hint { font-size: 12px; overflow-wrap: anywhere; word-break: normal; }
+.share-action { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 8px; text-align: center; }
+.share-action:disabled { opacity: .5; }
+.share-notice { margin: 8px 0; font-size: 13px; overflow-wrap: anywhere; }
+.share-notice.error { color: var(--danger); }
+.share-notice.ok { color: var(--ok); }
+.pdf-view { display: block; width: 100%; min-height: 70dvh; border: 0; }
+@keyframes settings-reveal { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .settings-popover { animation: none; } }
 .settings label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--text-secondary); }
 .settings input { padding: 10px; border: 0; border-bottom: 1px solid var(--border-color); background: var(--bg-secondary); border-radius: 6px 6px 0 0; font-size: 15px; color: var(--text-color); }
 .settings input:focus { outline: none; border-bottom: 2px solid var(--accent-primary); }

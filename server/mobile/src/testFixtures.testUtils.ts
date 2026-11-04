@@ -32,7 +32,7 @@ export async function makeTestApp() {
   const app = createApp({ tokens, registry, version: "test" });
   const get = (url: string, headers: Record<string, string> = {}) =>
     app.request(url, { headers: { Authorization: `Bearer ${token}`, ...headers } });
-  return { base, wiki, rootId, token, app, get, cleanup };
+  return { base, wiki, rootId, token, app, get, registry, cleanup };
 }
 
 /** Read a JSON response body loosely typed, for assertions. */

@@ -69,7 +69,11 @@ export interface WorkspaceGroup {
   folders: WorkspaceFolder[];
 }
 
-type EntryKind = "dir" | "markdown" | "text" | "image";
+/**
+ * What a tree entry is. The server lists a PDF as `pdf`: it is not read as
+ * text, it is shown from its own bytes (see `PdfView`) and shared as a file.
+ */
+type EntryKind = "dir" | "markdown" | "text" | "html" | "image" | "pdf";
 
 export interface TreeEntry {
   name: string;

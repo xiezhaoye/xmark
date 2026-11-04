@@ -50,6 +50,8 @@ type DocState =
   | { status: "loading" }
   | { status: "ready"; content: FileContent }
   | { status: "image" }
+  /** A PDF: the reader shows its bytes (preview or the original), never text. */
+  | { status: "pdf" }
   | { status: "error"; error: string };
 
 export interface ReaderState {
@@ -133,6 +135,8 @@ export function serverName(raw: string, fallback: Pick<ServerProfile, "host">): 
 }
 
 const IMAGE_EXT = /\.(png|apng|jpe?g|jfif|gif|webp|bmp|ico|avif|heic|heif|tiff?|svg)$/i;
+/** A PDF is shown from its bytes, not its text: it never goes through `/api/file`. */
+const PDF_EXT = /\.pdf$/i;
 
 const codeOf = (err: unknown) => (err instanceof ApiError ? err.code : "network");
 
@@ -411,6 +415,10 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
       set({ doc, ...(opts.keepDrawer && get().drawerOpen ? {} : { drawerOpen: false }), revealQuery, ...(opts.keepView ? {} : { view: "reader" as const }) });
       if (IMAGE_EXT.test(relPath)) {
         set({ docState: { status: "image" } });
+        return;
+      }
+      if (PDF_EXT.test(relPath)) {
+        set({ docState: { status: "pdf" } });
         return;
       }
       const c = client();

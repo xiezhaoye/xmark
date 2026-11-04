@@ -21,3 +21,46 @@ describe("i18n", () => {
     expect(errorText("http_500")).toContain("http_500");
   });
 });
+
+describe("share and PDF strings", () => {
+  const KEYS = [
+    "settings.share",
+    "settings.shareUnavailable",
+    "share.sendFile",
+    "share.copyLink",
+    "share.sending",
+    "share.creating",
+    "share.copied",
+    "share.copyFailed",
+    "share.retryCopy",
+    "share.linkLabel",
+    "share.cancelled",
+    "share.sent",
+    "share.failed",
+    "share.busy",
+    "error.sharing_unavailable",
+  ] as const;
+
+  it("has every share string in both languages", () => {
+    for (const key of KEYS) {
+      expect(LOCALES.zh[key], key).toBeTruthy();
+      expect(LOCALES.en[key], key).toBeTruthy();
+    }
+  });
+
+  it("explains sharing_unavailable in words rather than a code", () => {
+    setLanguage("en");
+    expect(errorText("sharing_unavailable")).toContain("public link");
+    setLanguage("zh");
+    expect(errorText("sharing_unavailable")).not.toContain("sharing_unavailable");
+  });
+
+  it("labels the two share actions", () => {
+    setLanguage("zh");
+    expect(t("share.sendFile")).toBe("分享文件");
+    expect(t("share.copyLink")).toContain("链接");
+    setLanguage("en");
+    expect(t("share.sendFile")).toBe("Share file");
+    expect(t("share.copyLink")).toBe("Create share link");
+  });
+});

@@ -75,9 +75,55 @@ restart. A file that does not parse is reported and left untouched.
 | `XDG_DATA_HOME` | Linux only: the data directory root (`~/.local/share`) |
 | `XMARK_MOBILE_HOST` | the Tailscale IPv4 (override for local testing only) |
 | `XMARK_MOBILE_CORS_ORIGINS` | empty — no CORS; a comma-separated list of `http(s)://host[:port]` origins to allow (browser build) |
+| `XMARK_MOBILE_SHARES_DIR` | under the app's data directory: `…/<appId>/mobile-server/shares` |
+| `XMARK_MOBILE_PUBLIC_BASE_URL` | unset — share links are unavailable; an `https://host[:port]` origin (Funnel hostname) enables them |
+| `XMARK_MOBILE_PUBLIC_PORT` | `8741` — loopback port `tailscale funnel` proxies to |
 
 ## API
 
-All `GET`, all need `Authorization: Bearer <token>`:
-`/api/health`, `/api/workspaces`, `/api/tree?root&path`, `/api/file?root&path`,
-`/api/asset?root&path`, `/api/search?q&root?`.
+All need `Authorization: Bearer <token>`:
+`GET /api/health`, `GET /api/workspaces`, `GET /api/tree?root&path`,
+`GET /api/file?root&path`, `GET /api/asset?root&path`, `GET /api/search?q&root?`,
+`GET /api/download?root&path`, `POST /api/shares` `{root, path}`.
+
+`/api/download` returns a file's original bytes (max 30 MiB) with its own
+Content-Type and a `Content-Disposition` that carries the UTF-8 name; markdown,
+text, images and PDF are served, anything else is `415 unsupported_kind`.
+
+`POST /api/shares` freezes the file as saved *right now* into an immutable
+snapshot and answers `{"url": "https://<public base>/s/<id>"}`, or
+`503 {"error":"sharing_unavailable"}` when `XMARK_MOBILE_PUBLIC_BASE_URL` is
+unset. Editing or deleting the source afterwards does not change the link.
+
+## Share links (public reading page)
+
+Sharing is a second, **separate** listener on `127.0.0.1:8741`. It is a
+different app: it serves snapshots only (`/s/<id>`, `/s/<id>/download`,
+`/s/<id>/assets/<name>`) and registers no `/api` route, no token. The private
+listener keeps the Tailscale bind and all the authenticated APIs.
+
+```sh
+# 1. tell the server its public origin (the Funnel hostname of this machine)
+export XMARK_MOBILE_PUBLIC_BASE_URL=https://<machine>.tailXXXX.ts.net
+
+# 2. stop an existing login agent, then start with this environment
+node server/mobile/dist/cli.js uninstall-agent
+node server/mobile/dist/cli.js serve
+
+# 3. in another terminal, proxy HTTPS to that loopback port
+tailscale funnel --bg http://127.0.0.1:8741
+```
+
+The foreground server inherits the variables above; the generated login agent
+does not copy your shell environment. To run sharing at login, add these
+variables to the launchd/systemd service environment before starting it.
+
+`tailscale funnel --bg` requires Funnel access for the tailnet; follow its
+authorization instructions if prompted. The proxy is only started by that
+command — the server never runs or reconfigures Tailscale itself. **The source
+machine must be online**: a share link is served by that machine from the
+snapshot on its disk, so nothing is readable while it is asleep or offline.
+
+A snapshot lives in `XMARK_MOBILE_SHARES_DIR` (directories `0700`, files
+`0600`); it holds the original bytes, `meta.json` and the frozen preview
+images. It has no expiry — delete `…/shares/<id>` to revoke one.

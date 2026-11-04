@@ -61,6 +61,44 @@ afterEach(() => {
 });
 
 describe("useDocumentDrag (mouse)", () => {
+  it("ends before a preview can stop the release from bubbling", () => {
+    const { result } = renderHook(() => useDocumentDrag());
+    const preview = document.createElement("div");
+    document.body.append(preview);
+    preview.addEventListener("mouseup", (event) => event.stopPropagation());
+    const onMove = vi.fn();
+    const onEnd = vi.fn();
+    result.current.start({ onMove, onEnd, cursor: "col-resize" });
+
+    preview.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+    move(100);
+
+    expect(onEnd).toHaveBeenCalledTimes(1);
+    expect(onMove).not.toHaveBeenCalled();
+    expect(result.current.isActive()).toBe(false);
+    expect(listeners.count()).toBe(0);
+    preview.remove();
+  });
+
+  it.each(["release", "blur", "unmount"])("shields iframe previews only during a resize, then removes the shield on %s", (reason) => {
+    const { result, unmount } = renderHook(() => useDocumentDrag());
+    result.current.start({ onMove: vi.fn(), cursor: "col-resize" });
+    const shield = document.querySelector<HTMLElement>("[data-document-drag-shield]");
+    expect(shield).not.toBeNull();
+    expect(shield?.style.position).toBe("fixed");
+    expect(shield?.style.inset).toBe("0px");
+    expect(shield?.style.pointerEvents).toBe("auto");
+    expect(shield?.style.cursor).toBe("col-resize");
+
+    if (reason === "unmount") unmount();
+    else if (reason === "blur") window.dispatchEvent(new Event("blur"));
+    else shield?.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+
+    expect(document.querySelector("[data-document-drag-shield]")).toBeNull();
+    expect(listeners.count()).toBe(0);
+    expect(document.body.style.cursor).toBe("");
+  });
+
   it("delivers moves only between start and release", () => {
     const { result } = renderHook(() => useDocumentDrag());
     const onMove = vi.fn();

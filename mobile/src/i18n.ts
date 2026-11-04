@@ -1,6 +1,8 @@
 /**
  * The reader's UI strings, Chinese and English, chosen from the system
- * language. Every user-facing string goes through `t()`.
+ * language. Every user-facing string goes through `t()`. Sharing has its own
+ * block: the two actions, their progress and the link that outlives a failed
+ * copy.
  *
  * @module i18n
  */
@@ -36,9 +38,10 @@ const zh = {
   "search.back": "返回",
   "settings.title": "设置",
   "settings.back": "返回",
+  "settings.close": "关闭设置",
   "settings.open": "设置",
   "settings.servers": "服务器",
-  "settings.reading": "阅读",
+  "settings.reading": "字体大小",
   "settings.addServer": "添加服务器",
   "settings.verifying": "正在验证…",
   "settings.hint": "扫描管理页（或 Mac 终端 xmark-mobile-server pair）显示的二维码。",
@@ -82,6 +85,23 @@ const zh = {
   "alert.important": "重要",
   "alert.warning": "警告",
   "alert.caution": "小心",
+  "settings.share": "分享",
+  "settings.shareUnavailable": "打开一个文件后可以分享",
+  "share.sendFile": "分享文件",
+  "share.copyLink": "创建分享链接",
+  "share.sending": "正在准备原文件…",
+  "share.creating": "正在创建链接…",
+  "share.copied": "链接已复制",
+  "share.copyFailed": "链接已创建，但复制失败。请手动复制下面的链接。",
+  "share.retryCopy": "重新复制",
+  "share.linkLabel": "分享链接",
+  "share.cancelled": "已取消",
+  "share.sent": "已交给系统分享",
+  "share.failed": "分享失败",
+  "share.busy": "正在分享上一个文件，请稍候",
+  "error.sharing_unavailable": "这台 Mac 没有配置公开链接地址，暂时无法创建分享链接。",
+  "error.share_failed": "无法打开分享，请重试，或使用创建分享链接。",
+  "error.file_changed": "文件正在更新，请稍后再次分享。",
 } as const;
 
 type Key = keyof typeof zh;
@@ -117,9 +137,10 @@ const en: Record<Key, string> = {
   "search.back": "Back",
   "settings.title": "Settings",
   "settings.back": "Back",
+  "settings.close": "Close settings",
   "settings.open": "Settings",
   "settings.servers": "Servers",
-  "settings.reading": "Reading",
+  "settings.reading": "Font size",
   "settings.addServer": "Add a server",
   "settings.verifying": "Checking…",
   "settings.hint": "Scan the QR code on the admin page (or from xmark-mobile-server pair on the Mac).",
@@ -163,6 +184,23 @@ const en: Record<Key, string> = {
   "alert.important": "Important",
   "alert.warning": "Warning",
   "alert.caution": "Caution",
+  "settings.share": "Share",
+  "settings.shareUnavailable": "Open a file to share it",
+  "share.sendFile": "Share file",
+  "share.copyLink": "Create share link",
+  "share.sending": "Preparing the original file…",
+  "share.creating": "Creating the link…",
+  "share.copied": "Link copied",
+  "share.copyFailed": "The link was created but copying it failed. Copy it below.",
+  "share.retryCopy": "Copy again",
+  "share.linkLabel": "Share link",
+  "share.cancelled": "Cancelled",
+  "share.sent": "Handed to the share sheet",
+  "share.failed": "Sharing failed",
+  "share.busy": "Sharing another file; one moment",
+  "error.sharing_unavailable": "This Mac has no public link address configured, so it cannot create share links yet.",
+  "error.share_failed": "Could not open sharing. Try again, or create a share link.",
+  "error.file_changed": "The file is being updated. Try sharing it again in a moment.",
 };
 
 let table: Record<Key, string> = typeof navigator !== "undefined" && !navigator.language.startsWith("zh") ? en : zh;
@@ -176,7 +214,7 @@ export function t(key: Key, vars: Record<string, string> = {}): string {
   return table[key].replace(/\{(\w+)\}/g, (_m, name: string) => vars[name] ?? "");
 }
 
-const ERROR_KEYS = new Set<string>(["network", "timeout", "unauthorized", "unknown_root", "not_found", "bad_path", "too_large", "not_utf8", "unsupported_kind", "bad_query"]);
+const ERROR_KEYS = new Set<string>(["network", "timeout", "unauthorized", "unknown_root", "not_found", "bad_path", "too_large", "not_utf8", "unsupported_kind", "bad_query", "sharing_unavailable", "share_failed", "file_changed"]);
 
 /** User-facing text for an API error code. */
 export function errorText(code: string): string {

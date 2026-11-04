@@ -50,7 +50,7 @@ function Node({ serverId, rootId, entry, depth }: { serverId: string; rootId: st
         ) : (
           <span className="chevron-space" />
         )}
-        <Icon name={isDir ? "folder" : entry.kind === "image" ? "image" : "file"} size={16} />
+        <Icon name={isDir ? "folder" : entry.kind === "image" ? "image" : entry.kind === "pdf" ? "pdf" : "file"} size={16} />
         <span className="label">{entry.name}</span>
       </button>
       {isDir && open && <Level serverId={serverId} rootId={rootId} relPath={entry.relPath} depth={depth + 1} />}

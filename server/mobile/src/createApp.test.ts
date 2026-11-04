@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "./createApp";
+import type { ShareStore } from "./shareStore";
 import { makeTestApp, readJson } from "./testFixtures.testUtils";
 import type { Hono } from "hono";
 
@@ -130,3 +131,48 @@ describe("createApp with CORS origins", () => {
     }
   });
 });
+
+describe("createApp CORS methods", () => {
+  it("grants POST and the JSON content type only when sharing is configured", async () => {
+    const plain = makeCorsApp([WEB]);
+    const pre = await plain.request("/api/shares", {
+      method: "OPTIONS",
+      headers: { Origin: WEB, "Access-Control-Request-Method": "POST" },
+    });
+    expect(pre.headers.get("access-control-allow-methods")).toBe("GET, OPTIONS");
+    expect(pre.headers.get("access-control-allow-headers")).toBe("Authorization");
+
+    const sharing = createApp({
+      tokens: { current: async () => "test-token" },
+      registry: { current: async () => ({ version: 1, groups: [], roots: new Map() }) } as never,
+      version: "test",
+      corsOrigins: [WEB],
+      shares: { store: fakeStore(), publicBaseUrl: "https://box.tail1234.ts.net" },
+    });
+    const preSharing = await sharing.request("/api/shares", {
+      method: "OPTIONS",
+      headers: { Origin: WEB, "Access-Control-Request-Method": "POST" },
+    });
+    expect(preSharing.status).toBe(204);
+    expect(preSharing.headers.get("access-control-allow-methods")).toBe("GET, POST, OPTIONS");
+    expect(preSharing.headers.get("access-control-allow-headers")).toBe("Authorization, Content-Type");
+  });
+});
+
+/** A store that is never reached: these tests only read the CORS headers. */
+function fakeStore(): ShareStore {
+  return {
+    save: async () => ({
+      id: "a".repeat(64),
+      name: "x.md",
+      kind: "markdown",
+      contentType: "text/markdown; charset=utf-8",
+      size: 0,
+      createdAt: 0,
+      assets: [],
+    }),
+    read: async () => null,
+    meta: async () => null,
+    readAsset: async () => null,
+  };
+}

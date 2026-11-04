@@ -36,6 +36,8 @@ function fakeClient(over: Partial<Client> = {}): Client {
     file: vi.fn(async () => ({ text: "# A", kind: "markdown" as const, size: 3, mtime: 1 })),
     asset: vi.fn(async () => new Blob()),
     search: vi.fn(async () => ({ results: [], truncated: false })),
+    download: vi.fn(async (_root: string, path: string) => ({ bytes: new Uint8Array(), name: path, mimeType: "text/plain" })),
+    createShare: vi.fn(async () => ({ url: "https://box.ts.net/s/abc" })),
     ...over,
   };
 }
@@ -590,5 +592,53 @@ describe("ordering servers", () => {
     await useReaderStore.getState().bootstrap();
     useReaderStore.getState().reorderServers(["nope", OTHER.id]);
     expect(useReaderStore.getState().servers.map((p) => p.id)).toEqual([OTHER.id, PROFILE.id]);
+  });
+});
+
+describe("pdf documents", () => {
+  beforeEach(async () => {
+    pairFirst();
+    await useReaderStore.getState().bootstrap();
+  });
+
+  it("opens a PDF without asking for its text", async () => {
+    await useReaderStore.getState().openDoc("r1", "docs/手册.pdf");
+    expect(client.file).not.toHaveBeenCalled();
+    expect(useReaderStore.getState().docState).toEqual({ status: "pdf" });
+    expect(useReaderStore.getState().doc).toEqual({ rootId: "r1", relPath: "docs/手册.pdf" });
+  });
+
+  it("recognises every PDF extension case-insensitively", async () => {
+    for (const relPath of ["a.pdf", "A.PDF", "dir/b.Pdf"]) {
+      await useReaderStore.getState().openDoc("r1", relPath);
+      expect(useReaderStore.getState().docState.status, relPath).toBe("pdf");
+    }
+    expect(client.file).not.toHaveBeenCalled();
+  });
+
+  it("does not treat a name merely containing pdf as one", async () => {
+    await useReaderStore.getState().openDoc("r1", "a.pdf.txt");
+    expect(useReaderStore.getState().docState).toMatchObject({ status: "ready" });
+  });
+});
+
+describe("settings view", () => {
+  it("keeps the document mounted while settings are open: the document stays loaded", async () => {
+    pairFirst();
+    await useReaderStore.getState().bootstrap();
+    await useReaderStore.getState().openDoc("r1", "a.md");
+    useReaderStore.getState().setView("settings");
+    const s = useReaderStore.getState();
+    expect(s.view).toBe("settings");
+    expect(s.doc).toEqual({ rootId: "r1", relPath: "a.md" });
+    expect(s.docState.status).toBe("ready");
+  });
+
+  it("closes the settings popover when a document is opened", async () => {
+    pairFirst();
+    await useReaderStore.getState().bootstrap();
+    useReaderStore.getState().setView("settings");
+    await useReaderStore.getState().openDoc("r1", "a.md");
+    expect(useReaderStore.getState().view).toBe("reader");
   });
 });

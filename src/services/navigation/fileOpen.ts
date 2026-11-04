@@ -29,6 +29,7 @@ import { markdownExtensions } from "@/lib/formats/saveFilters";
 import { executeOpenDecision } from "./executeOpenDecision";
 import { applyFileOwnershipAfterOpen } from "@/services/workspaces/fileOwnership";
 import { activateTabWithWorkspaceContext } from "@/services/workspaces/activateTabWithWorkspaceContext";
+import { claimTabForWorkspaceContext } from "@/services/workspaces/workspaceContextOwnership";
 import { tryOpenMediaFile } from "./openMediaFile";
 import { shouldShowProgressIndicator } from "@/utils/fileSizeThresholds";
 // Shared replace flow (also used by "Open Recent File"); re-exported so existing
@@ -252,8 +253,11 @@ export async function handleOpenFile(
   windowLabel: string,
   path: string
 ): Promise<void> {
-  // Identical semantics to openFileInNewTab (existing → ownership-aware
-  // activate, else create) — delegate rather than duplicate.
+  // A tree click belongs to the selected workspace, including when a nested
+  // bookmark already has this file open. Reclaim before activation so the
+  // existing tab cannot pull the sidebar away from the tree being browsed.
+  const existingTabId = findExistingTabForPath(windowLabel, path);
+  if (existingTabId) claimTabForWorkspaceContext(windowLabel, existingTabId, path);
   await openFileInNewTab(windowLabel, path);
 }
 

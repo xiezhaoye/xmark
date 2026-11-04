@@ -20,6 +20,9 @@
  *   - Body cursor and user-select are set only when the caller asks for a
  *     cursor, and restored only by the session that set them, so a hook with no
  *     drag in progress cannot clear another resizer's styles on unmount.
+ *   - Mouse resizes shield embedded frames while dragging: events inside an
+ *     iframe never reach this document. Capture listeners also observe release
+ *     before an editor can stop propagation.
  *   - The returned controls are referentially stable, so they are safe in
  *     dependency arrays.
  *
@@ -87,10 +90,19 @@ function attach(
   const onRelease = (event: Event) => end("release", event);
   const onCancel = (event: Event) => end("cancel", event);
   const onBlur = () => end("blur", null);
+  const shield = kind === "mouse" && cursor !== undefined ? document.createElement("div") : null;
+  if (shield) {
+    shield.dataset.documentDragShield = "";
+    shield.setAttribute("aria-hidden", "true");
+    Object.assign(shield.style, {
+      position: "fixed", inset: "0", zIndex: "2147483647", pointerEvents: "auto", cursor,
+    });
+    document.body.append(shield);
+  }
 
-  document.addEventListener(names.move, onMove);
-  document.addEventListener(names.release, onRelease);
-  if (names.cancel) document.addEventListener(names.cancel, onCancel);
+  document.addEventListener(names.move, onMove, true);
+  document.addEventListener(names.release, onRelease, true);
+  if (names.cancel) document.addEventListener(names.cancel, onCancel, true);
   window.addEventListener("blur", onBlur);
   if (cursor !== undefined) {
     document.body.style.cursor = cursor;
@@ -98,10 +110,11 @@ function attach(
   }
 
   return () => {
-    document.removeEventListener(names.move, onMove);
-    document.removeEventListener(names.release, onRelease);
-    if (names.cancel) document.removeEventListener(names.cancel, onCancel);
+    document.removeEventListener(names.move, onMove, true);
+    document.removeEventListener(names.release, onRelease, true);
+    if (names.cancel) document.removeEventListener(names.cancel, onCancel, true);
     window.removeEventListener("blur", onBlur);
+    shield?.remove();
     if (cursor !== undefined) {
       document.body.style.cursor = "";
       document.body.style.userSelect = "";

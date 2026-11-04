@@ -13,7 +13,7 @@
  *
  * @module components/settings/ServersSection
  */
-import { Fragment, useEffect, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent, type TouchEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent, type TouchEvent } from "react";
 import { ApiError } from "../../api/client";
 import { defaultServerName, type ServerProfile } from "../../api/types";
 import { parsePairLink } from "../../pairing/parsePairUrl";
@@ -41,26 +41,6 @@ const STATE_KEY: Record<ServerState, "settings.status.checking" | "settings.stat
   offline: "settings.status.offline",
   unauthorized: "settings.status.unauthorized",
 };
-
-/** `host:port`, allowed to wrap after a dot so a long Tailscale name never splits its port. */
-function Address({ host, port }: { host: string; port: number }) {
-  const parts = host.split(".");
-  return (
-    <>
-      {parts.map((part, i) => (
-        <Fragment key={i}>
-          {part}
-          {i < parts.length - 1 && (
-            <>
-              .<wbr />
-            </>
-          )}
-        </Fragment>
-      ))}
-      :{port}
-    </>
-  );
-}
 
 /** Where each row starts on screen, so a drag knows what it is passing. */
 const rowRects = (servers: ServerProfile[], rows: Map<string, HTMLLIElement>): RowRect[] =>
@@ -331,9 +311,6 @@ export function ServersSection() {
                         <span className="server-name">{p.name}</span>
                         <span className={`status-dot ${state}`} role="img" aria-label={t(STATE_KEY[state])} />
                       </span>
-                      <span className="server-address">
-                        <Address host={p.host} port={p.port} />
-                      </span>
                     </span>
                   </button>
                   <button type="button" className="icon-button" aria-label={t("settings.more")} aria-expanded={menuId === p.id} onClick={() => setMenuId(menuId === p.id ? null : p.id)}>
@@ -406,11 +383,10 @@ export function ServersSection() {
         <p className="muted">{t("settings.noServers")}</p>
       )}
 
-      {/* Adding sits under the list it adds to; the hint says what to scan. */}
+      {/* Adding sits under the list it adds to. */}
       <button type="button" className="button wide" disabled={adding} onClick={() => void add()}>
         <Icon name="scan" size={18} /> {adding ? t("settings.verifying") : t("settings.addServer")}
       </button>
-      <p className="muted hint">{t("settings.hint")}</p>
       {toast}
     </>
   );

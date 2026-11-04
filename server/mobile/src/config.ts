@@ -14,11 +14,23 @@
  * list of origins a browser version of the reader may call from. Empty (the
  * default) keeps the server browser-hostile, which is the shipped behaviour.
  *
+ * Sharing has three knobs of its own:
+ *
+ * - `XMARK_MOBILE_SHARES_DIR` — where immutable snapshots live (beside the
+ *   token by default; the bytes are the only copy, so it is a data directory).
+ * - `XMARK_MOBILE_PUBLIC_BASE_URL` — the HTTPS origin a share link is built
+ *   from (a Funnel hostname). Unset means sharing is unavailable, and no
+ *   public listener is opened at all. The value is trusted configuration,
+ *   never derived from a request's `Host` header.
+ * - `XMARK_MOBILE_PUBLIC_PORT` — the loopback port Funnel proxies to.
+ *
  * @module config
  */
 import * as path from "node:path";
 
 export const DEFAULT_PORT = 8740;
+/** Funnel proxies `https://<name>.ts.net` to this loopback port. */
+export const DEFAULT_PUBLIC_PORT = 8741;
 
 export interface Config {
   shareFile: string;
@@ -28,6 +40,12 @@ export interface Config {
   host: string | null;
   /** Origins allowed cross-origin (`scheme://host[:port]`); empty means no CORS at all. */
   corsOrigins: string[];
+  /** Directory of immutable share snapshots (one subdirectory per share). */
+  sharesDir: string;
+  /** `https://host[:port]` a share URL is built from; null means sharing is off. */
+  publicBaseUrl: string | null;
+  /** Loopback port of the public listener (0 = OS-assigned, for tests). */
+  publicPort: number;
 }
 
 export type Env = Record<string, string | undefined>;
@@ -58,6 +76,35 @@ function parseCorsOrigins(raw: string | undefined): string[] {
     if (!origins.includes(origin)) origins.push(origin);
   }
   return origins;
+}
+
+function parsePublicPort(raw: string | undefined): number {
+  if (raw === undefined) return DEFAULT_PUBLIC_PORT;
+  const port = /^\d+$/.test(raw) ? Number(raw) : NaN;
+  if (!(port >= 0 && port <= 65535)) throw new Error(`Invalid XMARK_MOBILE_PUBLIC_PORT ${JSON.stringify(raw)}`);
+  return port;
+}
+
+/**
+ * A share URL must be built from configured truth, never from a request: the
+ * base is an `https` origin with no credentials, path, query or fragment, so
+ * appending `/s/<id>` is the whole URL. A trailing slash is tolerated.
+ */
+function parsePublicBaseUrl(raw: string | undefined): string | null {
+  if (raw === undefined || raw === "") return null;
+  const fail = () => new Error(`Invalid XMARK_MOBILE_PUBLIC_BASE_URL ${JSON.stringify(raw)}: need an https origin`);
+  if (raw.trim() !== raw) throw fail();
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    throw fail();
+  }
+  const bare = raw.replace(/\/$/, "");
+  if (url.protocol !== "https:" || url.username || url.password) throw fail();
+  if (url.pathname !== "/" || url.search || url.hash) throw fail();
+  if (url.origin !== bare) throw fail();
+  return bare;
 }
 
 function parseOrigin(item: string): string | null {
@@ -96,5 +143,8 @@ export function resolveConfig(env: Env, home: string, platform: NodeJS.Platform 
     port: parsePort(env.XMARK_MOBILE_PORT),
     host: env.XMARK_MOBILE_HOST ?? null,
     corsOrigins: parseCorsOrigins(env.XMARK_MOBILE_CORS_ORIGINS),
+    sharesDir: env.XMARK_MOBILE_SHARES_DIR ?? path.join(support, "mobile-server", "shares"),
+    publicBaseUrl: parsePublicBaseUrl(env.XMARK_MOBILE_PUBLIC_BASE_URL),
+    publicPort: parsePublicPort(env.XMARK_MOBILE_PUBLIC_PORT),
   };
 }

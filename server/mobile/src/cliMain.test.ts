@@ -180,6 +180,95 @@ describe("runCli", () => {
     expect(deps.exit).toHaveBeenCalledWith(1);
   });
 
+  it("serve starts the public listener only when a public base URL is configured", async () => {
+    deps.env.XMARK_MOBILE_PORT = "0";
+    deps.env.XMARK_MOBILE_HOST = "127.0.0.1";
+    deps.env.XMARK_MOBILE_PUBLIC_PORT = "0";
+    deps.env.XMARK_MOBILE_PUBLIC_BASE_URL = "https://box.tail1234.ts.net";
+    await writeFile(deps.env.XMARK_MOBILE_SHARE_FILE!, JSON.stringify({ version: 1, groups: [] }));
+    const bound: Array<{ hostname: string; port: number }> = [];
+    deps.startServer = async (o) => {
+      bound.push({ hostname: o.hostname, port: o.port });
+      return { url: `http://${o.hostname}:${o.port}`, close: async () => {} };
+    };
+    expect(await runCli(["serve"], deps)).toBe(0);
+    expect(bound).toHaveLength(2);
+    expect(bound[0]).toEqual({ hostname: "127.0.0.1", port: 0 });
+    expect(bound[1]).toEqual({ hostname: "127.0.0.1", port: 0 });
+    expect(out.join("")).toContain("https://box.tail1234.ts.net");
+  });
+
+  it("serve binds the private listener to the Tailscale address and the public one to loopback", async () => {
+    deps.env.XMARK_MOBILE_PUBLIC_PORT = "0";
+    deps.env.XMARK_MOBILE_PUBLIC_BASE_URL = "https://box.tail1234.ts.net";
+    await writeFile(deps.env.XMARK_MOBILE_SHARE_FILE!, JSON.stringify({ version: 1, groups: [] }));
+    const bound: Array<{ hostname: string; port: number }> = [];
+    deps.startServer = async (o) => {
+      bound.push({ hostname: o.hostname, port: o.port });
+      return { url: `http://${o.hostname}:${o.port}`, close: async () => {} };
+    };
+    expect(await runCli(["serve"], deps)).toBe(0);
+    expect(bound).toEqual([
+      { hostname: "100.64.1.2", port: 8740 },
+      { hostname: "127.0.0.1", port: 0 },
+    ]);
+  });
+
+  it("serve starts no public listener without a public base URL", async () => {
+    deps.env.XMARK_MOBILE_PORT = "0";
+    deps.env.XMARK_MOBILE_HOST = "127.0.0.1";
+    await writeFile(deps.env.XMARK_MOBILE_SHARE_FILE!, JSON.stringify({ version: 1, groups: [] }));
+    const bound: unknown[] = [];
+    deps.startServer = async (o) => {
+      bound.push(o.port);
+      return { url: "http://127.0.0.1:1", close: async () => {} };
+    };
+    expect(await runCli(["serve"], deps)).toBe(0);
+    expect(bound).toEqual([0]);
+  });
+
+  it("serve closes both listeners when the public one fails to start", async () => {
+    deps.env.XMARK_MOBILE_PORT = "0";
+    deps.env.XMARK_MOBILE_HOST = "127.0.0.1";
+    deps.env.XMARK_MOBILE_PUBLIC_PORT = "0";
+    deps.env.XMARK_MOBILE_PUBLIC_BASE_URL = "https://box.tail1234.ts.net";
+    await writeFile(deps.env.XMARK_MOBILE_SHARE_FILE!, JSON.stringify({ version: 1, groups: [] }));
+    let closed = 0;
+    let calls = 0;
+    deps.startServer = async () => {
+      calls += 1;
+      if (calls === 2) throw new Error("EADDRINUSE");
+      return { url: "http://127.0.0.1:1", close: async () => void (closed += 1) };
+    };
+    expect(await runCli(["serve"], deps)).toBe(1);
+    expect(closed).toBe(1);
+    expect(err.join("")).toContain("EADDRINUSE");
+  });
+
+  it("serve reports a bad public port or base URL", async () => {
+    deps.env.XMARK_MOBILE_PUBLIC_PORT = "nope";
+    expect(await runCli(["serve"], deps)).toBe(1);
+    deps.env.XMARK_MOBILE_PUBLIC_PORT = "0";
+    deps.env.XMARK_MOBILE_PUBLIC_BASE_URL = "http://insecure.example.com";
+    expect(await runCli(["serve"], deps)).toBe(1);
+  });
+
+  it("the public listener the CLI starts answers no private API", async () => {
+    deps.env.XMARK_MOBILE_PORT = "0";
+    deps.env.XMARK_MOBILE_HOST = "127.0.0.1";
+    deps.env.XMARK_MOBILE_PUBLIC_PORT = "0";
+    deps.env.XMARK_MOBILE_PUBLIC_BASE_URL = "https://box.tail1234.ts.net";
+    await writeFile(deps.env.XMARK_MOBILE_SHARE_FILE!, JSON.stringify({ version: 1, groups: [] }));
+    const apps: Array<{ app: unknown }> = [];
+    deps.startServer = async (o) => {
+      apps.push(o);
+      return { url: "http://127.0.0.1:1", close: async () => {} };
+    };
+    expect(await runCli(["serve"], deps)).toBe(0);
+    const publicApp = apps[1].app as { request: (u: string, i?: RequestInit) => Promise<Response> };
+    expect((await publicApp.request("/api/health")).status).toBe(404);
+  });
+
   it("serve reports a bad port configuration", async () => {
     deps.env.XMARK_MOBILE_PORT = "nope";
     expect(await runCli(["serve"], deps)).toBe(1);
