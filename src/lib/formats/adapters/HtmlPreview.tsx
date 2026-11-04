@@ -38,6 +38,7 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import DOMPurify from "dompurify";
+import { useSettingsStore } from "@/stores/settingsStore";
 import { HtmlTrustBar } from "./HtmlTrustBar";
 import { useHtmlTrust } from "./useHtmlTrust";
 import { TRUSTED_ALLOW, TRUSTED_SANDBOX, trustedFrameUrl } from "./htmlTrust";
@@ -89,9 +90,25 @@ export function HtmlPreview({
   path,
 }: PreviewRendererProps) {
   const { t } = useTranslation("editor");
+  // Off = this user never wants a document's scripts to run, so the pane never
+  // offers to. Absent (state persisted before the setting existed) reads as on.
+  const allowTrustedPreview = useSettingsStore(
+    (s) => s.formats.htmlTrustedPreview !== false,
+  );
 
-  const { token, trusted, stale, error, runCount, onEnable, onReload, onRevoke } =
-    useHtmlTrust(path, liveContent);
+  const {
+    token,
+    trusted: granted,
+    stale,
+    error,
+    runCount,
+    onEnable,
+    onReload,
+    onRevoke,
+  } = useHtmlTrust(path, liveContent);
+  // A grant made while the setting was on must not keep executing afterwards —
+  // the frame falls back to the sandboxed `srcdoc` on the next render.
+  const trusted = granted && allowTrustedPreview;
 
   const srcdoc = useMemo(
     () => (trusted ? null : buildSandboxedSrcdoc(content)),
@@ -119,7 +136,8 @@ export function HtmlPreview({
           {t("preview.signOffPending")}
         </div>
       )}
-      <HtmlTrustBar
+      {allowTrustedPreview && (
+        <HtmlTrustBar
         documentKey={path}
         trusted={trusted}
         stale={stale}
@@ -128,7 +146,8 @@ export function HtmlPreview({
         onEnable={onEnable}
         onRevoke={onRevoke}
         onReload={onReload}
-      />
+        />
+      )}
       {empty ? (
         <div className="html-preview__empty-slot" data-testid="html-preview-empty" />
       ) : trusted && token ? (

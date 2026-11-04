@@ -22,6 +22,8 @@
   "formats.diagrams.description": "以經過淨化的即時算繪與原始碼並排開啟 .mmd 和 .svg。",
   "formats.htmlPreview.label": "HTML 預覽",
   "formats.htmlPreview.description": "以阻擋指令碼的沙箱化預覽開啟 .html 和 .htm 檔案（安全審查進行中）",
+  "formats.htmlTrustedPreview.label": "提供「受信任預覽」入口",
+  "formats.htmlTrustedPreview.description": "在 .html 預覽上方顯示「啟用受信任預覽」控制項。關閉後所有預覽一律沙盒化、腳本一律封鎖，該控制項不再出現。",
   "formats.codeViewers.label": "程式碼檢視器",
   "formats.codeViewers.description": "以語法高亮檢視器開啟 .ts、.js、.py、.rs、.go、.css、.sh、.rb、.lua 及類似檔案(預設唯讀 — 點擊「啟用編輯」即可輸入)。",
   "formats.defaultViewMode.label": "預設檢視模式",

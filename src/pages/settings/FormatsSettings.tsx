@@ -204,6 +204,15 @@ export function FormatsSettings() {
           />
         </SettingRow>
         <SettingRow
+          label={t("formats.htmlTrustedPreview.label")}
+          description={t("formats.htmlTrustedPreview.description")}
+        >
+          <Toggle
+            checked={formats.htmlTrustedPreview !== false}
+            onChange={(v) => updateFormatsSetting("htmlTrustedPreview", v)}
+          />
+        </SettingRow>
+        <SettingRow
           label={t("formats.codeViewers.label")}
           description={t("formats.codeViewers.description")}
         >

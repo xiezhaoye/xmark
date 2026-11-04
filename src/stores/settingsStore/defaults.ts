@@ -160,6 +160,7 @@ export const initialState: SettingsState = {
     dataFormats: false,
     diagrams: false,
     htmlPreview: false,
+    htmlTrustedPreview: true,
     codeViewers: false,
     externalEditor: "",
     defaultViewMode: "split",

@@ -22,6 +22,8 @@
   "formats.diagrams.description": "Open .mmd and .svg with a sanitized live render alongside the source",
   "formats.htmlPreview.label": "HTML preview",
   "formats.htmlPreview.description": "Open .html and .htm files in a sandboxed preview that blocks scripts (security review in progress)",
+  "formats.htmlTrustedPreview.label": "Offer trusted HTML preview",
+  "formats.htmlTrustedPreview.description": "Show the “enable trusted preview” control above .html previews. Off keeps every preview sandboxed with scripts blocked, and the control never appears.",
   "formats.codeViewers.label": "Code viewers",
   "formats.codeViewers.description": "Open .ts, .js, .py, .rs, .go, .css, .sh, .rb, .lua and similar files in a syntax-highlighted viewer (read-only by default — click Enable Editing to type)",
   "formats.defaultViewMode.label": "Default view mode",

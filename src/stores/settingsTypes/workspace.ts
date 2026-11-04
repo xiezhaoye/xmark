@@ -37,6 +37,17 @@ export interface FormatsSettings {
   diagrams: boolean;
   /** Register `.html` / `.htm` adapter (sandboxed iframe + DOMPurify + CSP). */
   htmlPreview: boolean;
+  /**
+   * Whether an HTML preview may offer "enable trusted preview" — the explicit
+   * consent that swaps the sandboxed `srcdoc` frame for the `vmark-trusted://`
+   * origin with `allow-scripts`.
+   *
+   * Off means the preview is ALWAYS the safe frame and the trust bar is never
+   * rendered: a user who will never run a document's scripts should not carry
+   * a control offering to. Optional because state persisted before this
+   * existed has no key; everything reads absent as `true` (today's behaviour).
+   */
+  htmlTrustedPreview?: boolean;
   /** Register `.ts` / `.tsx` / `.js` / `.jsx` / `.py` / `.rs` / `.go` /
    *  `.css` / `.sh` / `.bash` / `.rb` / `.lua` viewers (read-only by default). */
   codeViewers: boolean;

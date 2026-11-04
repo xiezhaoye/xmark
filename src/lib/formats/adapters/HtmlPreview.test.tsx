@@ -16,6 +16,7 @@ const bridge = vi.hoisted(() => ({
 vi.mock("@/services/trustedHtml/trustedHtmlBridge", () => bridge);
 
 import { useHtmlTrustStore } from "@/stores/htmlTrustStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 import { HtmlPreview } from "./HtmlPreview";
 
 const TOKEN = "a".repeat(64);
@@ -561,5 +562,31 @@ describe("diagnostics are not echoed as a bare-coordinate strip", () => {
     );
     expect(screen.queryByText("(6:1)")).toBeNull();
     expect(document.querySelector(".html-preview__hint")).toBeNull();
+  });
+});
+
+describe("with the trusted-preview entry turned off", () => {
+  it("renders no trust control and keeps the safe frame", async () => {
+    useSettingsStore.setState((s) => ({
+      formats: { ...s.formats, htmlTrustedPreview: false },
+    }));
+    renderPreview();
+
+    // The bar's action is gone — nothing offers to run the document.
+    expect(screen.queryByRole("button", { name: /htmlTrustOpen|trusted/i })).toBeNull();
+    expect(frame()).toHaveAttribute("sandbox", "");
+    expect(bridge.grantTrustedHtml).not.toHaveBeenCalled();
+  });
+
+  it("does not keep executing a document trusted while the setting was on", () => {
+    // A grant outlives the setting in the session store; the frame must not.
+    useHtmlTrustStore.getState().grant(PATH, TOKEN);
+    useSettingsStore.setState((s) => ({
+      formats: { ...s.formats, htmlTrustedPreview: false },
+    }));
+    renderPreview();
+
+    expect(frame()).toHaveAttribute("sandbox", "");
+    expect(frame().getAttribute("src") ?? "").not.toContain("vmark-trusted");
   });
 });
