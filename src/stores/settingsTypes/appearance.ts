@@ -53,6 +53,13 @@ export interface AppearanceSettings {
    * has no key; every read treats absent as 100.
    */
   previewZoom?: number;
+  /**
+   * Browser-style page zoom for the whole window (0.5–3, step 0.1). Two zoom
+   * scales on purpose: this one is the native `pageZoom` (instant, ⌘+/⌘−),
+   * `previewZoom` is the in-pane reflowing one. Optional so state persisted
+   * before it existed stays valid; every read treats absent as 1.
+   */
+  windowZoom?: number;
   lineHeight: number;
   blockSpacing: number; // Visual gap between blocks in "lines" (1 = one line-height)
   cjkLetterSpacing: CJKLetterSpacingValue; // Letter spacing for CJK characters (em)

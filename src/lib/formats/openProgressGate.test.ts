@@ -27,10 +27,13 @@ describe("mountsWysiwygEditor", () => {
     expect(mountsWysiwygEditor("/reports/big.html")).toBe(false);
   });
 
-  it("is false when the registry is not bootstrapped, instead of throwing", () => {
+  it("falls back to the extension when the registry cannot answer", () => {
     registry.dispatchEditor.mockImplementation(() => {
       throw new Error("[formats] dispatchEditor: registry is empty");
     });
-    expect(mountsWysiwygEditor("/notes/plan.md")).toBe(false);
+    // markdown IS the WYSIWYG family, so an unanswered lookup must not claim
+    // "no editor" and clear an indicator the editor was about to clear.
+    expect(mountsWysiwygEditor("/notes/plan.md")).toBe(true);
+    expect(mountsWysiwygEditor("/reports/big.html")).toBe(false);
   });
 });

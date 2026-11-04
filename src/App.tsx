@@ -54,6 +54,7 @@ import {
   MainWindowRunners,
 } from "@/hooks/lifecycle";
 import { useRemoteSessionStore } from "@/stores/remoteSessionStore";
+import { useWindowZoom } from "@/hooks/useWindowZoom";
 
 const TerminalPanel = lazy(() =>
   import("@/components/Terminal").then((m) => ({ default: m.TerminalPanel }))
@@ -104,6 +105,8 @@ export function MainLayout() {
   // columns RENDER; it never touches the local stores, so switching back is a
   // return to the same tabs, unsaved edits and sidebar.
   const remoteServerId = useRemoteSessionStore((state) => state.active[windowLabel] ?? null);
+  // ⌘+/⌘−/⌘0 — the browser's own page zoom (instant, no reflow).
+  useWindowZoom();
   const railSettingsWidth = useSettingsStore((s) => s.general.workspaceRailWidth);
   const railCollapsed = useSettingsStore((s) => s.general.workspaceRailCollapsed);
   const workspaceRailWidth = railColumnWidth(railSettingsWidth, railCollapsed);

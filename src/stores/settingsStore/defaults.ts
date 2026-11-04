@@ -64,6 +64,7 @@ export const initialState: SettingsState = {
     monoFont: "system",
     fontSize: 18,
     previewZoom: 100,
+    windowZoom: 1,
     lineHeight: 1.8,
     blockSpacing: 1, // 1 = one line-height of visual gap between blocks
     cjkLetterSpacing: "0", // Off by default

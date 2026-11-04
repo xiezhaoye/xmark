@@ -21,11 +21,30 @@
 
 import { dispatchEditor } from "./registry";
 
-/** True when `filePath` opens on a surface that will clear the load indicator. */
+/**
+ * The one WYSIWYG family. Used ONLY as the fallback below — the registry is the
+ * authority whenever it can answer.
+ */
+const MARKDOWN_EXTS = new Set(["md", "markdown", "mdown", "mkd", "mdx"]);
+
+function extensionOf(filePath: string): string {
+  const base = filePath.slice(filePath.lastIndexOf("/") + 1);
+  const dot = base.lastIndexOf(".");
+  return dot <= 0 ? "" : base.slice(dot + 1).toLowerCase();
+}
+
+/**
+ * True when `filePath` opens on a surface that will clear the load indicator.
+ *
+ * A registry that cannot answer (not bootstrapped — never in the app, routinely
+ * in a unit test that mounts one open path) falls back to the extension: only
+ * markdown declares a WYSIWYG surface, and answering "no" there would clear the
+ * indicator under a document that would have cleared it itself.
+ */
 export function mountsWysiwygEditor(filePath: string): boolean {
   try {
     return dispatchEditor(filePath).wysiwygComponent !== undefined;
   } catch {
-    return false;
+    return MARKDOWN_EXTS.has(extensionOf(filePath));
   }
 }
