@@ -50,7 +50,7 @@ import { remoteLeadingColumns } from "@/shell/shellChrome";
 import { tooltipWithShortcut } from "@/utils/tooltipWithShortcut";
 import { CollapsedColumnStrip } from "@/components/shared/CollapsedColumnStrip";
 import { ServerSwitcher } from "@/components/WorkspaceRail/ServerSwitcher";
-import { RemoteError, RemoteBanner } from "./RemoteChrome";
+import { RemoteError } from "./RemoteChrome";
 import { RemoteShellSection } from "./RemoteShellSection";
 import { RemoteTree } from "./RemoteTree";
 import { RemoteViewer } from "./RemoteViewer";
@@ -200,12 +200,10 @@ function MainRegion({ serverId }: { serverId: string }) {
   const { scale: previewZoom } = usePreviewZoom();
   const { t } = useTranslation("sidebar");
   const doc = useRemoteBrowserStore((s) => s.doc);
-  const serverName = useRemoteServersStore((s) => s.serverAt(serverId)?.name ?? "");
   void useGroups(serverId);
 
   return (
     <div className="remote-viewer">
-      <RemoteBanner serverName={serverName} />
       <PreviewZoomBar />
       {/* The zoom travels as a custom property, applied to the BODY'S CHILDREN
           (remote-viewer.css). Putting `zoom` on this scrolling box rescales the

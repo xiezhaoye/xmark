@@ -21,18 +21,6 @@ import { useTranslation } from "react-i18next";
 import "./remote-chrome.css";
 
 /** `Read-only · <server name>` — the one-line statement of what this window is. */
-export function RemoteBanner({ serverName }: { serverName: string }) {
-  const { t } = useTranslation("sidebar");
-  return (
-    <div className="remote-banner" role="status">
-      <span className="remote-banner__badge">{t("remote.readOnly")}</span>
-      <span className="remote-banner__name" title={serverName}>
-        {serverName}
-      </span>
-    </div>
-  );
-}
-
 export interface RemoteErrorProps {
   message: string;
   onRetry: () => void;
