@@ -16,6 +16,7 @@ import { openWorkspaceWithConfig } from "@/services/workspaces/openWorkspaceWith
 import { getFileName } from "@/utils/pathUtils";
 import { routeOpenBySize } from "@/services/navigation/largeFileRouting";
 import { maybeMarkLargeMarkdownAsSource } from "@/lib/formats/markdownLargeFile";
+import { mountsWysiwygEditor } from "@/lib/formats/openProgressGate";
 import { applyFileOwnershipAfterOpen } from "@/services/workspaces/fileOwnership";
 import { shouldShowProgressIndicator } from "@/utils/fileSizeThresholds";
 import { isBinaryMediaPath, replaceTabWithMediaFile } from "./openMediaFile";
@@ -89,7 +90,11 @@ export async function replaceTabWithFile(params: {
     useRecentFilesStore.getState().addFile(sourcePath);
     maybeMarkLargeMarkdownAsSource(tabId, sourcePath, route.forceSourceMode);
     // On success the indicator stays on until TiptapEditor's onCreate fires
-    // endLoad() — that is the moment the editor is actually interactive.
+    // endLoad() — that is the moment the editor is actually interactive. A
+    // format without that surface has no such consumer, so it is cleared here.
+    if (replaceLoadId !== null && !mountsWysiwygEditor(targetPath)) {
+      useFileLoadStore.getState().endLoad(replaceLoadId);
+    }
     return { ok: true };
   } catch (error) {
     // Clear the indicator immediately on error so no stale spinner lingers.

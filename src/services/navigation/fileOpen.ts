@@ -24,6 +24,7 @@ import { createUntitledTab } from "@/services/navigation/newFile";
 import { getFileName } from "@/utils/pathUtils";
 import { routeOpenBySize } from "@/services/navigation/largeFileRouting";
 import { maybeMarkLargeMarkdownAsSource } from "@/lib/formats/markdownLargeFile";
+import { mountsWysiwygEditor } from "@/lib/formats/openProgressGate";
 import { getSupportedExtensions } from "@/lib/formats/registry";
 import { markdownExtensions } from "@/lib/formats/saveFilters";
 import { executeOpenDecision } from "./executeOpenDecision";
@@ -139,6 +140,14 @@ export async function openFileInNewTabCore(
     // adapter helper. For non-markdown formats this is a no-op
     // since they don't have a WYSIWYG path.
     maybeMarkLargeMarkdownAsSource(tabId, path, route.forceSourceMode);
+
+    // Nothing will clear the indicator for a format with no WYSIWYG surface
+    // (`TiptapEditor` is its only other consumer), so a 400 KB .html/.pdf/csv
+    // used to leave the spinner in the status bar for the rest of the session.
+    // A WYSIWYG open keeps it: that one ends when the editor is interactive.
+    if (loadId !== null && !mountsWysiwygEditor(path)) {
+      useFileLoadStore.getState().endLoad(loadId);
+    }
 
     perfMark("openFileInNewTab:complete");
     // On success, the indicator stays on until TiptapEditor's onCreate fires

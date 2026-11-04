@@ -1,0 +1,36 @@
+/**
+ * `mountsWysiwygEditor` — the gate that decides whether a large open reports
+ * progress at all.
+ *
+ * Behaviour under test: only a path that dispatches to a format with a
+ * `wysiwygComponent` (the markdown adapter) returns true, because `TiptapEditor`
+ * is the ONLY caller of `endLoad`. A large HTML/PDF/code file that started the
+ * indicator used to leave it in the status bar forever.
+ */
+import { describe, expect, it, vi } from "vitest";
+
+const registry = vi.hoisted(() => ({
+  dispatchEditor: vi.fn(),
+}));
+vi.mock("./registry", () => registry);
+
+const { mountsWysiwygEditor } = await import("./openProgressGate");
+
+describe("mountsWysiwygEditor", () => {
+  it("is true for a format that declares a WYSIWYG surface", () => {
+    registry.dispatchEditor.mockReturnValue({ id: "markdown", wysiwygComponent: () => Promise.resolve({}) });
+    expect(mountsWysiwygEditor("/notes/plan.md")).toBe(true);
+  });
+
+  it("is false for a format without one — nothing would end the load", () => {
+    registry.dispatchEditor.mockReturnValue({ id: "html", extensions: ["html"] });
+    expect(mountsWysiwygEditor("/reports/big.html")).toBe(false);
+  });
+
+  it("is false when the registry is not bootstrapped, instead of throwing", () => {
+    registry.dispatchEditor.mockImplementation(() => {
+      throw new Error("[formats] dispatchEditor: registry is empty");
+    });
+    expect(mountsWysiwygEditor("/notes/plan.md")).toBe(false);
+  });
+});

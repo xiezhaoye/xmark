@@ -152,8 +152,18 @@ describe("drag-drop split helpers", () => {
       sizeBytes: 400 * 1024,
     });
 
-    await openDroppedFileInNewTab(WINDOW, "/");
+    // Read still in flight: the label falls back to the raw path.
+    let release: (text: string) => void = () => {};
+    mockReadTextFile.mockReturnValue(new Promise<string>((resolve) => (release = resolve)));
 
+    const opening = openDroppedFileInNewTab(WINDOW, "/");
+    await Promise.resolve();
     expect(useFileLoadStore.getState().filename).toBe("/");
+
+    // And the open clears it itself: "/" dispatches to no WYSIWYG surface, so
+    // no editor mount will ever call endLoad (openProgressGate).
+    release("");
+    await opening;
+    expect(useFileLoadStore.getState().active).toBe(false);
   });
 });

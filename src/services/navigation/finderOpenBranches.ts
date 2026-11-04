@@ -42,6 +42,7 @@ import {
 import { applyFileOwnershipAfterOpen } from "@/services/workspaces/fileOwnership";
 import { routeOpenBySize } from "@/services/navigation/largeFileRouting";
 import { maybeMarkLargeMarkdownAsSource } from "@/lib/formats/markdownLargeFile";
+import { mountsWysiwygEditor } from "@/lib/formats/openProgressGate";
 import { shouldShowProgressIndicator } from "@/utils/fileSizeThresholds";
 import { getFileName } from "@/utils/pathUtils";
 import { finderFileOpenError } from "@/utils/debug";
@@ -196,6 +197,11 @@ export async function withSizeGateAndIndicator(
   const loadedTabId = await run();
   if (loadedTabId) {
     maybeMarkLargeMarkdownAsSource(loadedTabId, path, route.forceSourceMode);
+    // Same leak as the other two open paths: a format with no WYSIWYG surface
+    // never reaches TiptapEditor's endLoad.
+    if (indicatorId !== null && !mountsWysiwygEditor(path)) {
+      useFileLoadStore.getState().endLoad(indicatorId);
+    }
   } else if (indicatorId !== null) {
     // Nothing landed (read failure, detached orphan, dedup) — clear the
     // indicator so no spinner is left stuck on screen.
