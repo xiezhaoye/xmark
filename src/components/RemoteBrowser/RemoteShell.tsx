@@ -37,7 +37,7 @@
  * @module components/RemoteBrowser/RemoteShell
  */
 
-import { useEffect } from "react";
+import { useEffect, type CSSProperties } from "react";
 import { useTranslation } from "react-i18next";
 import { FolderOpen, ListTree } from "lucide-react";
 import { useRemoteBrowserStore } from "@/stores/remoteBrowserStore";
@@ -207,7 +207,14 @@ function MainRegion({ serverId }: { serverId: string }) {
     <div className="remote-viewer">
       <RemoteBanner serverName={serverName} />
       <PreviewZoomBar />
-      <div className="remote-viewer__body vm-scroll--thin" style={{ zoom: previewZoom }}>
+      {/* The zoom travels as a custom property, applied to the BODY'S CHILDREN
+          (remote-viewer.css). Putting `zoom` on this scrolling box rescales the
+          iframe's layout box, but the frame is a subdocument painted separately:
+          it kept rendering at the old scale until the document was swapped. */}
+      <div
+        className="remote-viewer__body vm-scroll--thin"
+        style={{ "--preview-zoom": String(previewZoom) } as CSSProperties}
+      >
         {/* `doc` is enough: a document whose `kind` is still `"loading"` is
             in flight, and the viewer paints that state itself. Gating on the
             kind here unmounted the reader the moment it started reading. */}

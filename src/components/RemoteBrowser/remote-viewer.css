@@ -19,6 +19,13 @@
   overflow: auto;
 }
 
+/* The reader's zoom, applied per CONTENT rather than to this scroller: a
+   sandboxed iframe is a subdocument, and `zoom` on its ancestor only resized
+   its box — the frame repainted at the old scale until the document changed. */
+.remote-viewer__body > * {
+  zoom: var(--preview-zoom, 1);
+}
+
 .remote-viewer__empty {
   display: flex;
   align-items: center;
@@ -303,6 +310,9 @@
 .remote-html {
   display: block;
   width: 100%;
+  /* `height: 100%` still lands on the pane: zoom rescales the used size, so the
+     percentage resolves against the parent in the element's own zoomed pixels.
+     Dividing by the zoom here would have made it SHORTER at every step. */
   height: 100%;
   border: 0;
   background: var(--bg-color);
