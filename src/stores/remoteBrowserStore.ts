@@ -91,7 +91,11 @@ export const useRemoteBrowserStore = create<RemoteBrowserState & RemoteBrowserAc
     set((s) =>
       s.serverId === serverId
         ? s
-        : { ...INITIAL, serverId, connection, groupsStatus: "loading" },
+        : // `groupsStatus` stays INITIAL (`"idle"`): that is the ONLY value
+          // `useGroups` loads on. Stamping `"loading"` here would satisfy the
+          // status gate with a request nobody ever issued, and every region
+          // would spin on `remote.loading` forever.
+          { ...INITIAL, serverId, connection },
     ),
   close: () => set({ ...INITIAL }),
 
