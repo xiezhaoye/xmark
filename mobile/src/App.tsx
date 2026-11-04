@@ -47,8 +47,14 @@ export function App() {
     const onPointerDown = (e: Event) => {
       const target = e.target as Node | null;
       if (!target) return;
-      // A sheet a section opened (the drawer's server picker) is part of settings.
-      const inside = (target as Element).closest?.(".settings-popover, .server-sheet-backdrop");
+      // Anything settings itself opened counts as settings: the drawer's server
+      // picker, and any dialog portalled to <body> (Modal, the scan screen).
+      // Without the last two, a tap inside a dialog read as a tap OUTSIDE the
+      // popover, which closed settings — and took the dialog with it before its
+      // own click handler could run, so the buttons looked dead.
+      const inside = (target as Element).closest?.(
+        ".settings-popover, .server-sheet-backdrop, .modal-backdrop, .scan",
+      );
       const icon = settingsButton.current?.contains(target);
       if (inside || icon) return;
       useReaderStore.getState().setView("reader");

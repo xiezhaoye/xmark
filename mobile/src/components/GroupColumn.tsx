@@ -42,8 +42,6 @@ export function GroupColumn() {
   const groupsError = useReaderStore((s) => s.groupsError);
   const collapsed = useReaderStore((s) => s.collapsedGroups);
   const selected = useReaderStore((s) => s.selectedRootId);
-  // Groups are the phone's own concept; a Mac's groups are listed read-only.
-  const localSource = useReaderStore((s) => Boolean(s.connection?.local));
   const [hint, setHint] = useState<string | null>(null);
   const [menu, setMenu] = useState<Menu>(null);
   // Renaming is a dialog, never a field inside the rail.
@@ -88,14 +86,6 @@ export function GroupColumn() {
       const code = err instanceof Error ? err.message : String(err);
       if (!code.includes("cancelled")) setHint(errorText(code));
     }
-  };
-
-  const addGroup = async () => {
-    library().addGroup(t("side.newGroup"));
-    // Groups are the phone's own, so a new one must be visible: switch to the
-    // local source first when a Mac is showing.
-    await useReaderStore.getState().connectLocal();
-    await useReaderStore.getState().refreshWorkspaces();
   };
 
   const removeFolder = (path: string) => {
@@ -239,23 +229,10 @@ export function GroupColumn() {
             onAddFolder={(groupId) => void addFolder(groupId)}
             onRename={setRename}
             onDeleteFolder={removeFolder}
-            onDeleteGroup={(id) => {
-              library().removeGroup(id);
-              void useReaderStore.getState().refreshWorkspaces();
-            }}
           />
         )}
       </nav>
 
-      {/* Only the phone's own library can be extended, and only the group row's
-          ⋯ adds a folder — one place per action. */}
-      {localSource && (
-        <div className="groups-add">
-          <button type="button" className="groups-add-button" onClick={() => void addGroup()}>
-            ＋ {t("side.addGroup")}
-          </button>
-        </div>
-      )}
 
       {rename && (
         <RenameDialog
@@ -282,20 +259,20 @@ function LocalMenu({
   onAddFolder,
   onRename,
   onDeleteFolder,
-  onDeleteGroup,
 }: {
   menu: Exclude<Menu, null>;
   onClose: () => void;
   onAddFolder: (groupId: string) => void;
   onRename: (target: { kind: "folder" | "group"; id: string; value: string; title: string }) => void;
   onDeleteFolder: (path: string) => void;
-  onDeleteGroup: (id: string) => void;
 }) {
   const name = menu.name;
   return (
     <div className="local-menu" role="dialog" aria-label={t("side.actions", { name })}>
-      {/* A folder is added into a group, so the action belongs to the group. */}
-      {menu.kind === "group" && (
+      {/* Groups are fixed (the default one and nothing else), so the only
+          group-level action is adding a folder INTO it. Editing lives on the
+          folder itself. */}
+      {menu.kind === "group" ? (
         <button
           type="button"
           className="local-menu-item"
@@ -306,32 +283,30 @@ function LocalMenu({
         >
           {t("side.addFolder")}
         </button>
+      ) : (
+        <>
+          <button
+            type="button"
+            className="local-menu-item"
+            onClick={() => {
+              onClose();
+              onRename({ kind: "folder", id: menu.path, value: name, title: t("side.rename") });
+            }}
+          >
+            {t("side.rename")}
+          </button>
+          <button
+            type="button"
+            className="local-menu-item danger"
+            onClick={() => {
+              onClose();
+              onDeleteFolder(menu.path);
+            }}
+          >
+            {t("side.delete")}
+          </button>
+        </>
       )}
-      <button
-        type="button"
-        className="local-menu-item"
-        onClick={() => {
-          onClose();
-          onRename(
-            menu.kind === "folder"
-              ? { kind: "folder", id: menu.path, value: name, title: t("side.rename") }
-              : { kind: "group", id: menu.id, value: name, title: t("side.renameGroup") },
-          );
-        }}
-      >
-        {menu.kind === "folder" ? t("side.rename") : t("side.renameGroup")}
-      </button>
-      <button
-        type="button"
-        className="local-menu-item danger"
-        onClick={() => {
-          onClose();
-          if (menu.kind === "folder") onDeleteFolder(menu.path);
-          else onDeleteGroup(menu.id);
-        }}
-      >
-        {menu.kind === "folder" ? t("side.delete") : t("side.deleteGroup")}
-      </button>
       <button type="button" className="local-menu-item" onClick={onClose}>
         {t("settings.cancel")}
       </button>
