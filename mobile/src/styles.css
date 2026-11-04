@@ -97,7 +97,7 @@ input { font: inherit; color: inherit; }
 
 /* Document: the top bar scrolls away with the text */
 .document-frame { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
-.document { overscroll-behavior-y: none; padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+.document { overscroll-behavior-y: none; scroll-behavior: smooth; padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
 /* The document's text follows the reading size; the app's chrome, which sits
    outside this element, keeps the body's 16px. */
 .document-body { font-size: var(--reading-size); }
@@ -203,7 +203,7 @@ input { font: inherit; color: inherit; }
 .server-sheet-option:active { background: var(--bg-secondary); }
 .server-sheet-option.current { background: var(--accent-bg); }
 .server-sheet-option .sheet-option-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.server-sheet-option .sheet-option-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.server-sheet-option .sheet-option-name { display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .server-sheet-option.current .sheet-option-name { font-weight: 700; }
 .server-sheet-option .sheet-option-address { font: 12px var(--font-mono); color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .server-sheet-option .icon { flex: none; color: var(--accent-primary); }
@@ -300,6 +300,8 @@ input { font: inherit; color: inherit; }
 .settings-popover .server-row { gap: 0; }
 .settings-popover .server-select { padding: 6px; gap: 6px; min-width: 0; min-height: 36px; }
 .settings-popover .server-select .radio { width: 16px; height: 16px; }
+/* The dot took the radio's slot: same 16px of leading space, dot centred in it. */
+.settings-popover .server-select > .status-dot { width: 10px; height: 10px; margin: 0 3px; }
 .settings-popover .server-name { white-space: nowrap; font-size: 14px; }
 .settings-popover .server-title { gap: 6px; }
 .settings-popover .servers { gap: 6px; }
@@ -419,3 +421,33 @@ input { font: inherit; color: inherit; }
   .hljs-title, .hljs-section, .hljs-function .hljs-title { color: #d2a8ff; }
   .hljs-type, .hljs-name, .hljs-tag { color: #7ee787; }
 }
+
+/* ---- Reading-size pill over the document, preview/source switch in the popover ---- */
+/* The stepper takes the floating pill's place; `mode-float` still supplies the
+   position, shadow and z-index, so both controls sat in the same spot. */
+.stepper.mode-float { border-radius: 8px; }
+/* In the popover the switch fills the row: two equal halves, no leftover gap. */
+.mode-switch.mode-inline { display: flex; align-self: stretch; }
+.mode-switch.mode-inline button { flex: 1; padding: 8px 10px; font-size: 14px; }
+/* The share outcome sits directly under the header it belongs to. */
+.settings-popover > .share-notice { margin: 0; padding: 8px 12px; }
+
+/* Back to the top of the document: translucent, bottom-right, out of the text. */
+.to-top {
+  position: absolute;
+  right: 16px;
+  bottom: calc(env(safe-area-inset-bottom) + 18px);
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--bg-secondary) 82%, transparent);
+  color: var(--text-secondary);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.16);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.to-top:active { background: color-mix(in srgb, var(--bg-tertiary) 90%, transparent); color: var(--text-color); }

@@ -91,15 +91,17 @@ export function SettingsPopover({ anchor, onClose }: { anchor: () => HTMLElement
       <header className="settings-popover-head">
         <h1 className="settings-popover-title">{t("settings.title")}</h1>
         <button type="button" className="icon-button" aria-label={t("settings.close")} onClick={onClose}>
-          <Icon name="chevron" size={18} />
+          <Icon name="close" size={18} />
         </button>
       </header>
       <div className="scroll settings settings-popover-body">
-        {SETTINGS_SECTIONS.map(({ id, titleKey, Component }) => (
-          <section key={id} aria-label={id === "share" ? t(titleKey) : undefined} aria-labelledby={id === "share" ? undefined : `settings-${id}`}>
-            {id !== "share" && <h2 className="section-title" id={`settings-${id}`}>
-              {t(titleKey)}
-            </h2>}
+        {SETTINGS_SECTIONS.map(({ id, titleKey, showsTitle, Component }) => (
+          <section key={id} aria-label={t(titleKey)} aria-labelledby={showsTitle ? `settings-${id}` : undefined}>
+            {showsTitle && (
+              <h2 className="section-title" id={`settings-${id}`}>
+                {t(titleKey)}
+              </h2>
+            )}
             <Component />
           </section>
         ))}

@@ -18,6 +18,7 @@ import { createPortal } from "react-dom";
 import { useActiveProfile, useReaderStore } from "../state/readerStore";
 import { t } from "../i18n";
 import { Icon } from "./Icon";
+import { SERVER_STATE_KEY, useServerStatus } from "./settings/useServerStatus";
 
 export function ServerPicker() {
   const servers = useReaderStore((s) => s.servers);
@@ -26,6 +27,9 @@ export function ServerPicker() {
   const [open, setOpen] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
   const sheet = useRef<HTMLDivElement>(null);
+  // One health request per server when the button renders, same vocabulary as
+  // the settings list: green online, grey offline, red unauthorized.
+  const status = useServerStatus(servers);
 
   // Focus enters the sheet while it is open, and goes back to the button
   // once it closes — but only from a sheet that was actually shown, so the
@@ -91,7 +95,13 @@ export function ServerPicker() {
                   onClick={() => pick(p.id)}
                 >
                   <span className="sheet-option-main">
-                    <span className="sheet-option-name">{p.name}</span>
+                    <span className="sheet-option-name">
+                      {(() => {
+                        const state = status[p.id] ?? "checking";
+                        return <span className={`status-dot ${state}`} role="img" aria-label={t(SERVER_STATE_KEY[state])} />;
+                      })()}
+                      {p.name}
+                    </span>
                     <span className="sheet-option-address">
                       {p.host}:{p.port}
                     </span>

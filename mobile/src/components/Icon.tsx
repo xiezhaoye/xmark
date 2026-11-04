@@ -26,6 +26,8 @@ const PATHS = {
   share: "M12 15V3M8 7l4-4 4 4M5 11v9h14v-9",
   // The "more" dots.
   more: "M5 12h.01M12 12h.01M19 12h.01",
+  close: "M6 6l12 12M18 6L6 18",
+  arrowUp: "M12 20V5M6 11l6-6 6 6",
 } as const;
 
 export type IconName = keyof typeof PATHS;

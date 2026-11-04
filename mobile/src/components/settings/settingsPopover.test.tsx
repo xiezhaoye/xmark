@@ -136,14 +136,20 @@ describe("settings popover", () => {
     expect(parseFloat(style.maxHeight || style.getPropertyValue("--popover-max-height"))).toBeGreaterThan(100);
   });
 
-  it("keeps every existing setting: reading size, servers, share", async () => {
+  it("is titled Settings, then share, preview/source, servers", async () => {
     await openReader();
     const settings = await openSettings();
-    expect(within(settings).getByRole("heading", { name: "Font size" })).toBeTruthy();
-    expect(within(settings).getByLabelText("Larger text")).toBeTruthy();
-    expect(within(settings).getByRole("heading", { name: "Servers" })).toBeTruthy();
-    expect(within(settings).getByRole("radio")).toBeTruthy();
+    // Header: the title and a close button in the corner.
+    expect(within(settings).getByRole("heading", { name: "Settings" })).toBeTruthy();
+    expect(within(settings).getByLabelText("Close settings")).toBeTruthy();
+    // Three sections, in this order.
+    expect(within(settings).getByRole("heading", { name: "Share" })).toBeTruthy();
     expect(within(settings).getByRole("button", { name: "Share file" })).toBeTruthy();
+    expect(within(settings).getByRole("heading", { name: "Preview" })).toBeTruthy();
+    expect(within(settings).getByRole("radiogroup", { name: "View as" })).toBeTruthy();
+    expect(within(settings).getByRole("heading", { name: "Servers" })).toBeTruthy();
+    // The type size is not here: it floats over the document.
+    expect(within(settings).queryByLabelText("Larger text")).toBeNull();
   });
 
   it("closes by tapping the icon again, and returns focus to it", async () => {
@@ -170,7 +176,7 @@ describe("settings popover", () => {
     const { container } = await openReader();
     const settings = await openSettings();
     fireEvent.pointerDown(settings);
-    fireEvent.pointerDown(within(settings).getByLabelText("Larger text"));
+    fireEvent.pointerDown(within(settings).getByRole("heading", { name: "Servers" }));
     await flush();
     expect(popover()).not.toBeNull();
     fireEvent.pointerDown(container.querySelector(".document") as HTMLElement);
@@ -192,13 +198,12 @@ describe("settings popover", () => {
     expect(settings.contains(document.activeElement)).toBe(true);
   });
 
-  it("the right close button returns to the document", async () => {
+  it("the close button in the corner returns to the document", async () => {
     await openReader();
     await openSettings();
     fireEvent.click(screen.getByLabelText("Close settings"));
     await flush();
     expect(popover()).toBeNull();
-    expect(useReaderStore.getState().view).toBe("reader");
     expect(screen.getByRole("heading", { name: "Hello" })).toBeTruthy();
   });
 
@@ -228,15 +233,14 @@ describe("settings popover", () => {
     expect(useReaderStore.getState().drawerOpen).toBe(true);
     // The popover is above the drawer, not behind it.
     expect(settings.closest(".overlay-page")).toBeNull();
-    expect(within(settings).getByLabelText("Larger text")).toBeTruthy();
+    expect(within(settings).getByRole("heading", { name: "Servers" })).toBeTruthy();
   });
 
-  it("keeps the reading size working from the popover", async () => {
+  it("no longer carries the reading size: it floats over the document", async () => {
     await openReader();
     const settings = await openSettings();
-    fireEvent.click(within(settings).getByLabelText("Larger text"));
-    expect(useReaderStore.getState().readingSize).toBe(17);
-    expect(within(settings).getByText("17")).toBeTruthy();
+    expect(within(settings).queryByLabelText("Larger text")).toBeNull();
+    expect(within(settings).queryByLabelText("Smaller text")).toBeNull();
   });
 
   it("closes when a document is opened from the drawer", async () => {

@@ -16,7 +16,8 @@ import { useReaderStore } from "../state/readerStore";
 import { errorText, t } from "../i18n";
 import { HtmlPreview } from "./HtmlPreview";
 import { MarkdownBody } from "./MarkdownBody";
-import { ModeSwitch } from "./ModeSwitch";
+import { ReadingStepper } from "./ReadingStepper";
+import { Icon } from "./Icon";
 import { PdfView } from "./PdfView";
 import { TopBar, type TopBarProps } from "./TopBar";
 import { StatusMessage } from "./StatusMessage";
@@ -90,9 +91,7 @@ export function DocumentView({ settingsButton, onSettings, settingsOpen }: Docum
   const [scroll, setScroll] = useState({ key: "", past: false });
   const scrolledPast = scroll.key === docKey && scroll.past;
   const scroller = useRef<HTMLDivElement>(null);
-  const isMarkdown = docState.status === "ready" && docState.content.kind === "markdown";
   const isHtml = docState.status === "ready" && /\.html?$/i.test(doc?.relPath ?? "");
-  const previewable = isMarkdown || isHtml;
 
   // A new document starts at the top.
   useLayoutEffect(() => {
@@ -162,7 +161,25 @@ export function DocumentView({ settingsButton, onSettings, settingsOpen }: Docum
         <div className="document-body">{body}</div>
       </div>
       {scrolledPast && <div className="status-backdrop" aria-hidden="true" />}
-      {scrolledPast && previewable && <ModeSwitch className="mode-float" />}
+      {scrolledPast && <ReadingStepper className="mode-float" />}
+      {/* Once the text has scrolled past the top bar, one tap returns to the top.
+          It appears with the same condition as the pill, bottom-right, and is
+          translucent so it never competes with the text under it. */}
+      {scrolledPast && (
+        <button
+          type="button"
+          className="to-top"
+          aria-label={t("doc.toTop")}
+          onClick={() => {
+            // The smooth part is `.document { scroll-behavior: smooth }`; setting
+            // scrollTop keeps this working where that API is absent (tests).
+            const el = scroller.current?.querySelector<HTMLElement>(".document");
+            if (el) el.scrollTop = 0;
+          }}
+        >
+          <Icon name="arrowUp" size={18} />
+        </button>
+      )}
     </div>
   );
 }

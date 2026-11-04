@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { ApiError, type Client } from "../api/client";
 import { setLanguage } from "../i18n";
 import { useReaderStore } from "../state/readerStore";
@@ -162,21 +162,22 @@ describe("App", () => {
     expect(useReaderStore.getState().drawerOpen).toBe(false);
   });
 
-  it("switches a markdown file between preview and source, from the switch that floats once the top bar is gone", async () => {
+  it("switches a markdown file between preview and source, from the settings popover", async () => {
     pair();
     lastDoc({ rootId: "r1", relPath: "a.md" });
     const { container } = render(<App />);
     await flush();
     expect(screen.getByRole("heading", { name: "Hello" })).toBeTruthy();
+    // The switch lives in the popover now; the floating pill carries the size.
     expect(screen.queryByRole("radio", { name: "Source" })).toBeNull();
-    const scroller = container.querySelector(".document") as HTMLElement;
-    scroller.scrollTop = 400;
-    fireEvent.scroll(scroller);
-    fireEvent.click(screen.getByRole("radio", { name: "Source" }));
+    fireEvent.click(screen.getByLabelText("Settings"));
+    await flush();
+    const settings = screen.getByRole("dialog", { name: "Settings" });
+    fireEvent.click(within(settings).getByRole("radio", { name: "Source" }));
     await flush();
     expect(container.querySelector("pre.source")?.textContent).toContain("# Hello");
     expect(screen.queryByRole("heading", { name: "Hello" })).toBeNull();
-    fireEvent.click(screen.getByRole("radio", { name: "Preview" }));
+    fireEvent.click(within(settings).getByRole("radio", { name: "Preview" }));
     await flush();
     expect(screen.getByRole("heading", { name: "Hello" })).toBeTruthy();
   });
@@ -197,6 +198,22 @@ describe("App", () => {
     expect(container.querySelector(".mode-float")).toBeNull();
   });
 
+  it("offers a back-to-top button once the text has scrolled past the top bar", async () => {
+    pair();
+    lastDoc({ rootId: "r1", relPath: "a.md" });
+    const { container } = render(<App />);
+    await flush();
+    expect(container.querySelector(".to-top")).toBeNull();
+    const scroller = container.querySelector(".document") as HTMLElement;
+    scroller.scrollTop = 600;
+    fireEvent.scroll(scroller);
+    const button = container.querySelector(".to-top") as HTMLButtonElement;
+    expect(button).not.toBeNull();
+    expect(button.getAttribute("aria-label")).toBe("Back to top");
+    fireEvent.click(button);
+    expect(scroller.scrollTop).toBe(0);
+  });
+
   it("previews an HTML file in a script-less sandbox, with source one switch away", async () => {
     pair();
     vi.mocked(client.file).mockResolvedValue({ text: "<h1>Page</h1>", kind: "text", size: 13, mtime: 1 });
@@ -207,10 +224,10 @@ describe("App", () => {
     expect(frame).not.toBeNull();
     expect(frame.getAttribute("sandbox")).toBe("allow-same-origin");
     expect(frame.getAttribute("srcdoc")).toContain("<h1>Page</h1>");
-    const scroller = container.querySelector(".document") as HTMLElement;
-    scroller.scrollTop = 400;
-    fireEvent.scroll(scroller);
-    fireEvent.click(screen.getByRole("radio", { name: "Source" }));
+    fireEvent.click(screen.getByLabelText("Settings"));
+    await flush();
+    const settings = screen.getByRole("dialog", { name: "Settings" });
+    fireEvent.click(within(settings).getByRole("radio", { name: "Source" }));
     await flush();
     expect(container.querySelector("iframe.html-preview")).toBeNull();
     expect(container.querySelector("pre.source")?.textContent).toContain("<h1>Page</h1>");
@@ -467,23 +484,23 @@ describe("settings servers", () => {
     expect(vi.mocked(client.health).mock.calls.length).toBeLessThanOrEqual(2);
   });
 
-  it("puts the status dot beside the name, not at the row's end", async () => {
+  it("leads each row with the status dot, in the slot the radio used to hold", async () => {
     saveServers([PROFILE, OTHER]);
     saveActiveServerId(PROFILE.id);
     const { container } = await openSettings();
     const rows = [...container.querySelectorAll(".server")];
     expect(rows).toHaveLength(2);
     for (const row of rows) {
-      const title = row.querySelector(".server-title");
-      expect(title).not.toBeNull();
-      expect(title?.querySelector(".server-name")).not.toBeNull();
-      expect(title?.querySelector(".status-dot")).not.toBeNull();
-      // The dot is not a sibling of the "more" button, and no row ends in one.
+      // The leading mark of the select button IS the dot.
+      const select = row.querySelector(".server-select") as HTMLElement;
+      expect(select.firstElementChild?.classList.contains("status-dot")).toBe(true);
+      // The radio is gone, and the name no longer carries a dot of its own.
+      expect(row.querySelector(".radio")).toBeNull();
+      expect(row.querySelector(".server-title .status-dot")).toBeNull();
+      // The row still ends with "more", not with a dot.
       const more = row.querySelector(".icon-button");
       expect(more?.getAttribute("aria-label")).toBe("More");
-      expect(more?.querySelector(".status-dot")).toBeNull();
       expect(row.querySelector(".server-row")?.lastElementChild).toBe(more);
-      expect(row.querySelectorAll(".server-row > *")).toHaveLength(2);
     }
   });
 
@@ -685,9 +702,15 @@ describe("settings servers", () => {
     expect(useReaderStore.getState().servers.map((p) => p.id)).toEqual([PROFILE.id, OTHER.id]);
   });
 
-  it("shows the reading size and moves it one px per tap", async () => {
+  it("shows the reading size on the document and moves it one px per tap", async () => {
     pair();
-    await openSettings();
+    lastDoc({ rootId: "r1", relPath: "a.md" });
+    const { container } = render(<App />);
+    await flush();
+    // It floats once the top bar has scrolled away, where the mode switch used to be.
+    const scroller = container.querySelector(".document") as HTMLElement;
+    scroller.scrollTop = 400;
+    fireEvent.scroll(scroller);
     const value = () => document.querySelector(".stepper-value")?.textContent;
     expect(value()).toBe("16");
     fireEvent.click(screen.getByLabelText("Larger text"));
@@ -702,7 +725,12 @@ describe("settings servers", () => {
 
   it("disables the step that would leave the size's range", async () => {
     pair();
-    await openSettings();
+    lastDoc({ rootId: "r1", relPath: "a.md" });
+    const { container } = render(<App />);
+    await flush();
+    const scroller = container.querySelector(".document") as HTMLElement;
+    scroller.scrollTop = 400;
+    fireEvent.scroll(scroller);
     const minus = () => screen.getByLabelText("Smaller text") as HTMLButtonElement;
     const plus = () => screen.getByLabelText("Larger text") as HTMLButtonElement;
     act(() => useReaderStore.getState().setReadingSize(12));

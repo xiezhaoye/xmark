@@ -42,7 +42,8 @@ export function App() {
   useEffect(() => {
     if (!settingsOpen) return;
     useReaderStore.getState().setDrawer(false);
-    const onPointerDown = (e: PointerEvent) => {
+    // `Event`, not `PointerEvent`: the same handler is on touchstart (see below).
+    const onPointerDown = (e: Event) => {
       const target = e.target as Node | null;
       if (!target) return;
       // A sheet a section opened (the drawer's server picker) is part of settings.
@@ -51,8 +52,17 @@ export function App() {
       if (inside || icon) return;
       useReaderStore.getState().setView("reader");
     };
+    // `pointerdown` alone is not enough: the document's scroller calls
+    // `preventDefault()` on touchstart (to stop rubber-banding), which
+    // suppresses the pointer event derived from that touch — so a tap on the
+    // text left the popover up. Both are listened to; the handler is
+    // idempotent.
     document.addEventListener("pointerdown", onPointerDown, true);
-    return () => document.removeEventListener("pointerdown", onPointerDown, true);
+    document.addEventListener("touchstart", onPointerDown, true);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown, true);
+      document.removeEventListener("touchstart", onPointerDown, true);
+    };
   }, [settingsOpen]);
 
   const closeSettings = () => {

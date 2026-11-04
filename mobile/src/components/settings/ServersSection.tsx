@@ -24,7 +24,7 @@ import { Icon } from "../Icon";
 import { useToast } from "../Toast";
 import { createLongPress, type LongPress } from "./longPress";
 import { dragTarget, moveItem, rowOffset, rowShift, type RowRect } from "./reorder";
-import { useServerStatus, type ServerState } from "./useServerStatus";
+import { SERVER_STATE_KEY, useServerStatus } from "./useServerStatus";
 
 /** A drag in progress: which row, how far the finger has moved, and where every row started. */
 interface Drag {
@@ -35,12 +35,6 @@ interface Drag {
   rects: RowRect[];
 }
 
-const STATE_KEY: Record<ServerState, "settings.status.checking" | "settings.status.online" | "settings.status.offline" | "settings.status.unauthorized"> = {
-  checking: "settings.status.checking",
-  online: "settings.status.online",
-  offline: "settings.status.offline",
-  unauthorized: "settings.status.unauthorized",
-};
 
 /** Where each row starts on screen, so a drag knows what it is passing. */
 const rowRects = (servers: ServerProfile[], rows: Map<string, HTMLLIElement>): RowRect[] =>
@@ -305,11 +299,13 @@ export function ServersSection() {
                     onPointerCancel={pressCancel}
                     onKeyDown={(e) => keyMove(e, i)}
                   >
-                    <span className="radio" aria-hidden="true" />
+                    {/* No radio button: the status dot IS the leading mark, in the
+                        slot the radio used to occupy. Which server is current stays
+                        legible from the row's own highlight. */}
+                    <span className={`status-dot ${state}`} role="img" aria-label={t(SERVER_STATE_KEY[state])} />
                     <span className="server-main">
                       <span className="server-title">
                         <span className="server-name">{p.name}</span>
-                        <span className={`status-dot ${state}`} role="img" aria-label={t(STATE_KEY[state])} />
                       </span>
                     </span>
                   </button>

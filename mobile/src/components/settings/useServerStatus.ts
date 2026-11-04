@@ -12,6 +12,17 @@ import { useReaderStore } from "../../state/readerStore";
 
 export type ServerState = "checking" | "online" | "offline" | "unauthorized";
 
+/** The sentence a dot stands for, translated at render time (shared with the picker). */
+export const SERVER_STATE_KEY: Record<
+  ServerState,
+  "settings.status.checking" | "settings.status.online" | "settings.status.offline" | "settings.status.unauthorized"
+> = {
+  checking: "settings.status.checking",
+  online: "settings.status.online",
+  offline: "settings.status.offline",
+  unauthorized: "settings.status.unauthorized",
+};
+
 export function useServerStatus(servers: ServerProfile[]): Record<string, ServerState> {
   const [status, setStatus] = useState<Record<string, ServerState>>({});
   // Re-probe only when what a probe depends on changes — not on a rename or a reorder.
