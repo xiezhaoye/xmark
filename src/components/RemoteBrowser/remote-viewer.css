@@ -293,9 +293,15 @@
   object-fit: contain;
 }
 
+/* An iframe has an intrinsic 150px height and never grows to its content, so
+   `flex: 1` on a non-flex parent left a tall document showing only its top
+   sliver. `.remote-viewer__body` is the definite-height flex child of the
+   viewer column, which is what `height: 100%` resolves against; the document's
+   own overflow then scrolls INSIDE the frame. */
 .remote-html {
-  flex: 1;
+  display: block;
   width: 100%;
+  height: 100%;
   border: 0;
   background: var(--bg-color);
 }

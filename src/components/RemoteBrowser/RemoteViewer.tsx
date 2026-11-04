@@ -32,8 +32,23 @@ import { RemoteMarkdown } from "./RemoteMarkdown";
 import { RemoteError } from "./RemoteChrome";
 import "./remote-viewer.css";
 
-/** Extensions the server serves as `image` and the viewer shows as a picture. */
-const IMAGE_EXTS = new Set(["png", "jpg", "jpeg", "gif", "webp", "svg", "avif", "bmp", "ico"]);
+/**
+ * The two extension sets the server can actually serve, mirrored from
+ * `server/mobile/src/fileKinds.ts`. Drift here is user-visible in both
+ * directions: a kind the server serves but this list omits (heic, tiff, apng)
+ * used to fall through to the text reader and 415; a kind NEITHER side serves
+ * (pdf, docx, zip) used to spend a request just to show an error card.
+ */
+const SERVER_TEXT_EXTS = new Set([
+  "md", "markdown", "mdown", "mkd", "mdx",
+  "html", "htm",
+  "txt", "json", "jsonl", "yaml", "yml", "toml", "mmd",
+  "ts", "tsx", "js", "jsx", "py", "rs", "go", "css", "sh", "bash", "rb", "lua",
+]);
+const SERVER_IMAGE_EXTS = new Set([
+  "png", "apng", "jpg", "jpeg", "jfif", "gif", "webp", "bmp",
+  "ico", "avif", "heic", "heif", "tif", "tiff", "svg",
+]);
 
 /** Display cap for source text: the server sends up to 5 MB, the DOM gets 1 MB. */
 const MAX_SOURCE_CHARS = 1_000_000;
@@ -122,16 +137,39 @@ export interface RemoteViewerProps {
  * document's content under the new path.
  */
 export function RemoteViewer({ rootId, relPath }: RemoteViewerProps) {
-  return <LoadedDocument key={`${rootId}:${relPath}`} rootId={rootId} relPath={relPath} />;
+  const { t } = useTranslation("sidebar");
+  const ext = extOf(relPath);
+  // Dispatch BEFORE reading. The image branch never touches `/api/file`: the
+  // server answers 415 for anything that is not markdown/text/html, so asking
+  // first put every remote image on the error card and wasted the request.
+  if (SERVER_IMAGE_EXTS.has(ext)) return <ImageView rootId={rootId} relPath={relPath} />;
+  if (!SERVER_TEXT_EXTS.has(ext)) {
+    return (
+      <p className="remote-viewer__empty">
+        <FileQuestion size={14} aria-hidden="true" /> {t("remote.unknownKind")}
+      </p>
+    );
+  }
+  // Keyed by the document it shows, so a switch remounts the loader: the
+  // "loading" state is then the loader's INITIAL state rather than something
+  // an effect assigns — no render paints the previous document's content
+  // under the new path.
+  return <LoadedText key={`${rootId}:${relPath}`} rootId={rootId} relPath={relPath} ext={ext} />;
 }
 
-function LoadedDocument({ rootId, relPath }: RemoteViewerProps) {
+/** Lower-cased extension of a remote path, or "" for a name without one. */
+function extOf(relPath: string): string {
+  const dot = relPath.lastIndexOf(".");
+  return dot < 0 ? "" : relPath.slice(dot + 1).toLowerCase();
+}
+
+/** A server-served TEXT document: markdown, HTML or source. */
+function LoadedText({ rootId, relPath, ext }: RemoteViewerProps & { ext: string }) {
   const { t } = useTranslation("sidebar");
   // Both start at their only correct value for this document: nothing loaded,
   // first attempt. A new document is a new mount (see `RemoteViewer`).
   const [state, setState] = useState<DocState>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
-  const ext = relPath.slice(relPath.lastIndexOf(".") + 1).toLowerCase();
 
   useEffect(() => {
     // Only the async callbacks below set state: the reset is the remount.
@@ -159,24 +197,15 @@ function LoadedDocument({ rootId, relPath }: RemoteViewerProps) {
   }
 
   const { file } = state;
-  const isImage = IMAGE_EXTS.has(ext);
   // A relative link in markdown has already been requested by `RemoteMarkdown`;
   // this effect's re-run (on the new `relPath`) is what paints it.
   const openDoc = (next: string) => {
     if (next !== relPath) useRemoteBrowserStore.setState({ doc: { rootId, relPath: next, kind: "loading" } });
   };
 
-  if (isImage) return <ImageView rootId={rootId} relPath={relPath} />;
   if (ext === "html" || ext === "htm") return <HtmlView text={file.text} />;
   if (file.kind === "markdown" || ext === "md" || ext === "markdown") {
     return <RemoteMarkdown rootId={rootId} relPath={relPath} text={file.text} onOpenDoc={openDoc} />;
-  }
-  if (!ext) {
-    return (
-      <p className="remote-viewer__empty">
-        <FileQuestion size={14} aria-hidden="true" /> {t("remote.unknownKind")}
-      </p>
-    );
   }
   return <SourceView text={file.text} ext={ext} />;
 }
