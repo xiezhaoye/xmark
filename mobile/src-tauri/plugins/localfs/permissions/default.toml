@@ -1,0 +1,10 @@
+[default]
+description = "Read files inside a folder the user picked with the system document picker."
+permissions = [
+  "allow-pick-folder",
+  "allow-restore-folders",
+  "allow-forget-folder",
+  "allow-list-folder",
+  "allow-read-text",
+  "allow-read-bytes",
+]

@@ -4176,6 +4176,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "tauri-plugin-xmark-localfs"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 2.0.21",
+]
+
+[[package]]
 name = "tauri-plugin-xmark-share"
 version = "0.1.0"
 dependencies = [
@@ -5559,6 +5571,7 @@ dependencies = [
  "tauri-plugin-clipboard-manager",
  "tauri-plugin-http",
  "tauri-plugin-opener",
+ "tauri-plugin-xmark-localfs",
  "tauri-plugin-xmark-share",
 ]
 

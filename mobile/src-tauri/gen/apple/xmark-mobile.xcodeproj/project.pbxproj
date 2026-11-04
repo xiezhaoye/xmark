@@ -150,6 +150,20 @@
 			path = bindings;
 			sourceTree = "<group>";
 		};
+		"TEMP_15542A83-E45B-4E0D-8F41-95442D79F60D" /* x86_64 */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = x86_64;
+			sourceTree = "<group>";
+		};
+		"TEMP_9BAD7863-2D62-43B4-96DD-301AED84632F" /* arm64 */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = arm64;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */

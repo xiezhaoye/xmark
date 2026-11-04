@@ -10,7 +10,8 @@ pub fn run() {
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_clipboard_manager::init())
-        .plugin(tauri_plugin_xmark_share::init());
+        .plugin(tauri_plugin_xmark_share::init())
+        .plugin(tauri_plugin_xmark_localfs::init());
     #[cfg(mobile)]
     let builder = builder.plugin(tauri_plugin_barcode_scanner::init());
     builder

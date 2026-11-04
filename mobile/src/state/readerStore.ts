@@ -20,6 +20,7 @@
 import { create } from "zustand";
 import { ApiError, type Client } from "../api/client";
 import { connectionOf, defaultServerName, newServerId, sameServer, type Connection, type FileContent, type ServerProfile, type TreeEntry, type WorkspaceGroup } from "../api/types";
+import { forgetLocalFolder, restoreLocalFolders } from "../platformLocalFS";
 import {
   DEFAULT_READING_SIZE,
   MAX_READING_SIZE,
@@ -92,6 +93,12 @@ interface ReaderActions {
   connect(c: Connection, name?: string | null): Promise<{ status: "added" | "updated"; name: string }>;
   /** Adds a Mac; `activate: false` lists it without switching to it. */
   addServer(input: { name: string; connection: Connection; activate?: boolean }): Promise<void>;
+  /**
+   * Opens a folder on this phone as the current source. The native side has
+   * already granted access and remembered the bookmark; this records the
+   * profile the reader switches to, adding one the first time.
+   */
+  connectLocalFolder(folder: { path: string; name: string; activate?: boolean }): Promise<void>;
   /** Puts the Macs in the given order; ids it does not mention keep their place at the end. */
   reorderServers(ids: string[]): void;
   updateServer(id: string, patch: Partial<Pick<ServerProfile, "name" | "host" | "port" | "token">>): Promise<void>;
@@ -255,8 +262,24 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
 
     async bootstrap() {
       const { servers, activeServerId } = loadServers();
-      set({ ...profilesPatch(servers, activeServerId), readingSize: loadReadingSize() });
-      if (!activeServerId || !servers.length) {
+      // Re-activate every folder grant the native side remembered, and make
+      // sure each still-readable one has a profile to switch to. The bookmark
+      // is the source of truth; the profile is only how the reader addresses it.
+      const folders = await restoreLocalFolders().catch(() => []);
+      const known = new Set(servers.map((p) => p.localPath).filter(Boolean));
+      const added = folders
+        .filter((f) => f.ok && !known.has(f.path))
+        .map<ServerProfile>((f) => ({
+          id: newServerId(),
+          name: f.name,
+          host: "local",
+          port: 0,
+          token: "",
+          localPath: f.path,
+        }));
+      const restored = added.length ? [...servers, ...added] : servers;
+      set({ ...profilesPatch(restored, activeServerId), readingSize: loadReadingSize() });
+      if (!activeServerId || !restored.length) {
         docSeq += 1;
         switchSeq += 1;
         // Nothing paired: the reader shows an "add a server" button.
@@ -288,6 +311,7 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
         host: connection.host,
         port: connection.port,
         token: connection.token,
+        ...(connection.localPath ? { localPath: connection.localPath } : {}),
       };
       if (!makeCurrent) {
         set((s) => profilesPatch([...s.servers, profile], s.activeServerId));
@@ -295,6 +319,19 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
       }
       set((s) => profilesPatch([...s.servers, profile], profile.id));
       await activate(profile.id);
+    },
+
+    async connectLocalFolder({ path, name, activate: makeCurrent = true }) {
+      const connection: Connection = { host: "local", port: 0, token: "", localPath: path };
+      const known = get().servers.find((p) => p.localPath === path);
+      if (known) {
+        if (known.name !== name) await get().updateServer(known.id, { name });
+        if (makeCurrent) await get().switchServer(known.id);
+        return;
+      }
+      const first = !get().activeServerId;
+      await get().addServer({ name, connection, activate: makeCurrent || first });
+      if (first) set({ view: "reader" });
     },
 
     reorderServers(ids) {
@@ -333,7 +370,10 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
 
     removeServer(id) {
       const { servers, activeServerId } = get();
-      if (!servers.some((p) => p.id === id)) return;
+      const removing = servers.find((p) => p.id === id);
+      if (!removing) return;
+      // A local folder's grant belongs to the bookmark store, not to this list.
+      if (removing.localPath) void forgetLocalFolder(removing.localPath);
       saveLastDoc(id, null);
       const rest = servers.filter((p) => p.id !== id);
       const nextId = activeServerId === id ? (rest[0]?.id ?? null) : activeServerId;

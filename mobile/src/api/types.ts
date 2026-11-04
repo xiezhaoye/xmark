@@ -8,6 +8,13 @@ export interface Connection {
   host: string;
   port: number;
   token: string;
+  /**
+   * Set when this "connection" is a folder on this phone rather than a Mac:
+   * the absolute path the native picker returned. `host`/`port`/`token` are
+   * then placeholders, and the client factory builds a local reader instead of
+   * an HTTP one.
+   */
+  localPath?: string;
 }
 
 /** The longest server name accepted from a pairing link or typed in settings. */
@@ -25,6 +32,8 @@ export interface ServerProfile {
   host: string;
   port: number;
   token: string;
+  /** A folder on this phone, instead of a Mac. See `Connection.localPath`. */
+  localPath?: string;
 }
 
 /**
@@ -38,11 +47,19 @@ export function defaultServerName(host: string): string {
 }
 
 /** The connection a profile stands for; what the HTTP client is built from. */
-export const connectionOf = ({ host, port, token }: ServerProfile): Connection => ({ host, port, token });
+export const connectionOf = ({ host, port, token, localPath }: ServerProfile): Connection =>
+  localPath ? { host, port, token, localPath } : { host, port, token };
 
 /** Two profiles address the same Mac when their host and port match. */
-export const sameServer = (a: Pick<ServerProfile, "host" | "port">, b: Pick<ServerProfile, "host" | "port">) =>
-  a.host.toLowerCase() === b.host.toLowerCase() && a.port === b.port;
+export const sameServer = (
+  a: Pick<ServerProfile, "host" | "port" | "localPath">,
+  b: Pick<ServerProfile, "host" | "port" | "localPath">,
+) =>
+  // A local folder is identified by its path; every one of them shares the
+  // placeholder host, so host/port alone would merge two folders into one.
+  a.localPath || b.localPath
+    ? a.localPath === b.localPath
+    : a.host.toLowerCase() === b.host.toLowerCase() && a.port === b.port;
 
 let idCounter = 0;
 

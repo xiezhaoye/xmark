@@ -18,6 +18,7 @@ import { ApiError } from "../../api/client";
 import { defaultServerName, type ServerProfile } from "../../api/types";
 import { parsePairLink } from "../../pairing/parsePairUrl";
 import { scanQrCode } from "../../platform";
+import { pickLocalFolder } from "../../platformLocalFS";
 import { SERVER_NAME_MAX, useReaderStore } from "../../state/readerStore";
 import { errorText, t } from "../../i18n";
 import { Icon } from "../Icon";
@@ -49,6 +50,7 @@ export function ServersSection() {
   const status = useServerStatus(servers);
   const { toast, show } = useToast();
   const [adding, setAdding] = useState(false);
+  const [picking, setPicking] = useState(false);
   const [menuId, setMenuId] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<{ id: string; value: string } | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -56,6 +58,24 @@ export function ServersSection() {
   const rows = useRef(new Map<string, HTMLLIElement>());
   const list = useRef<HTMLUListElement | null>(null);
   const store = useReaderStore.getState;
+
+  /**
+   * Opens the system folder picker and switches the reader to that folder. A
+   * dismissal is a decision, not an error: nothing is said about it.
+   */
+  const openLocalFolder = async () => {
+    if (picking) return;
+    setPicking(true);
+    try {
+      const folder = await pickLocalFolder();
+      await store().connectLocalFolder({ path: folder.path, name: folder.name });
+    } catch (err) {
+      const code = err instanceof Error ? err.message : String(err);
+      if (!code.includes("cancelled")) show(errorText(code));
+    } finally {
+      setPicking(false);
+    }
+  };
 
   const add = async () => {
     if (adding) return;
@@ -379,9 +399,13 @@ export function ServersSection() {
         <p className="muted">{t("settings.noServers")}</p>
       )}
 
-      {/* Adding sits under the list it adds to. */}
+      {/* Adding sits under the list it adds to: scan a Mac's QR, or open a
+          folder this phone already holds. */}
       <button type="button" className="button wide" disabled={adding} onClick={() => void add()}>
         <Icon name="scan" size={18} /> {adding ? t("settings.verifying") : t("settings.addServer")}
+      </button>
+      <button type="button" className="button wide" disabled={picking} onClick={() => void openLocalFolder()}>
+        <Icon name="folder" size={18} /> {t("settings.addLocalFolder")}
       </button>
       {toast}
     </>

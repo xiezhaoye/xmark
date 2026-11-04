@@ -1,0 +1,22 @@
+[package]
+name = "tauri-plugin-xmark-localfs"
+version = "0.1.0"
+description = "Read files in a folder the user picked with the system document picker, on iOS."
+edition = "2021"
+publish = false
+links = "tauri-plugin-xmark-localfs"
+build = "build.rs"
+
+[lib]
+name = "tauri_plugin_xmark_localfs"
+path = "src/lib.rs"
+
+[build-dependencies]
+tauri-plugin = { version = "2", features = ["build"] }
+
+[dependencies]
+base64 = "0.22"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tauri = { version = "2", features = ["wry"] }
+thiserror = "2"

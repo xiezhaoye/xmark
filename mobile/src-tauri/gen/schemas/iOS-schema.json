@@ -2793,6 +2793,84 @@
           "markdownDescription": "Denies the reveal_item_in_dir command without any pre-configured scope."
         },
         {
+          "description": "Read files inside a folder the user picked with the system document picker.\n#### This default permission set includes:\n\n- `allow-pick-folder`\n- `allow-restore-folders`\n- `allow-forget-folder`\n- `allow-list-folder`\n- `allow-read-text`\n- `allow-read-bytes`",
+          "type": "string",
+          "const": "xmark-localfs:default",
+          "markdownDescription": "Read files inside a folder the user picked with the system document picker.\n#### This default permission set includes:\n\n- `allow-pick-folder`\n- `allow-restore-folders`\n- `allow-forget-folder`\n- `allow-list-folder`\n- `allow-read-text`\n- `allow-read-bytes`"
+        },
+        {
+          "description": "Enables the forget_folder command without any pre-configured scope.",
+          "type": "string",
+          "const": "xmark-localfs:allow-forget-folder",
+          "markdownDescription": "Enables the forget_folder command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the list_folder command without any pre-configured scope.",
+          "type": "string",
+          "const": "xmark-localfs:allow-list-folder",
+          "markdownDescription": "Enables the list_folder command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the pick_folder command without any pre-configured scope.",
+          "type": "string",
+          "const": "xmark-localfs:allow-pick-folder",
+          "markdownDescription": "Enables the pick_folder command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the read_bytes command without any pre-configured scope.",
+          "type": "string",
+          "const": "xmark-localfs:allow-read-bytes",
+          "markdownDescription": "Enables the read_bytes command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the read_text command without any pre-configured scope.",
+          "type": "string",
+          "const": "xmark-localfs:allow-read-text",
+          "markdownDescription": "Enables the read_text command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the restore_folders command without any pre-configured scope.",
+          "type": "string",
+          "const": "xmark-localfs:allow-restore-folders",
+          "markdownDescription": "Enables the restore_folders command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the forget_folder command without any pre-configured scope.",
+          "type": "string",
+          "const": "xmark-localfs:deny-forget-folder",
+          "markdownDescription": "Denies the forget_folder command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the list_folder command without any pre-configured scope.",
+          "type": "string",
+          "const": "xmark-localfs:deny-list-folder",
+          "markdownDescription": "Denies the list_folder command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the pick_folder command without any pre-configured scope.",
+          "type": "string",
+          "const": "xmark-localfs:deny-pick-folder",
+          "markdownDescription": "Denies the pick_folder command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the read_bytes command without any pre-configured scope.",
+          "type": "string",
+          "const": "xmark-localfs:deny-read-bytes",
+          "markdownDescription": "Denies the read_bytes command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the read_text command without any pre-configured scope.",
+          "type": "string",
+          "const": "xmark-localfs:deny-read-text",
+          "markdownDescription": "Denies the read_text command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the restore_folders command without any pre-configured scope.",
+          "type": "string",
+          "const": "xmark-localfs:deny-restore-folders",
+          "markdownDescription": "Denies the restore_folders command without any pre-configured scope."
+        },
+        {
           "description": "Allow the user to share an original file through the system share sheet.\n#### This default permission set includes:\n\n- `allow-share-file`",
           "type": "string",
           "const": "xmark-share:default",

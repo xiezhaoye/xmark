@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { ApiError } from "../../api/client";
 import type { ServerProfile } from "../../api/types";
 import { useReaderStore } from "../../state/readerStore";
+import { connectionOf } from "../../api/types";
 
 export type ServerState = "checking" | "online" | "offline" | "unauthorized";
 
@@ -34,7 +35,7 @@ export function useServerStatus(servers: ServerProfile[]): Record<string, Server
     const set = (id: string, state: ServerState) => live && setStatus((s) => ({ ...s, [id]: state }));
     for (const p of JSON.parse(key) as Array<Pick<ServerProfile, "id" | "host" | "port" | "token">>) {
       set(p.id, "checking");
-      makeClient({ host: p.host, port: p.port, token: p.token })
+      makeClient(connectionOf(p as never))
         .health()
         .then(
           () => set(p.id, "online"),

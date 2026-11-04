@@ -19,6 +19,7 @@ import { useActiveProfile, useReaderStore } from "../state/readerStore";
 import { t } from "../i18n";
 import { Icon } from "./Icon";
 import { SERVER_STATE_KEY, useServerStatus } from "./settings/useServerStatus";
+import { pickLocalFolder } from "../platformLocalFS";
 
 export function ServerPicker() {
   const servers = useReaderStore((s) => s.servers);
@@ -52,6 +53,16 @@ export function ServerPicker() {
   const pick = (id: string) => {
     setOpen(false);
     useReaderStore.getState().switchServer(id);
+  };
+
+  const openLocalFolder = async () => {
+    setOpen(false);
+    try {
+      const folder = await pickLocalFolder();
+      await useReaderStore.getState().connectLocalFolder({ path: folder.path, name: folder.name });
+    } catch {
+      // A dismissal is a decision; nothing to say about it.
+    }
   };
 
   const add = () => {
@@ -103,7 +114,7 @@ export function ServerPicker() {
                       {p.name}
                     </span>
                     <span className="sheet-option-address">
-                      {p.host}:{p.port}
+                      {p.localPath ? t("local.folder") : `${p.host}:${p.port}`}
                     </span>
                   </span>
                   {current ? <Icon name="check" size={16} /> : <span className="sheet-option-spacer" />}
@@ -114,6 +125,9 @@ export function ServerPicker() {
         </ul>
         <button type="button" className="server-sheet-add" onClick={add}>
           ＋ {t("servers.add")}
+        </button>
+        <button type="button" className="server-sheet-add" onClick={() => void openLocalFolder()}>
+          <Icon name="folder" size={16} /> {t("settings.addLocalFolder")}
         </button>
       </div>
     </div>
