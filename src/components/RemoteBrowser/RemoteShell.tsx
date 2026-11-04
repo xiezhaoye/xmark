@@ -54,6 +54,7 @@ import { RemoteError, RemoteBanner } from "./RemoteChrome";
 import { RemoteShellSection } from "./RemoteShellSection";
 import { RemoteTree } from "./RemoteTree";
 import { RemoteViewer } from "./RemoteViewer";
+import { PreviewZoomBar, usePreviewZoom } from "@/components/PreviewZoom/PreviewZoom";
 import "./remote-shell.css";
 
 /** Which column the shell is: the rail's place, the sidebar's, or the document's. */
@@ -196,6 +197,7 @@ function SidebarRegion({ serverId }: { serverId: string }) {
 }
 
 function MainRegion({ serverId }: { serverId: string }) {
+  const { scale: previewZoom } = usePreviewZoom();
   const { t } = useTranslation("sidebar");
   const doc = useRemoteBrowserStore((s) => s.doc);
   const serverName = useRemoteServersStore((s) => s.serverAt(serverId)?.name ?? "");
@@ -204,7 +206,8 @@ function MainRegion({ serverId }: { serverId: string }) {
   return (
     <div className="remote-viewer">
       <RemoteBanner serverName={serverName} />
-      <div className="remote-viewer__body vm-scroll--thin">
+      <PreviewZoomBar />
+      <div className="remote-viewer__body vm-scroll--thin" style={{ zoom: previewZoom }}>
         {/* `doc` is enough: a document whose `kind` is still `"loading"` is
             in flight, and the viewer paints that state itself. Gating on the
             kind here unmounted the reader the moment it started reading. */}

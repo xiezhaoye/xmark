@@ -530,3 +530,28 @@ describe("SplitPaneEditor", () => {
     });
   });
 });
+
+// The reading zoom must not sit between the preview column and the preview.
+// A wrapper there broke `.html-preview { height: 100% }`: it resolved against an
+// auto-height box, the iframe collapsed to its 150px default, and an HTML file
+// showed only its first few lines.
+describe("reading zoom", () => {
+  const withPreview = (): FormatConfig => ({ ...jsonStub, genericPreview: GenericPreview });
+
+  it("keeps the preview a DIRECT child of the column and zooms via a property", () => {
+    render(<SplitPaneEditor tabId="tab-1" formatConfig={withPreview()} />);
+
+    const preview = screen.getByTestId("preview-content");
+    const column = preview.parentElement;
+    expect(column).toHaveClass("split-pane-editor__preview");
+    // No intermediate element: the column IS the preview's box.
+    expect(preview.parentElement?.parentElement).not.toHaveClass("preview-zoom-content");
+    // The scale travels as a custom property the column's CSS rule reads.
+    expect(column?.getAttribute("style") ?? "").toContain("--preview-zoom");
+  });
+
+  it("shows the zoom control above the preview", () => {
+    render(<SplitPaneEditor tabId="tab-1" formatConfig={withPreview()} />);
+    expect(screen.getByRole("group", { name: /zoom/i })).toBeInTheDocument();
+  });
+});

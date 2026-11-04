@@ -116,8 +116,15 @@
  * markdown editor is a single flat `--bg-color` surface — match it). The slot
  * owns scroll only; each adapter owns its own padding, so the slot adds none
  * (a slot padding here would double every adapter's inset). */
+.split-pane-editor__preview > :not(.preview-zoom) {
+  zoom: var(--preview-zoom, 1);
+}
+
 .split-pane-editor__preview {
-  /* The zoom control is positioned against this column (PreviewZoom.tsx). */
+  /* The zoom control is positioned against this column (PreviewZoom.tsx), and
+     the reading zoom scales its CONTENT — never a wrapper around it: an extra
+     div here would make `.html-preview { height: 100% }` resolve against an
+     auto-height box and collapse the iframe back to its 150px default. */
   position: relative;
   flex-grow: calc(1 - var(--split-pane-source-fraction, 0.5));
   flex-shrink: 0;

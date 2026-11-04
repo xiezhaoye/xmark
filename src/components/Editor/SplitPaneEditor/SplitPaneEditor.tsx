@@ -29,6 +29,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useTranslation } from "react-i18next";
 import { SourcePane } from "./SourcePane";
+import type { CSSProperties } from "react";
 import { usePreviewModel } from "./usePreviewModel";
 import { PreviewZoomBar, usePreviewZoom } from "@/components/PreviewZoom/PreviewZoom";
 import { ReadOnlyBanner } from "./ReadOnlyBanner";
@@ -266,19 +267,18 @@ export function SplitPaneEditor({ tabId, formatConfig }: SplitPaneEditorProps) {
           />
         ) : undefined
       }
+      previewStyle={{ "--preview-zoom": String(previewZoom) } as CSSProperties}
       preview={
         showPreview && Preview ? (
           <>
             <PreviewZoomBar />
-            <div className="preview-zoom-content" style={{ zoom: previewZoom }}>
-              <Preview
-                content={preview.content}
-                liveContent={preview.liveContent}
-                path={filePath}
-                diagnostics={preview.diagnostics}
-                tabId={tabId}
-              />
-            </div>
+            <Preview
+              content={preview.content}
+              liveContent={preview.liveContent}
+              path={filePath}
+              diagnostics={preview.diagnostics}
+              tabId={tabId}
+            />
           </>
         ) : undefined
       }

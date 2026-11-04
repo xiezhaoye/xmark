@@ -34,6 +34,8 @@ export interface SplitPaneFrameProps {
   source?: ReactNode;
   resizeHandle?: ReactNode;
   preview?: ReactNode;
+  /** Style for the preview column — the reading zoom sets a custom property here. */
+  previewStyle?: CSSProperties;
 }
 
 export function SplitPaneFrame({
@@ -45,6 +47,7 @@ export function SplitPaneFrame({
   source,
   resizeHandle,
   preview,
+  previewStyle,
 }: SplitPaneFrameProps) {
   return (
     <div
@@ -62,7 +65,11 @@ export function SplitPaneFrame({
       <div className="split-pane-editor__body">
         {source !== undefined && <div className="split-pane-editor__source">{source}</div>}
         {resizeHandle}
-        {preview !== undefined && <div className="split-pane-editor__preview">{preview}</div>}
+        {preview !== undefined && (
+          <div className="split-pane-editor__preview" style={previewStyle}>
+            {preview}
+          </div>
+        )}
       </div>
     </div>
   );

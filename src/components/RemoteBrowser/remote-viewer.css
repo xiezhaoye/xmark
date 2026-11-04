@@ -3,6 +3,8 @@
    local one; colours are tokens only (rule 31). */
 
 .remote-viewer {
+  /* The zoom control is positioned against this surface. */
+  position: relative;
   display: flex;
   flex: 1;
   min-width: 0;

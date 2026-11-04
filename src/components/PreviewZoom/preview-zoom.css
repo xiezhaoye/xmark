@@ -10,15 +10,6 @@
   min-height: 0;
 }
 
-.preview-zoom-content {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-  /* `zoom` is set inline: it is the reader's per-app choice, not a theme value */
-}
-
 .preview-zoom {
   position: absolute;
   top: var(--space-2);
