@@ -21,6 +21,7 @@ import { useEffect, useRef } from "react";
 import { useReaderStore } from "./state/readerStore";
 import { Drawer } from "./components/Drawer";
 import { DocumentView } from "./components/DocumentView";
+import { ScanScreen } from "./components/ScanScreen";
 import { Icon } from "./components/Icon";
 import { SearchPage } from "./components/SearchPage";
 import { SettingsPopover } from "./components/settings/SettingsPopover";
@@ -106,6 +107,8 @@ export function App() {
         </div>
       )}
       {settingsOpen && <SettingsPopover anchor={() => settingsButton.current} onClose={closeSettings} />}
+      {/* Above everything, including the popover: the camera is the whole task. */}
+      <ScanScreen />
     </div>
   );
 }

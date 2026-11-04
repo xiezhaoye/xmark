@@ -423,6 +423,28 @@ input { font: inherit; color: inherit; }
 }
 
 /* ---- Reading-size pill over the document, preview/source switch in the popover ---- */
+/* Preview / source reads as two tabs of one strip: equal halves, no track
+   behind them, the active one marked by weight and a rule under it. */
+.settings-popover .mode-switch {
+  align-self: stretch;
+  padding: 0;
+  border-radius: 0;
+  border-bottom: 1px solid var(--border-color);
+  background: transparent;
+}
+.settings-popover .mode-switch button {
+  flex: 1;
+  padding: 9px 0;
+  border-radius: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.settings-popover .mode-switch button.on {
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-color);
+  border-bottom: 2px solid var(--accent-primary);
+}
 /* The stepper takes the floating pill's place; `mode-float` still supplies the
    position, shadow and z-index, so both controls sat in the same spot. */
 .stepper.mode-float { border-radius: 8px; }
@@ -465,3 +487,26 @@ input { font: inherit; color: inherit; }
 .local-menu-item.danger { color: var(--danger); }
 .local-draft { display: flex; gap: 6px; align-items: center; padding: 8px 12px calc(env(safe-area-inset-bottom) + 8px); border-top: 1px solid var(--border-color); }
 .local-draft input { flex: 1; min-width: 0; }
+
+/* ---- Scanner screen: our chrome over the native preview ------------------ */
+/* The camera is inserted behind the webview, so the page must not paint. */
+html.scanning, html.scanning body, html.scanning #root { background: transparent !important; }
+html.scanning .app { visibility: hidden; }
+.scan { position: fixed; inset: 0; z-index: 90; display: flex; flex-direction: column; }
+.scan-mask { position: absolute; background: rgb(0 0 0 / 55%); }
+.scan-mask--top { top: 0; left: 0; right: 0; height: calc(50% - 130px); }
+.scan-mask--bottom { bottom: 0; left: 0; right: 0; height: calc(50% - 130px); }
+.scan-mask--left { top: calc(50% - 130px); left: 0; width: calc(50% - 130px); height: 260px; }
+.scan-mask--right { top: calc(50% - 130px); right: 0; width: calc(50% - 130px); height: 260px; }
+.scan-reticle { position: absolute; top: calc(50% - 130px); left: calc(50% - 130px); width: 260px; height: 260px; border-radius: 16px; box-shadow: 0 0 0 2px rgb(255 255 255 / 85%); }
+.scan-top { position: relative; z-index: 1; display: flex; align-items: center; gap: 12px; padding: calc(env(safe-area-inset-top) + 10px) 14px 10px; }
+.scan-cancel { padding: 8px 14px; border-radius: 18px; background: rgb(255 255 255 / 18%); color: #fff; font-size: 15px; }
+.scan-title { color: #fff; font-size: 15px; font-weight: 600; }
+.scan-hint { position: absolute; bottom: calc(env(safe-area-inset-bottom) + 26px); left: 0; right: 0; text-align: center; color: #fff; font-size: 13px; }
+
+/* ---- Adding a Mac: choose a path, then a pasted pairing link ------------- */
+.add-choice, .add-code { display: flex; flex-direction: column; gap: 8px; }
+.add-code { gap: 6px; }
+.add-code input { width: 100%; padding: 10px; font: 13px var(--font-mono); }
+.add-code .row { display: flex; gap: 8px; }
+.add-code .row .button { flex: 1; padding: 10px; }

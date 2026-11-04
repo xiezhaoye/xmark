@@ -49,6 +49,11 @@ export function ServersSection() {
   const status = useServerStatus(servers);
   const { toast, show } = useToast();
   const [adding, setAdding] = useState(false);
+  // Adding a Mac is a choice now: point the camera at a code, or paste the line
+  // the Mac printed. The scan covers the screen (components/ScanScreen), so the
+  // two paths share one sheet that never guesses which one you wanted.
+  const [addStep, setAddStep] = useState<"idle" | "choose" | "code">("idle");
+  const [code, setCode] = useState("");
   const [menuId, setMenuId] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<{ id: string; value: string } | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -57,27 +62,45 @@ export function ServersSection() {
   const list = useRef<HTMLUListElement | null>(null);
   const store = useReaderStore.getState;
 
-  const add = async () => {
+  /** Health-check, then pair. Shared by the camera and the pasted link. */
+  const connectWithLink = async (raw: string): Promise<void> => {
+    const link = parsePairLink(raw);
+    if (!link) {
+      show(t("settings.badQr"), "error");
+      return;
+    }
+    try {
+      await store().makeClient(link.connection).health();
+    } catch (err) {
+      show(errorText(err instanceof ApiError ? err.code : "network"), "error");
+      return;
+    }
+    const result = await store().connect(link.connection, link.name || null);
+    show(t(result.status === "added" ? "settings.added" : "settings.updated", { name: result.name }));
+    setAddStep("idle");
+    setCode("");
+  };
+
+  const scan = async () => {
     if (adding) return;
     setAdding(true);
     try {
       const raw = await scanQrCode();
       if (raw === null) return;
-      const link = parsePairLink(raw);
-      if (!link) {
-        show(t("settings.badQr"), "error");
-        return;
-      }
-      try {
-        await store().makeClient(link.connection).health();
-      } catch (err) {
-        show(errorText(err instanceof ApiError ? err.code : "network"), "error");
-        return;
-      }
-      const result = await store().connect(link.connection, link.name || null);
-      show(t(result.status === "added" ? "settings.added" : "settings.updated", { name: result.name }));
+      await connectWithLink(raw);
     } catch (err) {
       show(err instanceof Error ? err.message : String(err), "error");
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const submitCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (adding || !code.trim()) return;
+    setAdding(true);
+    try {
+      await connectWithLink(code);
     } finally {
       setAdding(false);
     }
@@ -284,6 +307,7 @@ export function ServersSection() {
                   else rows.current.delete(p.id);
                 }}
                 className={`server ${p.id === activeId ? "current" : ""} ${dragging ? "dragging" : ""}`}
+                data-local={p.local ? "true" : undefined}
                 style={offset ? { transform: `translateY(${offset}px)` } : undefined}
               >
                 <div className="server-row">
@@ -309,9 +333,14 @@ export function ServersSection() {
                       </span>
                     </span>
                   </button>
-                  <button type="button" className="icon-button" aria-label={t("settings.more")} aria-expanded={menuId === p.id} onClick={() => setMenuId(menuId === p.id ? null : p.id)}>
-                    <Icon name="more" />
-                  </button>
+                  {/* The phone itself is not a paired Mac: no rename, no
+                      remove, no drag. Only the folder library inside it is the
+                      user's to arrange (drawer column 1). */}
+                  {!p.local && (
+                    <button type="button" className="icon-button" aria-label={t("settings.more")} aria-expanded={menuId === p.id} onClick={() => setMenuId(menuId === p.id ? null : p.id)}>
+                      <Icon name="more" />
+                    </button>
+                  )}
                 </div>
 
                 {menuId === p.id && !renaming && confirmId !== p.id && (
@@ -379,11 +408,50 @@ export function ServersSection() {
         <p className="muted">{t("settings.noServers")}</p>
       )}
 
-      {/* Adding sits under the list it adds to: scan a Mac's QR, or open a
-          folder this phone already holds. */}
-      <button type="button" className="button wide" disabled={adding} onClick={() => void add()}>
-        <Icon name="scan" size={18} /> {adding ? t("settings.verifying") : t("settings.addServer")}
-      </button>
+      {/* Adding sits under the list it adds to, and asks HOW first. */}
+      {addStep === "idle" && (
+        <button type="button" className="button wide" onClick={() => setAddStep("choose")}>
+          <Icon name="scan" size={18} /> {t("settings.addServer")}
+        </button>
+      )}
+      {addStep === "choose" && (
+        <div className="add-choice">
+          <button type="button" className="button wide" disabled={adding} onClick={() => void scan()}>
+            <Icon name="scan" size={18} /> {adding ? t("settings.verifying") : t("settings.addChoice.scan")}
+          </button>
+          <button type="button" className="button wide" onClick={() => setAddStep("code")}>
+            {t("settings.addChoice.code")}
+          </button>
+          <button type="button" className="button wide" onClick={() => setAddStep("idle")}>
+            {t("settings.cancel")}
+          </button>
+        </div>
+      )}
+      {addStep === "code" && (
+        <form className="add-code" onSubmit={(e) => void submitCode(e)}>
+          <label>
+            {t("settings.pairCodeLabel")}
+            <input
+              autoFocus
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder={t("settings.pairCodePlaceholder")}
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
+            />
+          </label>
+          <p className="hint">{t("settings.pairCodeHint")}</p>
+          <div className="row">
+            <button type="submit" className="button primary" disabled={adding || !code.trim()}>
+              {adding ? t("settings.verifying") : t("settings.connect")}
+            </button>
+            <button type="button" className="button" onClick={() => { setAddStep("choose"); setCode(""); }}>
+              {t("settings.cancel")}
+            </button>
+          </div>
+        </form>
+      )}
       {toast}
     </>
   );

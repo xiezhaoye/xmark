@@ -298,22 +298,20 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
       const existingLocal = servers.find((p) => p.local);
       const macs = servers.filter((p) => !p.local && !isLegacyLocalRow(p));
       // The local source is a row like the Macs (tap to select, status dot,
-      // "current" highlight) and always first — listed once it holds a folder,
-      // so a phone with nothing added still shows the "add a server" prompt.
-      const hasLocal = useLocalLibrary.getState().groups.some((g) => g.folders.length);
-      const restored = hasLocal
-        ? [
-            existingLocal ?? {
-              id: LOCAL_SOURCE_ID,
-              name: LOCAL_SOURCE_NAME,
-              host: "local",
-              port: 0,
-              token: "",
-              local: true,
-            },
-            ...macs,
-          ]
-        : macs;
+      // "current" highlight), always first and ALWAYS present: folders and
+      // groups can be added from the drawer at any time, so the row that holds
+      // them cannot come and go with them.
+      const restored = [
+        existingLocal ?? {
+          id: LOCAL_SOURCE_ID,
+          name: LOCAL_SOURCE_NAME,
+          host: "local",
+          port: 0,
+          token: "",
+          local: true,
+        },
+        ...macs,
+      ];
       // A stored selection that no longer exists (a removed Mac, or a row the
       // previous build stored per folder) falls back to something real instead
       // of leaving the reader with no source at all.

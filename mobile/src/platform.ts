@@ -11,6 +11,7 @@
  * @module platform
  */
 import type { FetchLike } from "./api/client";
+import { setScanning } from "./scan/scanSession";
 
 const inTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
@@ -48,11 +49,26 @@ export async function scanQrCode(): Promise<string | null> {
   let permission = await scanner.checkPermissions();
   if (permission !== "granted") permission = await scanner.requestPermissions();
   if (permission !== "granted") throw new Error("Camera permission denied");
+  // WINDOWED so the preview sits BEHIND a transparent webview: that is what
+  // lets components/ScanScreen draw the scrim, the reticle and the way out on
+  // top. Full-screen mode would cover the whole UI with camera.
+  setScanning(true);
   try {
-    const result = await scanner.scan({ windowed: false, formats: [scanner.Format.QRCode] });
+    const result = await scanner.scan({ windowed: true, formats: [scanner.Format.QRCode] });
     return result.content;
   } catch (err) {
     if (/cancel/i.test(String(err))) return null;
     throw err;
+  } finally {
+    setScanning(false);
   }
+}
+
+/** Closes the camera. The plugin answers the pending scan with "cancelled". */
+export async function cancelScan(): Promise<void> {
+  if (!inTauri) return;
+  const scanner = await import("@tauri-apps/plugin-barcode-scanner");
+  await scanner.cancel().catch(() => {
+    /* already closed by a scanned code */
+  });
 }

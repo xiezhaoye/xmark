@@ -86,7 +86,7 @@ export function ServerPicker() {
           {servers.map((p) => {
             const current = p.id === activeId;
             return (
-              <li key={p.id}>
+              <li key={p.id} data-local={p.local ? "true" : undefined}>
                 <button
                   type="button"
                   role="radio"
