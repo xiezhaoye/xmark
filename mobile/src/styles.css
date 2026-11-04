@@ -426,9 +426,6 @@ input { font: inherit; color: inherit; }
 /* The stepper takes the floating pill's place; `mode-float` still supplies the
    position, shadow and z-index, so both controls sat in the same spot. */
 .stepper.mode-float { border-radius: 8px; }
-/* In the popover the switch fills the row: two equal halves, no leftover gap. */
-.mode-switch.mode-inline { display: flex; align-self: stretch; }
-.mode-switch.mode-inline button { flex: 1; padding: 8px 10px; font-size: 14px; }
 /* The share outcome sits directly under the header it belongs to. */
 .settings-popover > .share-notice { margin: 0; padding: 8px 12px; }
 

@@ -290,7 +290,6 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
         }
       }
       // One row for the library, always first, and only while it holds folders.
-      const hasLocal = useLocalLibrary.getState().groups.some((g) => g.folders.length);
       // A folder picked by the previous build was stored as its own server
       // profile (`localPath`, named after the folder). Those rows are gone:
       // one `本机` row replaced them, and the folders now live in the library —
@@ -298,6 +297,10 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
       const isLegacyLocalRow = (p: ServerProfile) => Boolean((p as ServerProfile & { localPath?: string }).localPath);
       const existingLocal = servers.find((p) => p.local);
       const macs = servers.filter((p) => !p.local && !isLegacyLocalRow(p));
+      // The local source is a row like the Macs (tap to select, status dot,
+      // "current" highlight) and always first — listed once it holds a folder,
+      // so a phone with nothing added still shows the "add a server" prompt.
+      const hasLocal = useLocalLibrary.getState().groups.some((g) => g.folders.length);
       const restored = hasLocal
         ? [
             existingLocal ?? {
@@ -311,8 +314,13 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
             ...macs,
           ]
         : macs;
-      set({ ...profilesPatch(restored, activeServerId), readingSize: loadReadingSize() });
-      if (!activeServerId || !restored.length) {
+      // A stored selection that no longer exists (a removed Mac, or a row the
+      // previous build stored per folder) falls back to something real instead
+      // of leaving the reader with no source at all.
+      const activeStillExists = activeServerId && restored.some((p) => p.id === activeServerId);
+      const active = activeStillExists ? activeServerId : (restored[0]?.id ?? null);
+      set({ ...profilesPatch(restored, active), readingSize: loadReadingSize() });
+      if (!restored.length) {
         docSeq += 1;
         switchSeq += 1;
         // Nothing paired: the reader shows an "add a server" button.
@@ -321,7 +329,7 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
       }
       set({ ...noServer, view: "reader" });
       await get().refreshWorkspaces();
-      await restoreLastDoc(activeServerId);
+      await restoreLastDoc(active);
     },
 
     async connect(connection, name = null) {
