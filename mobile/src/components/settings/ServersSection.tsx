@@ -21,6 +21,7 @@ import { scanQrCode } from "../../platform";
 import { SERVER_NAME_MAX, useReaderStore } from "../../state/readerStore";
 import { errorText, t } from "../../i18n";
 import { Icon } from "../Icon";
+import { Modal } from "../Modal";
 import { useToast } from "../Toast";
 import { createLongPress, type LongPress } from "./longPress";
 import { dragTarget, moveItem, rowOffset, rowShift, type RowRect } from "./reorder";
@@ -324,9 +325,11 @@ export function ServersSection() {
                     onKeyDown={(e) => keyMove(e, i)}
                   >
                     {/* No radio button: the status dot IS the leading mark, in the
-                        slot the radio used to occupy. Which server is current stays
-                        legible from the row's own highlight. */}
-                    <span className={`status-dot ${state}`} role="img" aria-label={t(SERVER_STATE_KEY[state])} />
+                        slot the radio used to occupy. The phone itself has no
+                        reachability to report, so its row carries no dot. */}
+                    {!p.local && (
+                      <span className={`status-dot ${state}`} role="img" aria-label={t(SERVER_STATE_KEY[state])} />
+                    )}
                     <span className="server-main">
                       <span className="server-title">
                         <span className="server-name">{p.name}</span>
@@ -409,48 +412,51 @@ export function ServersSection() {
       )}
 
       {/* Adding sits under the list it adds to, and asks HOW first. */}
-      {addStep === "idle" && (
-        <button type="button" className="button wide" onClick={() => setAddStep("choose")}>
-          <Icon name="scan" size={18} /> {t("settings.addServer")}
-        </button>
-      )}
+      <button type="button" className="button wide" onClick={() => setAddStep("choose")}>
+        <Icon name="scan" size={18} /> {t("settings.addServer")}
+      </button>
+      {/* How to pair is a choice, so it is asked in a dialog: a code or the camera. */}
       {addStep === "choose" && (
-        <div className="add-choice">
-          <button type="button" className="button wide" disabled={adding} onClick={() => void scan()}>
-            <Icon name="scan" size={18} /> {adding ? t("settings.verifying") : t("settings.addChoice.scan")}
-          </button>
-          <button type="button" className="button wide" onClick={() => setAddStep("code")}>
-            {t("settings.addChoice.code")}
-          </button>
-          <button type="button" className="button wide" onClick={() => setAddStep("idle")}>
-            {t("settings.cancel")}
-          </button>
-        </div>
+        <Modal label={t("settings.addServer")} onClose={() => setAddStep("idle")}>
+          <h2 className="modal-title">{t("settings.addServer")}</h2>
+          <div className="choose-dialog">
+            <button type="button" className="button" onClick={() => setAddStep("code")}>
+              {t("settings.addChoice.code")}
+            </button>
+            <button type="button" className="button" disabled={adding} onClick={() => { setAddStep("idle"); void scan(); }}>
+              <Icon name="scan" size={18} /> {adding ? t("settings.verifying") : t("settings.addChoice.scan")}
+            </button>
+            <button type="button" className="button" onClick={() => setAddStep("idle")}>
+              {t("settings.cancel")}
+            </button>
+          </div>
+        </Modal>
       )}
       {addStep === "code" && (
-        <form className="add-code" onSubmit={(e) => void submitCode(e)}>
-          <label>
-            {t("settings.pairCodeLabel")}
+        <Modal label={t("settings.addChoice.code")} onClose={() => setAddStep("choose")}>
+          <form className="rename-dialog" onSubmit={(e) => void submitCode(e)}>
+            <h2 className="modal-title">{t("settings.addChoice.code")}</h2>
             <input
               autoFocus
               value={code}
               onChange={(e) => setCode(e.target.value)}
               placeholder={t("settings.pairCodePlaceholder")}
+              aria-label={t("settings.pairCodeLabel")}
               autoCapitalize="off"
               autoCorrect="off"
               spellCheck={false}
             />
-          </label>
-          <p className="hint">{t("settings.pairCodeHint")}</p>
-          <div className="row">
-            <button type="submit" className="button primary" disabled={adding || !code.trim()}>
-              {adding ? t("settings.verifying") : t("settings.connect")}
-            </button>
-            <button type="button" className="button" onClick={() => { setAddStep("choose"); setCode(""); }}>
-              {t("settings.cancel")}
-            </button>
-          </div>
-        </form>
+            <p className="hint">{t("settings.pairCodeHint")}</p>
+            <div className="modal-actions">
+              <button type="button" className="button" onClick={() => { setAddStep("choose"); setCode(""); }}>
+                {t("settings.cancel")}
+              </button>
+              <button type="submit" className="button primary" disabled={adding || !code.trim()}>
+                {adding ? t("settings.verifying") : t("settings.connect")}
+              </button>
+            </div>
+          </form>
+        </Modal>
       )}
       {toast}
     </>

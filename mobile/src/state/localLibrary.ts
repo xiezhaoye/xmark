@@ -56,15 +56,17 @@ interface Persisted {
 export function loadLocalLibrary(): LocalGroup[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
+    if (!raw) return withDefaultGroup([]);
     const parsed = JSON.parse(raw) as Persisted;
     if (!Array.isArray(parsed.groups)) return [];
-    return parsed.groups.filter(
-      (g): g is LocalGroup =>
-        !!g && typeof g.id === "string" && typeof g.name === "string" && Array.isArray(g.folders),
+    return withDefaultGroup(
+      parsed.groups.filter(
+        (g): g is LocalGroup =>
+          !!g && typeof g.id === "string" && typeof g.name === "string" && Array.isArray(g.folders),
+      ),
     );
   } catch {
-    return [];
+    return withDefaultGroup([]);
   }
 }
 
@@ -105,7 +107,10 @@ export const useLocalLibrary = create<LocalLibraryState>()((set, get) => {
     set({ groups });
   };
   return {
-    groups: [],
+    // The default group exists from the first launch: selecting 本机 must show
+    // the group its folders will land in, not an empty rail that only grows one
+    // when the user presses 「分组」.
+    groups: withDefaultGroup(loadLocalLibrary()),
 
     addFolder({ path, name }, groupId = DEFAULT_LOCAL_GROUP_ID) {
       const groups = withDefaultGroup(get().groups);

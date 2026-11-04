@@ -25,7 +25,7 @@
   --font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
   --topbar-h: 48px;
-  --groups-col: 132px;
+  --groups-col: 176px;
   /* The document's type size; the settings page sets it (see DocumentView). */
   --reading-size: 16px;
   /* The dimmed page behind a bottom sheet. */
@@ -425,25 +425,29 @@ input { font: inherit; color: inherit; }
 /* ---- Reading-size pill over the document, preview/source switch in the popover ---- */
 /* Preview / source reads as two tabs of one strip: equal halves, no track
    behind them, the active one marked by weight and a rule under it. */
+/* Two rectangles of equal width, side by side. The chosen one is FILLED — no
+   underline, no outer track. */
 .settings-popover .mode-switch {
   align-self: stretch;
+  gap: 6px;
   padding: 0;
-  border-radius: 0;
-  border-bottom: 1px solid var(--border-color);
   background: transparent;
 }
 .settings-popover .mode-switch button {
   flex: 1;
-  padding: 9px 0;
-  border-radius: 0;
+  padding: 10px 0;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
   font-size: 14px;
   color: var(--text-secondary);
 }
 .settings-popover .mode-switch button.on {
-  background: transparent;
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: #fff;
+  font-weight: 600;
   box-shadow: none;
-  color: var(--text-color);
-  border-bottom: 2px solid var(--accent-primary);
 }
 /* The stepper takes the floating pill's place; `mode-float` still supplies the
    position, shadow and z-index, so both controls sat in the same spot. */
@@ -510,3 +514,13 @@ html.scanning .app { visibility: hidden; }
 .add-code input { width: 100%; padding: 10px; font: 13px var(--font-mono); }
 .add-code .row { display: flex; gap: 8px; }
 .add-code .row .button { flex: 1; padding: 10px; }
+
+/* ---- Modal: the one shape for "answer this first" ----------------------- */
+.modal-backdrop { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 24px; background: rgb(0 0 0 / 38%); }
+.modal-card { width: 100%; max-width: 320px; padding: 18px; border-radius: 14px; background: var(--bg-color); box-shadow: 0 12px 40px rgb(0 0 0 / 28%); }
+.modal-title { margin: 0 0 12px; font-size: 16px; font-weight: 600; color: var(--text-color); }
+.modal-actions { display: flex; gap: 8px; margin-top: 14px; }
+.modal-actions .button { flex: 1; padding: 10px; }
+.rename-dialog input { width: 100%; padding: 10px; }
+.choose-dialog { display: flex; flex-direction: column; gap: 8px; }
+.choose-dialog .button { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; }

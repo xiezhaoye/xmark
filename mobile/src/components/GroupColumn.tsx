@@ -23,6 +23,7 @@ import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import { StatusMessage } from "./StatusMessage";
 import { useLocalLibrary } from "../state/localLibrary";
 import { forgetLocalFolder, pickLocalFolder } from "../platformLocalFS";
+import { RenameDialog } from "./settings/RenameDialog";
 
 const LONG_PRESS_MS = 500;
 /** A drag starts only after the finger has travelled this far, so a tap stays a tap. */
@@ -31,7 +32,7 @@ const DRAG_START_PX = 6;
 /** Which local entry a menu is open for. */
 type Menu =
   | { kind: "folder"; path: string; name: string; groupId: string }
-  | { kind: "group"; id: string; name: string }
+  | { kind: "group"; id: string; name: string; groupKey: string }
   | null;
 
 const isLocalGroup = (id: string) => id.startsWith("local:");
@@ -41,9 +42,12 @@ export function GroupColumn() {
   const groupsError = useReaderStore((s) => s.groupsError);
   const collapsed = useReaderStore((s) => s.collapsedGroups);
   const selected = useReaderStore((s) => s.selectedRootId);
+  // Groups are the phone's own concept; a Mac's groups are listed read-only.
+  const localSource = useReaderStore((s) => Boolean(s.connection?.local));
   const [hint, setHint] = useState<string | null>(null);
   const [menu, setMenu] = useState<Menu>(null);
-  const [draft, setDraft] = useState<{ kind: "folder" | "group"; id: string; value: string } | null>(null);
+  // Renaming is a dialog, never a field inside the rail.
+  const [rename, setRename] = useState<{ kind: "folder" | "group"; id: string; value: string; title: string } | null>(null);
   const [drag, setDrag] = useState<{ path: string; overGroup: string; overIndex: number } | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pressOrigin = useRef<{ x: number; y: number; path: string; groupId: string } | null>(null);
@@ -59,11 +63,12 @@ export function GroupColumn() {
 
   /* ---- actions ------------------------------------------------------- */
 
-  const addFolder = async () => {
+  /** Picks a folder and files it under `groupId` (the default group by default). */
+  const addFolder = async (groupId?: string) => {
     try {
       const folder = await pickLocalFolder();
       // The picker's name is the folder's own; the library keeps it as the row.
-      library().addFolder({ path: folder.path, name: folder.name });
+      library().addFolder({ path: folder.path, name: folder.name }, groupId);
       await useReaderStore.getState().connectLocal();
       await useReaderStore.getState().refreshWorkspaces();
     } catch (err) {
@@ -144,7 +149,7 @@ export function GroupColumn() {
                 onContextMenu={(e) => {
                   if (!local) return;
                   e.preventDefault();
-                  setMenu({ kind: "group", id: g.id, name: g.name });
+                  setMenu({ kind: "group", id: g.id, name: g.name, groupKey: g.id });
                 }}
               >
                 <span className={`chevron ${collapsed[g.id] ? "" : "open"}`}>
@@ -160,13 +165,13 @@ export function GroupColumn() {
                     aria-label={t("side.actions", { name: g.name })}
                     onClick={(e) => {
                       e.stopPropagation();
-                      setMenu({ kind: "group", id: g.id, name: g.name });
+                      setMenu({ kind: "group", id: g.id, name: g.name, groupKey: g.id });
                     }}
                     onKeyDown={(e) => {
                       if (e.key !== "Enter" && e.key !== " ") return;
                       e.preventDefault();
                       e.stopPropagation();
-                      setMenu({ kind: "group", id: g.id, name: g.name });
+                      setMenu({ kind: "group", id: g.id, name: g.name, groupKey: g.id });
                     }}
                   >
                     <Icon name="more" size={16} />
@@ -214,58 +219,81 @@ export function GroupColumn() {
             </section>
           );
         })}
-        {menu && <LocalMenu menu={menu} onClose={() => setMenu(null)} onRename={setDraft} onDeleteFolder={removeFolder} onDeleteGroup={(id) => { library().removeGroup(id); void useReaderStore.getState().refreshWorkspaces(); }} />}
+        {menu && (
+          <LocalMenu
+            menu={menu}
+            onClose={() => setMenu(null)}
+            onAddFolder={(groupId) => void addFolder(groupId)}
+            onRename={setRename}
+            onDeleteFolder={removeFolder}
+            onDeleteGroup={(id) => {
+              library().removeGroup(id);
+              void useReaderStore.getState().refreshWorkspaces();
+            }}
+          />
+        )}
       </nav>
 
-      {/* The two ways to add live with the thing they add to. Both act on the
-          phone's own library; a Mac's groups are not ours to extend. */}
-      <div className="groups-add">
-        <button type="button" className="groups-add-button" onClick={() => void addFolder()}>
-          <Icon name="folder" size={16} /> {t("side.addFolder")}
-        </button>
-        <button type="button" className="groups-add-button" onClick={() => void addGroup()}>
-          ＋ {t("side.addGroup")}
-        </button>
-      </div>
+      {/* Only the phone's own library can be extended, and only the group row's
+          ⋯ adds a folder — one place per action. */}
+      {localSource && (
+        <div className="groups-add">
+          <button type="button" className="groups-add-button" onClick={() => void addGroup()}>
+            ＋ {t("side.addGroup")}
+          </button>
+        </div>
+      )}
 
-      {draft && (
-        <form
-          className="local-draft"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (draft.kind === "folder") library().renameFolder(draft.id, draft.value);
-            else library().renameGroup(draft.id, draft.value);
-            setDraft(null);
+      {rename && (
+        <RenameDialog
+          title={rename.title}
+          initial={rename.value}
+          onCancel={() => setRename(null)}
+          onConfirm={(value) => {
+            if (rename.kind === "folder") library().renameFolder(rename.id, value);
+            else library().renameGroup(rename.id, value);
+            setRename(null);
             void useReaderStore.getState().refreshWorkspaces();
           }}
-        >
-          <input autoFocus value={draft.value} onChange={(e) => setDraft({ ...draft, value: e.target.value })} aria-label={draft.kind === "folder" ? t("side.rename") : t("side.renameGroup")} />
-          <button type="submit" className="button small">{t("settings.renameSave")}</button>
-          <button type="button" className="button small" onClick={() => setDraft(null)}>{t("settings.cancel")}</button>
-        </form>
+        />
       )}
       {drag && <div className="drag-marker" aria-hidden="true" />}
     </div>
   );
 }
 
-/** The long-press menu for a local folder or group. */
+/** The long-press / ⋯ menu for a local folder or group. */
 function LocalMenu({
   menu,
   onClose,
+  onAddFolder,
   onRename,
   onDeleteFolder,
   onDeleteGroup,
 }: {
   menu: Exclude<Menu, null>;
   onClose: () => void;
-  onRename: (draft: { kind: "folder" | "group"; id: string; value: string }) => void;
+  onAddFolder: (groupId: string) => void;
+  onRename: (target: { kind: "folder" | "group"; id: string; value: string; title: string }) => void;
   onDeleteFolder: (path: string) => void;
   onDeleteGroup: (id: string) => void;
 }) {
   const name = menu.name;
   return (
     <div className="local-menu" role="dialog" aria-label={t("side.actions", { name })}>
+      {/* A folder is added into a group, so the action belongs to the group. */}
+      {menu.kind === "group" && (
+        <button
+          type="button"
+          className="local-menu-item"
+          onClick={() => {
+            onClose();
+            onAddFolder(menu.id);
+          }}
+        >
+          {t("side.addFolder")}
+        </button>
+      )}
       <button
         type="button"
         className="local-menu-item"
@@ -273,8 +301,8 @@ function LocalMenu({
           onClose();
           onRename(
             menu.kind === "folder"
-              ? { kind: "folder", id: menu.path, value: name }
-              : { kind: "group", id: menu.id, value: name },
+              ? { kind: "folder", id: menu.path, value: name, title: t("side.rename") }
+              : { kind: "group", id: menu.id, value: name, title: t("side.renameGroup") },
           );
         }}
       >

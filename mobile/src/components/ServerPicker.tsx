@@ -96,10 +96,11 @@ export function ServerPicker() {
                 >
                   <span className="sheet-option-main">
                     <span className="sheet-option-name">
-                      {(() => {
-                        const state = status[p.id] ?? "checking";
-                        return <span className={`status-dot ${state}`} role="img" aria-label={t(SERVER_STATE_KEY[state])} />;
-                      })()}
+                      {!p.local &&
+                        (() => {
+                          const state = status[p.id] ?? "checking";
+                          return <span className={`status-dot ${state}`} role="img" aria-label={t(SERVER_STATE_KEY[state])} />;
+                        })()}
                       {p.name}
                     </span>
                     <span className="sheet-option-address">
