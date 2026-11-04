@@ -76,25 +76,35 @@ const CASES = (["split", "source", "preview"] as const).flatMap((mode) =>
 );
 
 describe("split-pane chrome layout (real engine, production frame)", () => {
-  it.each(CASES)("mode $mode, banner $banner, dark $dark: toggle row is clear of everything", ({ mode, banner, dark }) => {
+  it.each(CASES)("mode $mode, banner $banner, dark $dark: the chrome floats, taking no height", ({ mode, banner, dark }) => {
     if (dark) document.documentElement.classList.add("dark-theme");
-    mount(mode, banner);
+    const host = mount(mode, banner);
     const toggle = box(".view-mode-toggle");
-    const header = box(".split-pane-editor__header");
+    const overlay = box(".editor-overlay");
     const body = box(".split-pane-editor__body");
+    const pane = host.getBoundingClientRect();
 
-    expect(intersects(toggle, body)).toBe(false);
-    expect(toggle.bottom).toBeLessThanOrEqual(body.top);
-    // A header row, not a second toolbar: compact, and it leaves the body room.
-    expect(header.height).toBeLessThanOrEqual(48);
+    // Nothing in flow above the body: the reading area starts at the pane's top
+    // edge, and the controls sit ON it (that is the point — the remote preview
+    // has no bar either, so both sides read the same way).
+    expect(body.top - pane.top).toBeLessThanOrEqual(1);
+    expect(intersects(toggle, body)).toBe(true);
+    // The overlay itself stays a compact strip near the top edge.
+    expect(overlay.height).toBeLessThanOrEqual(40);
+    expect(overlay.top - pane.top).toBeLessThanOrEqual(8);
     expect(body.height).toBeGreaterThan(400);
     if (banner) {
+      // The read-only notice rides in the same overlay, at its left.
       const bannerBox = box(".read-only-banner");
-      expect(intersects(bannerBox, header)).toBe(false);
-      expect(intersects(bannerBox, body)).toBe(false);
+      expect(bannerBox.top).toBeGreaterThanOrEqual(overlay.top - 1);
+      expect(bannerBox.bottom).toBeLessThanOrEqual(overlay.bottom + 1);
+      expect(intersects(bannerBox, toggle)).toBe(false);
     }
-    if (mode !== "source") expect(intersects(toggle, box(".html-preview__trust"))).toBe(false);
-    if (mode !== "preview") expect(intersects(toggle, box(".probe-source"))).toBe(false);
+    // Overlapping the content is the DESIGN now; what must hold is that while
+    // the row is hidden it cannot eat a tap meant for what lies beneath it.
+    const centre = { x: toggle.left + toggle.width / 2, y: toggle.top + toggle.height / 2 };
+    const under = document.elementFromPoint(centre.x, centre.y);
+    expect(under !== null && q(".view-mode-toggle")!.contains(under)).toBe(false);
   });
 
   it("both ends of the trust bar hit-test to the trust bar", () => {

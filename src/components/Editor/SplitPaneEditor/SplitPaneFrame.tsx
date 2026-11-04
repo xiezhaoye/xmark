@@ -29,8 +29,12 @@ export interface SplitPaneFrameProps {
   sourceFraction: number;
   /** Full-width notice above everything (the read-only banner). */
   banner?: ReactNode;
-  /** Content of the header row (the view-mode toggle); no row when omitted. */
+  /** Right slot of the floating control row (the view-mode toggle). */
   header?: ReactNode;
+  /** Centre slot of the same row (the type-size control). */
+  centerControls?: ReactNode;
+  /** Left slot of the same row (read-only actions). */
+  leftControls?: ReactNode;
   source?: ReactNode;
   resizeHandle?: ReactNode;
   preview?: ReactNode;
@@ -42,8 +46,9 @@ export function SplitPaneFrame({
   ariaLabel,
   formatId,
   sourceFraction,
-  banner,
   header,
+  centerControls,
+  leftControls,
   source,
   resizeHandle,
   preview,
@@ -57,14 +62,15 @@ export function SplitPaneFrame({
       data-format-id={formatId}
       style={{ "--split-pane-source-fraction": String(sourceFraction) } as CSSProperties}
     >
-      {/* ONE top row: the read-only notice on the left, the view-mode and zoom
-          controls on the right. Two stacked rows made the top look like an empty
-          band — and the controls were inside the preview area, where they
-          floated over the first line of the document. */}
-      {(banner !== undefined || header !== undefined) && (
-        <div className="split-pane-editor__header">
-          {banner !== undefined && <div className="split-pane-editor__banner">{banner}</div>}
-          {header !== undefined && <div className="split-pane-editor__controls">{header}</div>}
+      {/* The controls FLOAT over the document: one row, zero layout height —
+          left the read-only notice, centre the type size, right the mode
+          switch. A row in flow cost 31px of the reading area for chrome the
+          remote side does not have at all. */}
+      {(leftControls !== undefined || centerControls !== undefined || header !== undefined) && (
+        <div className="editor-overlay">
+          <div className="editor-overlay__left">{leftControls}</div>
+          <div className="editor-overlay__center">{centerControls}</div>
+          <div className="editor-overlay__right">{header}</div>
         </div>
       )}
       {/* Row body: source | resize | preview. Separated from the banner and the

@@ -53,11 +53,16 @@ export function useWindowZoom(): void {
 
   // Applied on mount too, so a persisted scale survives a restart.
   useEffect(() => {
-    void getCurrentWebviewWindow()
-      .setZoom(scale)
-      .catch(() => {
-        /* a window torn down mid-effect has nothing to zoom */
-      });
+    const win = getCurrentWebviewWindow() as unknown as {
+      setZoom?: (value: number) => Promise<void>;
+    };
+    // The API is absent outside a real window (unit tests, a webview torn down
+    // mid-effect). Treated as "nothing to zoom" rather than a thrown error:
+    // this hook runs in the app shell, so a throw here took the whole tree down.
+    if (typeof win.setZoom !== "function") return;
+    void win.setZoom(scale).catch(() => {
+      /* a window torn down mid-effect has nothing to zoom */
+    });
   }, [scale]);
 
   useEffect(() => {

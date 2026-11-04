@@ -24,19 +24,6 @@
 /* ONE slim row: read-only notice + controls. `min-height` keeps it a toolbar
    rather than a band; the controls sit at the right edge, never inside the
    preview area. */
-.split-pane-editor__header {
-  display: flex;
-  flex: 0 0 auto;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: 30px;
-  padding: 2px var(--space-2);
-  border-bottom: var(--border-thin) solid var(--border-color);
-  background: var(--bg-color);
-}
-.split-pane-editor__banner { min-width: 0; display: flex; align-items: center; }
-.split-pane-editor__controls { display: flex; align-items: center; gap: var(--space-2); margin-left: auto; }
 
 .split-pane-editor__body {
   display: flex;
@@ -238,3 +225,78 @@
   min-width: var(--space-8);
   text-align: right;
 }
+
+/* Floating control row over the document: zero layout height, three slots.
+   The centre slot is the type-size control, the right one the view mode; the
+   left one is free for the read-only notice. Pointer events pass through the
+   row itself so a click on the text under it still lands on the text. */
+.editor-overlay {
+  position: absolute;
+  top: 6px;
+  left: 10px;
+  right: 10px;
+  z-index: 6;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-2);
+  /* Hidden and inert until the reading surface is hovered or focused: the row
+     sits ON the document, so a permanently visible one would cover the first
+     line and swallow taps meant for the content under it. */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-fast, 120ms) ease-out;
+}
+.split-pane-editor:hover > .editor-overlay,
+.editor-container:hover > .editor-overlay,
+.editor-overlay:focus-within {
+  opacity: 1;
+  pointer-events: auto;
+}
+/* The left slot is capped so a long read-only notice can never reach the
+   mode switch: the notice truncates instead of overlapping. */
+.editor-overlay__left { justify-self: start; min-width: 0; max-width: 42%; overflow: hidden; }
+.editor-overlay__center { justify-self: center; }
+.editor-overlay__right { justify-self: end; }
+
+/* The read-only notice, as a pill in the overlay rather than a full-width row. */
+.editor-overlay .read-only-banner {
+  max-width: 100%;
+  min-width: 0;
+  gap: var(--space-1);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  padding: 2px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-primary) 88%, transparent);
+  font-size: var(--font-size-xs);
+}
+/* Every child shrinks and truncates, so the pill's real width stays inside its
+   slot — clipping alone would leave the box wider than it looks, over the
+   mode switch. */
+.editor-overlay .read-only-banner > * {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Read-only actions in the floating row's left slot: two compact buttons that
+   appear with the row (on hover), instead of a full-width banner. */
+.editor-readonly-actions { display: flex; align-items: center; gap: var(--space-1); }
+.editor-readonly-actions__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-primary) 88%, transparent);
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+}
+.editor-readonly-actions__btn:hover { color: var(--text-primary); }

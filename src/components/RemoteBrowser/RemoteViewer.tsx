@@ -125,9 +125,23 @@ function HtmlView({ text }: { text: string }) {
   return <iframe className="remote-html" sandbox="" srcDoc={srcdoc} title="HTML preview" referrerPolicy="no-referrer" />;
 }
 
+/** How a server document is shown. `split` is only meaningful for markdown:
+ * the rendered page and its source side by side. */
+export type RemoteViewMode = "preview" | "split" | "source";
+
 export interface RemoteViewerProps {
   rootId: string;
   relPath: string;
+  /** Chosen above the viewer; ignored by kinds that have a single shape. */
+  mode?: RemoteViewMode;
+}
+
+/** Which modes a path offers: markdown has all three, HTML two, the rest none. */
+export function remoteModesFor(relPath: string): RemoteViewMode[] {
+  const ext = extOf(relPath);
+  if (["md", "markdown", "mdown", "mkd", "mdx"].includes(ext)) return ["preview", "split", "source"];
+  if (ext === "html" || ext === "htm") return ["preview", "source"];
+  return [];
 }
 
 /**
@@ -136,7 +150,7 @@ export interface RemoteViewerProps {
  * rather than something an effect assigns — no render paints the previous
  * document's content under the new path.
  */
-export function RemoteViewer({ rootId, relPath }: RemoteViewerProps) {
+export function RemoteViewer({ rootId, relPath, mode = "preview" }: RemoteViewerProps) {
   const { t } = useTranslation("sidebar");
   const ext = extOf(relPath);
   // Dispatch BEFORE reading. The image branch never touches `/api/file`: the
@@ -154,7 +168,7 @@ export function RemoteViewer({ rootId, relPath }: RemoteViewerProps) {
   // "loading" state is then the loader's INITIAL state rather than something
   // an effect assigns — no render paints the previous document's content
   // under the new path.
-  return <LoadedText key={`${rootId}:${relPath}`} rootId={rootId} relPath={relPath} ext={ext} />;
+  return <LoadedText key={`${rootId}:${relPath}`} rootId={rootId} relPath={relPath} ext={ext} mode={mode} />;
 }
 
 /** Lower-cased extension of a remote path, or "" for a name without one. */
@@ -164,14 +178,12 @@ function extOf(relPath: string): string {
 }
 
 /** A server-served TEXT document: markdown, HTML or source. */
-function LoadedText({ rootId, relPath, ext }: RemoteViewerProps & { ext: string }) {
+function LoadedText({ rootId, relPath, ext, mode = "preview" }: RemoteViewerProps & { ext: string }) {
   const { t } = useTranslation("sidebar");
   // Both start at their only correct value for this document: nothing loaded,
   // first attempt. A new document is a new mount (see `RemoteViewer`).
   const [state, setState] = useState<DocState>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
-  // Per document (the viewer is keyed by path, so this resets on a switch).
-  const [raw, setRaw] = useState(false);
 
   useEffect(() => {
     // Only the async callbacks below set state: the reset is the remount.
@@ -205,27 +217,24 @@ function LoadedText({ rootId, relPath, ext }: RemoteViewerProps & { ext: string 
     if (next !== relPath) useRemoteBrowserStore.setState({ doc: { rootId, relPath: next, kind: "loading" } });
   };
 
-  if (ext === "html" || ext === "htm") return <HtmlView text={file.text} />;
+  if (ext === "html" || ext === "htm") {
+    return mode === "source" ? <SourceView text={file.text} ext={ext} /> : <HtmlView text={file.text} />;
+  }
   if (file.kind === "markdown" || ext === "md" || ext === "markdown") {
     // Read-only does not mean "no source": the rendered page and its text are
-    // the same document, and sometimes the text is what you came for.
-    return (
-      <div className="remote-md">
-        <button
-          type="button"
-          className="remote-md__mode"
-          aria-pressed={raw}
-          onClick={() => setRaw((value) => !value)}
-        >
-          {raw ? t("remote.previewMode") : t("remote.sourceMode")}
-        </button>
-        {raw ? (
-          <SourceView text={file.text} ext={ext} />
-        ) : (
-          <RemoteMarkdown rootId={rootId} relPath={relPath} text={file.text} onOpenDoc={openDoc} />
-        )}
-      </div>
-    );
+    // the same document, and sometimes the text is what you came for. `split`
+    // puts both side by side — the same three states the local editor has.
+    const rendered = <RemoteMarkdown rootId={rootId} relPath={relPath} text={file.text} onOpenDoc={openDoc} />;
+    if (mode === "source") return <SourceView text={file.text} ext={ext} />;
+    if (mode === "split") {
+      return (
+        <div className="remote-split">
+          <div className="remote-split__pane">{rendered}</div>
+          <div className="remote-split__pane"><SourceView text={file.text} ext={ext} /></div>
+        </div>
+      );
+    }
+    return <div className="remote-md">{rendered}</div>;
   }
   return <SourceView text={file.text} ext={ext} />;
 }

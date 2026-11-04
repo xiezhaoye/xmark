@@ -37,7 +37,7 @@
  * @module components/RemoteBrowser/RemoteShell
  */
 
-import { useEffect, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { useTranslation } from "react-i18next";
 import { FolderOpen, ListTree } from "lucide-react";
 import { useRemoteBrowserStore } from "@/stores/remoteBrowserStore";
@@ -53,7 +53,7 @@ import { ServerSwitcher } from "@/components/WorkspaceRail/ServerSwitcher";
 import { RemoteError } from "./RemoteChrome";
 import { RemoteShellSection } from "./RemoteShellSection";
 import { RemoteTree } from "./RemoteTree";
-import { RemoteViewer } from "./RemoteViewer";
+import { RemoteViewer, remoteModesFor, type RemoteViewMode } from "./RemoteViewer";
 import { PreviewZoomBar, usePreviewZoom } from "@/components/PreviewZoom/PreviewZoom";
 import "./remote-shell.css";
 
@@ -196,15 +196,61 @@ function SidebarRegion({ serverId }: { serverId: string }) {
   );
 }
 
+/** 预览 / 分栏 / 源码 for a server document — same labels and order as local. */
+function RemoteModeToggle({
+  modes,
+  mode,
+  onChange,
+}: {
+  modes: RemoteViewMode[];
+  mode: RemoteViewMode;
+  onChange: (mode: RemoteViewMode) => void;
+}) {
+  const { t } = useTranslation("editor");
+  return (
+    <div className="view-mode-toggle" role="radiogroup" aria-label={t("preview.zoom")}>
+      {modes.map((value) => (
+        <button
+          key={value}
+          type="button"
+          role="radio"
+          aria-checked={mode === value}
+          className={`view-mode-toggle__btn${mode === value ? " view-mode-toggle__btn--active" : ""}`}
+          onClick={() => onChange(value)}
+        >
+          {t(`splitPane.viewMode.${value === "source" ? "source" : value === "split" ? "split" : "preview"}`)}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function MainRegion({ serverId }: { serverId: string }) {
   const { scale: previewZoom } = usePreviewZoom();
   const { t } = useTranslation("sidebar");
   const doc = useRemoteBrowserStore((s) => s.doc);
   void useGroups(serverId);
 
+  const modes = doc ? remoteModesFor(doc.relPath) : [];
+  const [mode, setMode] = useState<RemoteViewMode>("preview");
+  // A different document starts at its rendered form, the way it opens locally.
+  useEffect(() => {
+    setMode("preview");
+  }, [doc?.rootId, doc?.relPath]);
+
   return (
     <div className="remote-viewer">
-      <PreviewZoomBar />
+      {/* The same floating row as the local editor: type size in the centre,
+          view mode at the right, nothing taken from the reading area. */}
+      <div className="editor-overlay">
+        <div className="editor-overlay__left" />
+        <div className="editor-overlay__center">
+          <PreviewZoomBar variant="inline" />
+        </div>
+        <div className="editor-overlay__right">
+          {modes.length > 1 && <RemoteModeToggle modes={modes} mode={mode} onChange={setMode} />}
+        </div>
+      </div>
       {/* The zoom travels as a custom property, applied to the BODY'S CHILDREN
           (remote-viewer.css). Putting `zoom` on this scrolling box rescales the
           iframe's layout box, but the frame is a subdocument painted separately:
@@ -217,7 +263,7 @@ function MainRegion({ serverId }: { serverId: string }) {
             in flight, and the viewer paints that state itself. Gating on the
             kind here unmounted the reader the moment it started reading. */}
         {doc ? (
-          <RemoteViewer rootId={doc.rootId} relPath={doc.relPath} />
+          <RemoteViewer rootId={doc.rootId} relPath={doc.relPath} mode={mode} />
         ) : (
           <p className="remote-viewer__empty">
             <FolderOpen size={14} aria-hidden="true" /> {t("remote.pickFile")}

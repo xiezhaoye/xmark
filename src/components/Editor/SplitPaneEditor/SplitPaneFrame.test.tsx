@@ -20,19 +20,19 @@ function frame(props: Partial<Parameters<typeof SplitPaneFrame>[0]> = {}) {
 const classesOf = (el: Element) => [...el.children].map((c) => c.className);
 
 describe("SplitPaneFrame", () => {
-  it("puts the read-only notice and the controls in ONE top row, above the body", () => {
+  it("floats the controls over the body, taking no height", () => {
     const root = frame({
-      banner: <div className="read-only-banner">ro</div>,
       header: <span>toggle</span>,
       source: <span>src</span>,
       resizeHandle: <div className="split-pane-editor__resize-handle" />,
       preview: <span>preview</span>,
     });
-    // One row, not two: stacked rows read as an empty band at the top.
-    expect(classesOf(root)).toEqual(["split-pane-editor__header", "split-pane-editor__body"]);
-    const header = root.querySelector(".split-pane-editor__header") as HTMLElement;
-    expect(header.querySelector(".split-pane-editor__banner .read-only-banner")).not.toBeNull();
-    expect(header.querySelector(".split-pane-editor__controls")?.textContent).toBe("toggle");
+    // Nothing in flow above the body: the chrome is an overlay, so the reading
+    // area starts at the very top — the same as the remote preview.
+    expect(classesOf(root)).toEqual(["editor-overlay", "split-pane-editor__body"]);
+    const overlay = root.querySelector(".editor-overlay") as HTMLElement;
+    expect(overlay.querySelector(".editor-overlay__left")?.childElementCount).toBe(0);
+    expect(overlay.querySelector(".editor-overlay__right")?.textContent).toBe("toggle");
     const body = root.querySelector(".split-pane-editor__body") as HTMLElement;
     expect(classesOf(body)).toEqual([
       "split-pane-editor__source",
@@ -41,9 +41,9 @@ describe("SplitPaneFrame", () => {
     ]);
   });
 
-  it("renders no header row when there is no header content", () => {
+  it("renders no overlay when there are no controls", () => {
     const root = frame({ source: <span>src</span> });
-    expect(root.querySelector(".split-pane-editor__header")).toBeNull();
+    expect(root.querySelector(".editor-overlay")).toBeNull();
   });
 
   it("omits an empty pane slot, so single-pane modes keep one pane", () => {

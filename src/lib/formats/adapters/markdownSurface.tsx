@@ -122,13 +122,15 @@ export function MarkdownEditorSurface({ tabId }: { tabId: string }) {
 
   return (
     <div className={containerClass} data-html-rendering-mode={htmlRenderingMode}>
-      {/* The controls live in a slim top row, like the split-pane formats —
-          never floating over the first line of the document. */}
+      {/* Same floating row as the split-pane formats: centre the type size,
+          right the mode switch, nothing taken from the reading area. */}
       {!forcedSource && (
-        <div className="split-pane-editor__header markdown-surface__header">
-          <div className="split-pane-editor__banner" />
-          <div className="split-pane-editor__controls">
+        <div className="editor-overlay">
+          <div className="editor-overlay__left" />
+          <div className="editor-overlay__center">
             <PreviewZoomBar variant="inline" />
+          </div>
+          <div className="editor-overlay__right">
             <ViewModeToggle mode={viewMode} onChange={changeViewMode} />
           </div>
         </div>

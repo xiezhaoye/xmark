@@ -26,13 +26,11 @@
  */
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
 import { useTranslation } from "react-i18next";
 import { SourcePane } from "./SourcePane";
 import type { CSSProperties } from "react";
 import { usePreviewModel } from "./usePreviewModel";
 import { PreviewZoomBar, usePreviewZoom } from "@/components/PreviewZoom/PreviewZoom";
-import { ReadOnlyBanner } from "./ReadOnlyBanner";
 import { ValidationGutter } from "./ValidationGutter";
 import { ViewModeToggle } from "./ViewModeToggle";
 import { SplitPaneFrame } from "./SplitPaneFrame";
@@ -40,17 +38,14 @@ import { useDocumentStore } from "@/stores/documentStore";
 import { useTabStore } from "@/stores/tabStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useHtmlTrustStore } from "@/stores/htmlTrustStore";
-import { presentDiagnostics } from "@/lib/formats/diagnosticPresentation";
-import { imeToast as toast } from "@/services/ime/imeToast";
-import {
-  isSplitViewMode,
-  type FormatConfig,
-  type SplitViewMode,
-  type ValidationDiagnostic,
-} from "@/lib/formats/types";
+import { invoke } from "@tauri-apps/api/core";
+import { toast } from "sonner";
 import { errorMessage } from "@/utils/errorMessage";
+import { LockOpen, ExternalLink } from "lucide-react";
+import { presentDiagnostics } from "@/lib/formats/diagnosticPresentation";
+import { isSplitViewMode, type FormatConfig, type SplitViewMode, type ValidationDiagnostic } from "@/lib/formats/types";
 
-export interface SplitPaneEditorProps {
+interface SplitPaneEditorProps {
   tabId: string;
   formatConfig: FormatConfig;
 }
@@ -177,36 +172,25 @@ export function SplitPaneEditor({ tabId, formatConfig }: SplitPaneEditorProps) {
     }
   }, []);
 
-  // Read-only banner for kind="viewer" tabs. Hidden when the
-  // user has clicked "Enable editing" or when the format isn't read-
-  // only-default.
-  const showReadOnlyBanner =
-    formatConfig.kind === "viewer" &&
-    formatConfig.adapters.readOnlyDefault &&
-    !editingEnabled;
 
-  // Open in external editor handler. The Tauri command lives
-  // in src-tauri/src/external_editor.rs (added in this phase). It
-  // reads $EDITOR (or platform default) and spawns it with the file
-  // path. Failure is surfaced via the toast pipeline; we don't block
-  // the UI.
-  const handleOpenExternal = useCallback(() => {
+  // Read-only is a MODE, not a banner: for a viewer format the two actions used
+  // to sit in a full-width row at the top. They now ride in the floating row,
+  // which costs no height and only appears on hover.
+  const readOnlyDefault =
+    formatConfig.kind === "viewer" && Boolean(formatConfig.adapters.readOnlyDefault);
+
+  const openExternal = useCallback(() => {
     if (!filePath) return;
-    // Read the GUI-setting at click time (not via selector) so a setting
-    // change while a tab is open takes effect immediately.
-    const editorOverride =
-      useSettingsStore.getState().formats.externalEditor.trim() || null;
-    invoke("open_in_external_editor", {
-      path: filePath,
-      editorOverride,
-    }).catch((error: unknown) => {
-      // Bubble Rust-side rejections (forbidden override chars, missing
-      // editor, spawn failure) to the user instead of silently dropping
-      // the unhandled promise rejection.
-      const message = errorMessage(error);
-      toast.error(message);
+    // Read at click time so a settings change while the tab is open applies.
+    const editorOverride = useSettingsStore.getState().formats.externalEditor.trim() || null;
+    invoke("open_in_external_editor", { path: filePath, editorOverride }).catch((error: unknown) => {
+      toast.error(errorMessage(error));
     });
   }, [filePath]);
+
+  const enableEditing = useCallback(() => {
+    useTabStore.getState().setTabEditingEnabled(tabId, true);
+  }, [tabId]);
 
   return (
     <SplitPaneFrame
@@ -219,25 +203,21 @@ export function SplitPaneEditor({ tabId, formatConfig }: SplitPaneEditorProps) {
       // only the preview shows (1 would give the preview grow: 0 → a
       // zero-width, invisible preview).
       sourceFraction={showResizeHandle ? fraction : showSource ? 1 : 0}
-      banner={
-        showReadOnlyBanner ? (
-          <ReadOnlyBanner
-            formatNameI18nKey={formatConfig.nameI18nKey}
-            onEnableEditing={() =>
-              useTabStore.getState().setTabEditingEnabled(tabId, true)
-            }
-            onOpenExternal={filePath ? handleOpenExternal : undefined}
-          />
+
+      leftControls={
+        readOnlyDefault && !editingEnabled ? (
+          <div className="editor-readonly-actions">
+            <button type="button" className="editor-readonly-actions__btn" onClick={enableEditing}>
+              <LockOpen size={12} aria-hidden="true" /> {t("readOnly.enableEditing")}
+            </button>
+            <button type="button" className="editor-readonly-actions__btn" onClick={openExternal} aria-label={t("readOnly.openExternal")} title={t("readOnly.openExternal")}>
+              <ExternalLink size={12} aria-hidden="true" />
+            </button>
+          </div>
         ) : undefined
       }
-      header={
-        hasPreview ? (
-          <>
-            <PreviewZoomBar variant="inline" />
-            <ViewModeToggle mode={viewMode} onChange={handleViewModeChange} />
-          </>
-        ) : undefined
-      }
+      centerControls={hasPreview ? <PreviewZoomBar variant="inline" /> : undefined}
+      header={hasPreview ? <ViewModeToggle mode={viewMode} onChange={handleViewModeChange} /> : undefined}
       source={
         showSource ? (
           <>

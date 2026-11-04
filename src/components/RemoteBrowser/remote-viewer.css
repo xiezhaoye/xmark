@@ -323,21 +323,9 @@
   background: var(--bg-color);
 }
 
-/* Markdown read-only view: the source toggle sits in the corner, out of the
-   text column, and the text is the same document rendered. */
+/* Markdown read-only view. The mode switch lives in the pane's floating row,
+   not in here, so this only carries the two-column shape for `split`. */
 .remote-md { position: relative; }
-.remote-md__mode {
-  position: absolute;
-  top: var(--space-2);
-  right: var(--space-3);
-  z-index: 5;
-  padding: 3px 10px;
-  border: 1px solid var(--border-color);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--bg-primary) 88%, transparent);
-  color: var(--text-secondary);
-  font-family: var(--font-ui);
-  font-size: var(--font-size-sm);
-  opacity: 0.8;
-}
-.remote-md__mode:hover { opacity: 1; color: var(--text-primary); }
+.remote-split { display: flex; gap: var(--space-3); align-items: stretch; min-height: 100%; }
+.remote-split__pane { flex: 1 1 50%; min-width: 0; }
+.remote-split__pane + .remote-split__pane { border-left: var(--border-thin) solid var(--border-color); padding-left: var(--space-3); }

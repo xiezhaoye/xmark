@@ -381,7 +381,7 @@ describe("SplitPaneEditor", () => {
       expect(parseFloat(fraction)).toBe(1);
     });
 
-    it("read-only viewer banner persists in preview mode (WI-1.3)", () => {
+    it("carries no read-only banner row: the status bar's lock is that switch", () => {
       const viewerPreview: FormatConfig = {
         ...jsonStub,
         kind: "viewer",
@@ -393,8 +393,10 @@ describe("SplitPaneEditor", () => {
       const { container } = render(
         <SplitPaneEditor tabId={id} formatConfig={viewerPreview} />,
       );
-      // Banner is outside the body → present even with the source unmounted.
-      expect(container.querySelector(".read-only-banner")).toBeInTheDocument();
+      // No banner row at all — it cost 31px of the reading area, and the lock in
+      // the status bar toggles the same thing.
+      expect(container.querySelector(".read-only-banner")).toBeNull();
+      expect(container.querySelector(".editor-overlay")).toBeInTheDocument();
       expect(screen.queryByTestId("source-pane")).not.toBeInTheDocument();
     });
   });
