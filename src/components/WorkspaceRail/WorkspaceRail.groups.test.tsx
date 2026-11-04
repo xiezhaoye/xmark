@@ -175,3 +175,54 @@ describe("WorkspaceRail groups", () => {
     await waitFor(() => expect(groups().groups).toHaveLength(0));
   });
 });
+
+describe("WorkspaceRail — empty placeholder instances", () => {
+  it("keeps a placeholder that owns no tabs out of the rail", () => {
+    // The state a seed race can leave behind: a real workspace plus an empty
+    // placeholder instance nobody claimed. It used to render as a phantom
+    // "Ungrouped → Untitled" row that opens no content.
+    useWorkspaceGroupsStore.setState({ groups: [{ id: "g1", name: "Clients", folders: ["/Users/me/muse"] }] });
+    addInstance("wsi-a", "/Users/me/muse");
+    const placeholder = createWorkspaceInstance({
+      workspaceInstanceId: "wsi-ph",
+      root: null,
+      ownerWindowLabel: "main",
+      createdFrom: "placeholder",
+      kind: "placeholder",
+    });
+    useWorkspaceInstancesStore.setState((state) => ({
+      instances: { ...state.instances, "wsi-ph": placeholder },
+      windows: {
+        ...state.windows,
+        main: {
+          ...state.windows.main,
+          workspaceInstanceIds: [...state.windows.main.workspaceInstanceIds, "wsi-ph"],
+        },
+      },
+    }));
+
+    render(<WorkspaceRail windowLabel="main" />);
+    expect(screen.queryByRole("group", { name: "Ungrouped" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Untitled/ })).not.toBeInTheDocument();
+  });
+
+  it("shows the placeholder once it actually holds a tab", () => {
+    const placeholder = createWorkspaceInstance({
+      workspaceInstanceId: "wsi-ph",
+      root: null,
+      ownerWindowLabel: "main",
+      createdFrom: "placeholder",
+      kind: "placeholder",
+    });
+    useWorkspaceInstancesStore.setState({
+      instances: { "wsi-ph": placeholder },
+      windows: {
+        main: { workspaceInstanceIds: ["wsi-ph"], activeWorkspaceInstanceId: "wsi-ph" },
+      },
+    });
+    useWorkspaceInstancesStore.getState().setWorkspaceInstanceTabs("wsi-ph", ["tab-1"], "tab-1");
+
+    render(<WorkspaceRail windowLabel="main" />);
+    expect(within(section("Ungrouped")).getByRole("button", { name: /Untitled/ })).toBeInTheDocument();
+  });
+});

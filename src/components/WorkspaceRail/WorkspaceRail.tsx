@@ -103,7 +103,14 @@ export function WorkspaceRail({ windowLabel }: { windowLabel: string }) {
     windowLabel,
     instances: workspaceInstanceIds
       .map((id) => instancesById[id])
-      .filter((instance) => instance !== undefined),
+      .filter((instance) => instance !== undefined)
+      // A placeholder instance is the rail's empty state: the bucket an
+      // untitled document lands in when nothing else is open. A seeded
+      // placeholder can outlive that moment (a workspace instance is added
+      // around the same tick), and an EMPTY one then reads as a phantom
+      // "Ungrouped → Untitled" row that opens no content. It earns its row only
+      // once it actually holds a tab.
+      .filter((instance) => instance.kind !== "placeholder" || instance.tabIds.length > 0),
     groups,
     editingGroupId,
     setEditingGroupId,
