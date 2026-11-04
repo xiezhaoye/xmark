@@ -124,12 +124,11 @@ describe("App", () => {
     expect(useReaderStore.getState().view).toBe("settings");
   });
 
-  it("goes to the reader by itself after the first server is added by scanning", async () => {
+  it("goes to the reader by itself after the first Mac is added by scanning", async () => {
     render(<App />);
     await flush();
-    fireEvent.click(screen.getByText("Add a server"));
-    await flush();
-    fireEvent.click(screen.getByText("Scan a code"));
+    // Pairing lives in settings now; the first Mac takes the reader there.
+    fireEvent.click(screen.getByLabelText("Settings"));
     await flush();
     scans(pairLink("m4.tailc8e51.ts.net"));
     await openAddScan();
@@ -443,7 +442,9 @@ describe("settings servers", () => {
     saveActiveServerId(OTHER.id);
     await openSettings();
     expect(screen.getByRole("heading", { name: "Settings" })).toBeTruthy();
-    expect(screen.getByText("100.66.175.80:8740")).toBeTruthy();
+    // Rows show the Mac's name (the whole address lives in the drawer's sheet);
+    // which one is current is carried by aria-checked.
+    expect(screen.getByText("Study Mac")).toBeTruthy();
     const radios = macRadios();
     expect(radios.map((r) => r.getAttribute("aria-checked"))).toEqual(["false", "true"]);
   });
@@ -483,13 +484,14 @@ describe("settings servers", () => {
       expect(screen.queryByRole("status")).toBeNull();
       // An ordinary success keeps 1800ms; adding a scanned server says so at once.
       scans(pairLink("100.66.175.80", `&name=${encodeURIComponent("客厅 Mac")}`));
+      // Under fake timers `flush()` (a real `setTimeout`) never settles, and a
+      // timeout here used to leak the fake clock into every later test. Advance
+      // the fake clock instead.
+      const settle = () => act(async () => { await vi.advanceTimersByTimeAsync(0); });
       fireEvent.click(screen.getByText("Add a server"));
-      await flush();
+      await settle();
       fireEvent.click(screen.getByText("Scan a code"));
-      await flush();
-      await act(async () => {
-        await vi.advanceTimersByTimeAsync(0);
-      });
+      await settle();
       expect(screen.getByRole("status").textContent).toContain('Updated “客厅 Mac”');
       act(() => vi.advanceTimersByTime(900));
       expect(screen.queryByRole("status")).not.toBeNull();
@@ -520,7 +522,9 @@ describe("settings servers", () => {
     saveServers([PROFILE, OTHER]);
     saveActiveServerId(PROFILE.id);
     const { container } = await openSettings();
-    const rows = [...container.querySelectorAll(".server")];
+    // The local `本机` row has no dot (it is the phone itself), so this walks
+    // the Mac rows only.
+    const rows = [...container.querySelectorAll(".server:not([data-local])")];
     expect(rows).toHaveLength(2);
     for (const row of rows) {
       // The leading mark of the select button IS the dot.
@@ -553,7 +557,7 @@ describe("settings servers", () => {
     scans(pairLink("100.66.175.80", `&name=${encodeURIComponent("客厅 Mac")}`));
     await openAddScan();
     const s = useReaderStore.getState();
-    expect(macs(s.servers).map((p) => p.name)).toEqual(["Study Mac", "客厅 Mac"]);
+    expect(macs().map((p) => p.name)).toEqual(["Study Mac", "客厅 Mac"]);
     expect(s.activeServerId).toBe(PROFILE.id);
     expect(s.view).toBe("settings");
     expect(screen.getByText("客厅 Mac")).toBeTruthy();
@@ -612,7 +616,7 @@ describe("settings servers", () => {
     fireEvent.click(screen.getByText("OK"));
     await flush();
     expect(macs()[0].name).toBe("书房 Mac");
-    expect(screen.getByText("书房 Mac")).toBeTruthy();
+    expect(screen.getAllByText("书房 Mac").length).toBeGreaterThan(0);
   });
 
   it("falls back to the machine name when the name is cleared", async () => {
@@ -644,6 +648,7 @@ describe("settings servers", () => {
     saveServers([PROFILE, OTHER]);
     saveActiveServerId(PROFILE.id);
     await openSettings();
+    // `macRadios()` already excludes the local row; index 1 is the second Mac.
     fireEvent.keyDown(macRadios()[1] as HTMLElement, { key: "ArrowUp", altKey: true });
     expect(macs().map((p) => p.id)).toEqual([OTHER.id, PROFILE.id]);
     // The first row cannot go further up.
@@ -775,10 +780,11 @@ describe("settings servers", () => {
     expect(useReaderStore.getState().readingSize).toBe(24);
   });
 
-  it("goes back to the reader", async () => {
+  it("closes back to the reader from the header's close button", async () => {
     pair();
     await openSettings();
-    fireEvent.click(screen.getByLabelText("Back"));
+    // The popover's corner is a close control, not a "Back" row.
+    fireEvent.click(screen.getByLabelText("Close settings"));
     expect(useReaderStore.getState().view).toBe("reader");
   });
 });

@@ -15,6 +15,9 @@ const EDGE_GAP = 8;
 const ANCHOR_GAP = 6;
 /** Half the screen is the target; this is the narrowest it may become. */
 const MIN_WIDTH = 176;
+/** A popover shorter than this cannot show one row plus a button: on a tiny
+ * viewport it grows to here and scrolls, rather than becoming a sliver. */
+const MIN_HEIGHT = 120;
 
 export interface PopoverGeometry {
   top: number;
@@ -47,7 +50,7 @@ export function anchorPopover({ anchor, viewport, viewportWidth }: AnchorInput):
     top,
     right: Math.max(0, right),
     width,
-    maxHeight: Math.max(0, available),
+    maxHeight: Math.max(MIN_HEIGHT, available),
     corner: onRight ? "top-right" : "top-left",
   };
 }

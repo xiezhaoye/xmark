@@ -91,13 +91,16 @@ describe("sendOriginal", () => {
     expect(shareMock()).not.toHaveBeenCalled();
   });
 
-  it("reports an unexpected failure as a network error rather than throwing", async () => {
+  it("reports an unexpected failure as share_failed rather than throwing", async () => {
     client = fakeClient({
       download: vi.fn(async () => {
         throw new Error("boom");
       }),
     });
-    expect(await sendOriginal(DOC, profile(), deps())).toEqual({ status: "error", code: "network" });
+    // A throw that is not an ApiError has no code of its own, so it becomes the
+    // share vocabulary's own failure — `network` was the older blanket answer
+    // and told the user to check Tailscale for what may be a local problem.
+    expect(await sendOriginal(DOC, profile(), deps())).toEqual({ status: "error", code: "share_failed" });
   });
 });
 

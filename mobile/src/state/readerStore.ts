@@ -336,7 +336,9 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
         await get().updateServer(known.id, { token: connection.token, ...(name ? { name: serverName(name, connection) } : {}) });
         return { status: "updated", name: get().servers.find((p) => p.id === known.id)?.name ?? known.name };
       }
-      const first = !get().activeServerId;
+      // "First" means the reader has no MAC yet: the local source is always
+      // present, but pairing the first Mac should still take the user to it.
+      const first = !get().activeServerId || Boolean(get().connection?.local);
       const profileName = serverName(name ?? "", connection);
       await get().addServer({ name: profileName, connection, activate: first });
       if (first) set({ view: "reader" });
@@ -383,6 +385,10 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
         }
       }
       ordered.push(...byId.values());
+      // The phone's own row is the first thing in the list by definition, so a
+      // reorder moves the Macs among themselves and leaves it where it is.
+      const localAt = ordered.findIndex((p) => p.local);
+      if (localAt > 0) ordered.unshift(...ordered.splice(localAt, 1));
       set(profilesPatch(ordered, activeServerId));
     },
 
