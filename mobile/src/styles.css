@@ -485,7 +485,7 @@ input { font: inherit; color: inherit; }
 .group-more { flex: none; display: grid; place-items: center; width: 26px; height: 26px; margin-left: auto; border-radius: 6px; color: var(--text-secondary); }
 .group-more:active { background: var(--bg-tertiary); }
 .folder.dragging { opacity: 0.5; }
-.local-menu { margin: 6px 12px; padding: 4px; border: 1px solid var(--border-color); border-radius: var(--radius); background: var(--bg-secondary); display: flex; flex-direction: column; }
+.local-menu { margin: 0; padding: 4px; z-index: 70; box-shadow: 0 10px 30px rgb(0 0 0 / 22%); border: 1px solid var(--border-color); border-radius: var(--radius); background: var(--bg-secondary); display: flex; flex-direction: column; }
 .local-menu-item { padding: 10px; text-align: left; font-size: 14px; color: var(--text-color); border-radius: 6px; }
 .local-menu-item:active { background: var(--bg-tertiary); }
 .local-menu-item.danger { color: var(--danger); }

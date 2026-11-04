@@ -15,6 +15,7 @@
  * @module components/GroupColumn
  */
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useReaderStore } from "../state/readerStore";
 import { errorText, t } from "../i18n";
 import { Icon } from "./Icon";
@@ -30,10 +31,24 @@ const LONG_PRESS_MS = 500;
 const DRAG_START_PX = 6;
 
 /** Which local entry a menu is open for. */
+/** Where a menu is pinned: the ⋯ (or the row) that opened it, in viewport
+ * coordinates — the sheet is portalled to <body>, so it must not be positioned
+ * by the drawer's own (transformed) box. */
+interface MenuAnchor {
+  top: number;
+  right: number;
+}
+
 type Menu =
-  | { kind: "folder"; path: string; name: string; groupId: string }
-  | { kind: "group"; id: string; name: string; groupKey: string }
+  | { kind: "folder"; path: string; name: string; groupId: string; anchor: MenuAnchor }
+  | { kind: "group"; id: string; name: string; groupKey: string; anchor: MenuAnchor }
   | null;
+
+/** The rect of the element that opened a menu, as the anchor for it. */
+const anchorOf = (el: Element): MenuAnchor => {
+  const r = el.getBoundingClientRect();
+  return { top: r.bottom + 4, right: r.right };
+};
 
 const isLocalGroup = (id: string) => id.startsWith("local:");
 
@@ -152,7 +167,7 @@ export function GroupColumn() {
                 onContextMenu={(e) => {
                   if (!local) return;
                   e.preventDefault();
-                  setMenu({ kind: "group", id: g.id, name: g.name, groupKey: g.id });
+                  setMenu({ kind: "group", id: g.id, name: g.name, groupKey: g.id, anchor: anchorOf(e.currentTarget) });
                 }}
               >
                 <span className={`chevron ${collapsed[g.id] ? "" : "open"}`}>
@@ -168,13 +183,13 @@ export function GroupColumn() {
                     aria-label={t("side.actions", { name: g.name })}
                     onClick={(e) => {
                       e.stopPropagation();
-                      setMenu({ kind: "group", id: g.id, name: g.name, groupKey: g.id });
+                      setMenu({ kind: "group", id: g.id, name: g.name, groupKey: g.id, anchor: anchorOf(e.currentTarget) });
                     }}
                     onKeyDown={(e) => {
                       if (e.key !== "Enter" && e.key !== " ") return;
                       e.preventDefault();
                       e.stopPropagation();
-                      setMenu({ kind: "group", id: g.id, name: g.name, groupKey: g.id });
+                      setMenu({ kind: "group", id: g.id, name: g.name, groupKey: g.id, anchor: anchorOf(e.currentTarget) });
                     }}
                   >
                     <Icon name="more" size={16} />
@@ -199,7 +214,7 @@ export function GroupColumn() {
                       onContextMenu={(e) => {
                         if (!local) return;
                         e.preventDefault();
-                        setMenu({ kind: "folder", path: f.rootId, name: f.name, groupId: g.id });
+                        setMenu({ kind: "folder", path: f.rootId, name: f.name, groupId: g.id, anchor: anchorOf(e.currentTarget) });
                       }}
                       onTouchStart={() => (local ? undefined : pressStart(f.name))}
                       onTouchEnd={pressEnd}
@@ -267,8 +282,18 @@ function LocalMenu({
   onDeleteFolder: (path: string) => void;
 }) {
   const name = menu.name;
-  return (
-    <div className="local-menu" role="dialog" aria-label={t("side.actions", { name })}>
+  // Portalled to <body> and pinned under its trigger: inline in the rail it was
+  // painted after the last folder — "below everything", not below the ⋯ that
+  // opened it — and the rail's scroll box clipped it.
+  const MENU_WIDTH = 184;
+  const left = Math.max(8, Math.min(menu.anchor.right - MENU_WIDTH, window.innerWidth - MENU_WIDTH - 8));
+  return createPortal(
+    <div
+      className="local-menu"
+      role="dialog"
+      aria-label={t("side.actions", { name })}
+      style={{ position: "fixed", top: menu.anchor.top, left, width: MENU_WIDTH }}
+    >
       {/* Groups are fixed (the default one and nothing else), so the only
           group-level action is adding a folder INTO it. Editing lives on the
           folder itself. */}
@@ -310,6 +335,7 @@ function LocalMenu({
       <button type="button" className="local-menu-item" onClick={onClose}>
         {t("settings.cancel")}
       </button>
-    </div>
+    </div>,
+    document.body,
   );
 }
