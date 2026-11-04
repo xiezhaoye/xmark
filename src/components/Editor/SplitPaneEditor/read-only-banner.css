@@ -5,8 +5,10 @@
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-2);
+  gap: var(--space-1);
+  padding: 0;
+  white-space: nowrap;
+  overflow: hidden;
   background: var(--bg-tertiary);
   border-bottom: var(--border-thin) solid var(--border-color);
   font-family: var(--font-ui);

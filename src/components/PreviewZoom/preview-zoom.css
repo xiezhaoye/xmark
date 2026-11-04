@@ -28,6 +28,19 @@
   transition: opacity 120ms ease;
 }
 
+/* In the top toolbar: in flow, no shadow, no absolute position — the toolbar
+   already separates it from the document. */
+.preview-zoom--inline {
+  position: static;
+  transform: none;
+  box-shadow: none;
+  opacity: 1;
+  background: transparent;
+  border-color: transparent;
+}
+.preview-zoom--inline .preview-zoom__btn { width: 20px; height: 20px; }
+.preview-zoom--inline .preview-zoom__value { min-width: 38px; }
+
 /* Reading first: the control recedes until the pointer is near it. */
 .preview-zoom:hover,
 .preview-zoom:focus-within {

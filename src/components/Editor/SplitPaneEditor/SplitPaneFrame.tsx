@@ -57,8 +57,16 @@ export function SplitPaneFrame({
       data-format-id={formatId}
       style={{ "--split-pane-source-fraction": String(sourceFraction) } as CSSProperties}
     >
-      {banner}
-      {header !== undefined && <div className="split-pane-editor__header">{header}</div>}
+      {/* ONE top row: the read-only notice on the left, the view-mode and zoom
+          controls on the right. Two stacked rows made the top look like an empty
+          band — and the controls were inside the preview area, where they
+          floated over the first line of the document. */}
+      {(banner !== undefined || header !== undefined) && (
+        <div className="split-pane-editor__header">
+          {banner !== undefined && <div className="split-pane-editor__banner">{banner}</div>}
+          {header !== undefined && <div className="split-pane-editor__controls">{header}</div>}
+        </div>
+      )}
       {/* Row body: source | resize | preview. Separated from the banner and the
           header so both span full width on top — the editor is a column, the
           body is the row. */}

@@ -19,12 +19,24 @@ import { FontSettings } from "./FontSettings";
 
 /** Numeric option definitions */
 const numericOptions = {
+  // The range has to cover what people actually store. A value OUTSIDE the list
+  // is the nasty case: a <select> with no matching option renders the FIRST one,
+  // so a 30px setting looked like "14px", and picking 14 fired no change event
+  // (the browser considered it already selected) — the setting could not be
+  // changed back at all.
   fontSize: [
+    { value: "12", label: "12px" },
     { value: "14", label: "14px" },
     { value: "16", label: "16px" },
     { value: "18", label: "18px" },
     { value: "20", label: "20px" },
     { value: "22", label: "22px" },
+    { value: "24", label: "24px" },
+    { value: "26", label: "26px" },
+    { value: "28", label: "28px" },
+    { value: "30", label: "30px" },
+    { value: "32", label: "32px" },
+    { value: "36", label: "36px" },
   ],
 };
 

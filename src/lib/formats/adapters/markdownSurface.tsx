@@ -122,10 +122,15 @@ export function MarkdownEditorSurface({ tabId }: { tabId: string }) {
 
   return (
     <div className={containerClass} data-html-rendering-mode={htmlRenderingMode}>
-      <PreviewZoomBar />
+      {/* The controls live in a slim top row, like the split-pane formats —
+          never floating over the first line of the document. */}
       {!forcedSource && (
-        <div className="editor-view-mode">
-          <ViewModeToggle mode={viewMode} onChange={changeViewMode} />
+        <div className="split-pane-editor__header markdown-surface__header">
+          <div className="split-pane-editor__banner" />
+          <div className="split-pane-editor__controls">
+            <PreviewZoomBar variant="inline" />
+            <ViewModeToggle mode={viewMode} onChange={changeViewMode} />
+          </div>
         </div>
       )}
       <div className="editor-content" data-active-editor={activeEditor} style={{ zoom: previewZoom }}>

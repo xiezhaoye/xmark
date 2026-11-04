@@ -20,7 +20,7 @@ function frame(props: Partial<Parameters<typeof SplitPaneFrame>[0]> = {}) {
 const classesOf = (el: Element) => [...el.children].map((c) => c.className);
 
 describe("SplitPaneFrame", () => {
-  it("renders banner, header row, then the body, in that order", () => {
+  it("puts the read-only notice and the controls in ONE top row, above the body", () => {
     const root = frame({
       banner: <div className="read-only-banner">ro</div>,
       header: <span>toggle</span>,
@@ -28,7 +28,11 @@ describe("SplitPaneFrame", () => {
       resizeHandle: <div className="split-pane-editor__resize-handle" />,
       preview: <span>preview</span>,
     });
-    expect(classesOf(root)).toEqual(["read-only-banner", "split-pane-editor__header", "split-pane-editor__body"]);
+    // One row, not two: stacked rows read as an empty band at the top.
+    expect(classesOf(root)).toEqual(["split-pane-editor__header", "split-pane-editor__body"]);
+    const header = root.querySelector(".split-pane-editor__header") as HTMLElement;
+    expect(header.querySelector(".split-pane-editor__banner .read-only-banner")).not.toBeNull();
+    expect(header.querySelector(".split-pane-editor__controls")?.textContent).toBe("toggle");
     const body = root.querySelector(".split-pane-editor__body") as HTMLElement;
     expect(classesOf(body)).toEqual([
       "split-pane-editor__source",

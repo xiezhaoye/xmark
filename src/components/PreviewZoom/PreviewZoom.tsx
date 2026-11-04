@@ -122,7 +122,7 @@ function isEditableTarget(target: EventTarget | null): boolean {
  * that shows no control cannot be zoomed by a keystroke meant for something
  * else (one bar per preview surface, one listener).
  */
-export function PreviewZoomBar() {
+export function PreviewZoomBar({ variant = "float" }: { variant?: "float" | "inline" } = {}) {
   const { t } = useTranslation("editor");
   const { percent, set, reset } = usePreviewZoom();
 
@@ -147,7 +147,7 @@ export function PreviewZoomBar() {
   }, []);
 
   return (
-    <div className="preview-zoom" role="group" aria-label={t("preview.zoom")}>
+    <div className={`preview-zoom preview-zoom--${variant}`} role="group" aria-label={t("preview.zoom")}>
       <button
         type="button"
         className="preview-zoom__btn"

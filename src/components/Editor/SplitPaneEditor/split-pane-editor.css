@@ -21,15 +21,22 @@
  * used to float absolutely over the top-right corner, which laid it across
  * whatever the panes drew there — the HTML trust bar, the read-only banner,
  * source text in Source mode. In flow, nothing can sit under it. */
+/* ONE slim row: read-only notice + controls. `min-height` keeps it a toolbar
+   rather than a band; the controls sit at the right edge, never inside the
+   preview area. */
 .split-pane-editor__header {
   display: flex;
   flex: 0 0 auto;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
-  padding: var(--space-1) var(--space-3);
+  gap: var(--space-2);
+  min-height: 30px;
+  padding: 2px var(--space-2);
   border-bottom: var(--border-thin) solid var(--border-color);
   background: var(--bg-color);
 }
+.split-pane-editor__banner { min-width: 0; display: flex; align-items: center; }
+.split-pane-editor__controls { display: flex; align-items: center; gap: var(--space-2); margin-left: auto; }
 
 .split-pane-editor__body {
   display: flex;

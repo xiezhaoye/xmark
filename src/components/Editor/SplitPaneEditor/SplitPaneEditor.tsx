@@ -232,7 +232,10 @@ export function SplitPaneEditor({ tabId, formatConfig }: SplitPaneEditorProps) {
       }
       header={
         hasPreview ? (
-          <ViewModeToggle mode={viewMode} onChange={handleViewModeChange} />
+          <>
+            <PreviewZoomBar variant="inline" />
+            <ViewModeToggle mode={viewMode} onChange={handleViewModeChange} />
+          </>
         ) : undefined
       }
       source={
@@ -271,7 +274,6 @@ export function SplitPaneEditor({ tabId, formatConfig }: SplitPaneEditorProps) {
       preview={
         showPreview && Preview ? (
           <>
-            <PreviewZoomBar />
             <Preview
               content={preview.content}
               liveContent={preview.liveContent}
