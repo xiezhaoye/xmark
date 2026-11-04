@@ -8,6 +8,9 @@ import { scanQrCode } from "../../platform";
 import { shareFile } from "../../platformShare";
 import { App } from "../../App";
 
+/** The Mac rows: the local `本机` row heads the list and is not a pairing. */
+const macRadios = () => screen.getAllByRole("radio").filter((r) => !r.closest("[data-local]"));
+
 vi.mock("../../platform", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../platform")>()),
   scanQrCode: vi.fn(),
@@ -207,10 +210,11 @@ describe("settings popover", () => {
     expect(screen.getByRole("heading", { name: "Hello" })).toBeTruthy();
   });
 
-  it("opens for a programmatic settings request: the reader's add-a-server button", async () => {
+  it("opens from the top bar's icon, and lists the add-a-server control", async () => {
     render(<App />);
     await flush();
-    fireEvent.click(screen.getByText("Add a server"));
+    // The local source means there is no "nothing paired" empty state to click.
+    fireEvent.click(screen.getByLabelText("Settings"));
     await flush();
     expect(popover()).toBeTruthy();
     expect(within(popover() as HTMLElement).getByText("Add a server")).toBeTruthy();
@@ -226,12 +230,14 @@ describe("settings popover", () => {
     expect(useReaderStore.getState().drawerOpen).toBe(false);
   });
 
-  it("stays usable with the drawer open: it sits above it and taps outside reach the drawer", async () => {
+  it("opens from the drawer and puts the drawer away, sitting above the page", async () => {
     await openReader();
     fireEvent.click(screen.getByLabelText("Open groups and files"));
     const settings = await openSettings();
-    expect(useReaderStore.getState().drawerOpen).toBe(true);
-    // The popover is above the drawer, not behind it.
+    // Opening settings closes the drawer: two surfaces that both claim the left
+    // edge would fight, and the popover needs the room.
+    expect(useReaderStore.getState().drawerOpen).toBe(false);
+    // It is an overlay of its own, not a page inside the drawer.
     expect(settings.closest(".overlay-page")).toBeNull();
     expect(within(settings).getByRole("heading", { name: "Servers" })).toBeTruthy();
   });
@@ -263,7 +269,7 @@ describe("settings popover", () => {
     await flush();
     const settings = await openSettings();
     expect(within(settings).getAllByRole("img", { name: "Unreachable" })).toHaveLength(2);
-    fireEvent.click(within(settings).getAllByRole("radio")[1] as HTMLElement);
+    fireEvent.click(macRadios()[1] as HTMLElement);
     await flush();
     expect(useReaderStore.getState().activeServerId).toBe(OTHER.id);
     expect(popover()).not.toBeNull();
@@ -279,7 +285,7 @@ describe("settings popover", () => {
     fireEvent.click(within(settings).getByText("OK"));
     await flush();
     expect(popover()).not.toBeNull();
-    expect(useReaderStore.getState().servers[0].name).toBe("书房 Mac");
+    expect(useReaderStore.getState().servers.find((p) => !p.local)?.name).toBe("书房 Mac");
   });
 });
 

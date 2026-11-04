@@ -419,7 +419,12 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
       }
       saveLastDoc(id, null);
       const rest = servers.filter((p) => p.id !== id);
-      const nextId = activeServerId === id ? (rest[0]?.id ?? null) : activeServerId;
+      // Removing the Mac being read falls back to the next MAC: the local row
+      // is always first, so taking `rest[0]` would silently jump the reader to
+      // the phone even when another Mac is still paired. The phone is the
+      // fallback only when no Mac is left.
+      const nextMac = rest.find((p) => !p.local);
+      const nextId = activeServerId === id ? (nextMac?.id ?? rest[0]?.id ?? null) : activeServerId;
       set(() => ({ ...profilesPatch(rest, nextId), ...(activeServerId === id ? noServer : {}) }));
       if (activeServerId === id) {
         docSeq += 1;

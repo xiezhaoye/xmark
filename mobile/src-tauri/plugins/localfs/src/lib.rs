@@ -55,8 +55,11 @@ impl Serialize for Error {
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-/// Ceiling for a text read: the reader caps display well below this.
-pub const MAX_TEXT_BYTES: u64 = 5 * 1024 * 1024;
+/// Ceiling for a text read. Higher than the server's 5 MB because a local
+/// folder is where novels live: a 5 MB cap refused the very files this path
+/// exists for. The renderer is the real limit — a text this size scrolls, it
+/// does not paginate.
+pub const MAX_TEXT_BYTES: u64 = 40 * 1024 * 1024;
 /// Ceiling for an image read (the phone's own camera roll size).
 pub const MAX_BYTES_BYTES: u64 = 30 * 1024 * 1024;
 

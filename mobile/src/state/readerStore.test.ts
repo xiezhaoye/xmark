@@ -3,6 +3,13 @@ import { ApiError, type Client } from "../api/client";
 import { treeKey, useReaderStore } from "./readerStore";
 import { loadLastDoc, loadServers, saveActiveServerId, saveLastDoc, saveServers } from "./storage";
 
+/**
+ * The paired Macs. The local `本机` row is always present and always first, so
+ * every assertion about "servers" in this file means "the Macs": filtering it
+ * keeps each expectation about pairing rather than about the extra row.
+ */
+const macs = <T extends { local?: boolean }>(list: T[]): T[] => list.filter((p) => !p.local);
+
 const TOKEN = "a".repeat(64);
 const OTHER_TOKEN = "b".repeat(64);
 const CONN = { host: "m4.ts.net", port: 8740, token: TOKEN };
@@ -50,12 +57,17 @@ beforeEach(() => {
 });
 
 describe("bootstrap", () => {
-  it("shows the reader, with its add-a-server prompt, when there is no pairing", async () => {
+  // There is no "nothing paired" state any more: the local source is always
+  // there and heads the list, so a fresh install opens on the phone itself with
+  // no groups to show until a folder is added from the drawer.
+  it("opens on the local source, with no groups, when nothing is paired", async () => {
     await useReaderStore.getState().bootstrap();
     const s = useReaderStore.getState();
     expect(s.view).toBe("reader");
-    expect(s.servers).toEqual([]);
-    expect(s.connection).toBeNull();
+    expect(macs(s.servers)).toEqual([]);
+    // The reader is on the phone's own (empty) library.
+    expect(s.connection).toMatchObject({ local: true });
+    expect(s.activeServerId).not.toBeNull();
   });
 
   it("loads groups and starts with the drawer closed even with no last document", async () => {
@@ -65,7 +77,7 @@ describe("bootstrap", () => {
     expect(s.view).toBe("reader");
     expect(s.groups.map((g) => g.name)).toEqual(["Wiki"]);
     expect(s.drawerOpen).toBe(false);
-    expect(s.servers.map((p) => p.id)).toEqual([PROFILE.id]);
+    expect(macs(s.servers).map((p) => p.id)).toEqual([PROFILE.id]);
     expect(s.connection).toEqual(CONN);
   });
 
@@ -104,19 +116,19 @@ describe("bootstrap", () => {
     await useReaderStore.getState().bootstrap();
     const s = useReaderStore.getState();
     expect(s.view).toBe("reader");
-    expect(s.servers).toHaveLength(1);
-    expect(s.servers[0]).toMatchObject({ name: "m4", host: "m4.ts.net", port: 8740, token: TOKEN });
-    expect(s.activeServerId).toBe(s.servers[0].id);
+    expect(macs(s.servers)).toHaveLength(1);
+    expect(macs(s.servers)[0]).toMatchObject({ name: "m4", host: "m4.ts.net", port: 8740, token: TOKEN });
+    expect(s.activeServerId).toBe(macs(s.servers)[0].id);
     expect(s.connection).toEqual(CONN);
     expect(s.doc).toEqual({ rootId: "r1", relPath: "a.md" });
-    expect(loadServers().servers).toHaveLength(1);
+    expect(macs(loadServers().servers)).toHaveLength(1);
   });
 
   it("treats a corrupt server list as a fresh install", async () => {
     localStorage.setItem("xmark-mobile.servers", "{oops");
     await useReaderStore.getState().bootstrap();
     expect(useReaderStore.getState().view).toBe("reader");
-    expect(useReaderStore.getState().servers).toEqual([]);
+    expect(macs(useReaderStore.getState().servers)).toEqual([]);
   });
 });
 
@@ -127,7 +139,7 @@ describe("servers", () => {
     vi.mocked(client.workspaces).mockClear();
     await useReaderStore.getState().addServer({ name: "客厅", connection: { host: "10.ts.net", port: 9000, token: OTHER_TOKEN } });
     const s = useReaderStore.getState();
-    expect(s.servers.map((p) => p.name)).toEqual(["书房 Mac", "客厅"]);
+    expect(macs(s.servers).map((p) => p.name)).toEqual(["书房 Mac", "客厅"]);
     expect(s.connection).toEqual({ host: "10.ts.net", port: 9000, token: OTHER_TOKEN });
     expect(client.workspaces).toHaveBeenCalled();
     expect(loadServers().activeServerId).toBe(s.activeServerId);
@@ -135,17 +147,17 @@ describe("servers", () => {
 
   it("names a server after its machine when given no name", async () => {
     await useReaderStore.getState().addServer({ name: "  ", connection: { host: "m1.tailc8e51.ts.net", port: 9000, token: OTHER_TOKEN } });
-    expect(useReaderStore.getState().servers[0].name).toBe("m1");
+    expect(macs(useReaderStore.getState().servers)[0].name).toBe("m1");
   });
 
   it("names a server at an IP address after the address", async () => {
     await useReaderStore.getState().addServer({ name: "", connection: { host: "100.66.175.80", port: 8740, token: OTHER_TOKEN } });
-    expect(useReaderStore.getState().servers[0].name).toBe("100.66.175.80");
+    expect(macs(useReaderStore.getState().servers)[0].name).toBe("100.66.175.80");
   });
 
   it("caps a server name at its length limit", async () => {
     await useReaderStore.getState().addServer({ name: "长".repeat(80), connection: CONN });
-    expect(useReaderStore.getState().servers[0].name).toHaveLength(40);
+    expect(macs(useReaderStore.getState().servers)[0].name).toHaveLength(40);
   });
 
   it("updates a server in place and reloads it when it is the current one", async () => {
@@ -153,10 +165,10 @@ describe("servers", () => {
     await useReaderStore.getState().bootstrap();
     await useReaderStore.getState().updateServer(PROFILE.id, { name: "改名了", token: OTHER_TOKEN });
     const s = useReaderStore.getState();
-    expect(s.servers).toHaveLength(1);
-    expect(s.servers[0]).toMatchObject({ name: "改名了", host: "m4.ts.net", token: OTHER_TOKEN });
+    expect(macs(s.servers)).toHaveLength(1);
+    expect(macs(s.servers)[0]).toMatchObject({ name: "改名了", host: "m4.ts.net", token: OTHER_TOKEN });
     expect(s.connection).toEqual({ host: "m4.ts.net", port: 8740, token: OTHER_TOKEN });
-    expect(loadServers().servers[0].token).toBe(OTHER_TOKEN);
+    expect(macs(loadServers().servers)[0].token).toBe(OTHER_TOKEN);
   });
 
   it("refuses to give two servers the same host and port", async () => {
@@ -164,7 +176,7 @@ describe("servers", () => {
     await useReaderStore.getState().bootstrap();
     await useReaderStore.getState().addServer({ name: "客厅", connection: OTHER });
     await useReaderStore.getState().updateServer(OTHER.id, { host: "m4.ts.net" });
-    expect(useReaderStore.getState().servers.map((p) => p.host)).toEqual(["m4.ts.net", "100.66.175.80"]);
+    expect(macs(useReaderStore.getState().servers).map((p) => p.host)).toEqual(["m4.ts.net", "100.66.175.80"]);
   });
 
   it("switching clears everything that belonged to the old server and reloads", async () => {
@@ -181,7 +193,7 @@ describe("servers", () => {
     await useReaderStore.getState().switchServer(PROFILE.id);
     const s = useReaderStore.getState();
     expect(s.activeServerId).toBe(PROFILE.id);
-    expect(s.connection).toEqual(CONN);
+    expect(s.connection).toEqual(CONN);  // the surviving Mac, not the local row
     expect(s.trees).toEqual({});
     expect(s.expanded).toEqual({});
     expect(s.selectedRootId).toBeNull();
@@ -302,9 +314,9 @@ describe("servers", () => {
     expect(useReaderStore.getState().activeServerId).toBe(OTHER.id);
     useReaderStore.getState().removeServer(OTHER.id);
     const s = useReaderStore.getState();
-    expect(s.servers.map((p) => p.id)).toEqual([PROFILE.id]);
+    expect(macs(s.servers).map((p) => p.id)).toEqual([PROFILE.id]);
     expect(s.activeServerId).toBe(PROFILE.id);
-    expect(s.connection).toEqual(CONN);
+    expect(s.connection).toEqual(CONN);  // the surviving Mac, not the local row
     // Deleting happens on the settings page, which does not throw the user out.
     expect(s.view).toBe("settings");
     expect(loadLastDoc(OTHER.id)).toBeNull();
@@ -325,14 +337,15 @@ describe("servers", () => {
     expect(s.doc).toEqual({ rootId: "r1", relPath: "a.md" });
   });
 
-  it("removing the last server leaves nothing selected", async () => {
+  it("removing the last Mac falls back to the local source", async () => {
     pairFirst();
     await useReaderStore.getState().bootstrap();
     useReaderStore.getState().removeServer(PROFILE.id);
     const s = useReaderStore.getState();
-    expect(s.servers).toEqual([]);
-    expect(s.connection).toBeNull();
-    expect(s.activeServerId).toBeNull();
+    expect(macs(s.servers)).toEqual([]);
+    // The local row is still there and becomes the only source.
+    expect(s.connection).toMatchObject({ local: true });
+    expect(s.activeServerId).not.toBeNull();
   });
 });
 
@@ -340,8 +353,8 @@ describe("connect", () => {
   it("adds a pairing and returns to the reader", async () => {
     await useReaderStore.getState().connect({ ...CONN, host: "other.ts.net" });
     const s = useReaderStore.getState();
-    expect(s.servers).toHaveLength(1);
-    expect(s.servers[0]).toMatchObject({ name: "other", host: "other.ts.net", port: 8740 });
+    expect(macs(s.servers)).toHaveLength(1);
+    expect(macs(s.servers)[0]).toMatchObject({ name: "other", host: "other.ts.net", port: 8740 });
     expect(client.workspaces).toHaveBeenCalled();
     expect(s.view).toBe("reader");
     expect(s.drawerOpen).toBe(false);
@@ -349,7 +362,7 @@ describe("connect", () => {
 
   it("takes the name it is given", async () => {
     await useReaderStore.getState().connect(CONN, "书房 Mac");
-    expect(useReaderStore.getState().servers[0].name).toBe("书房 Mac");
+    expect(macs(useReaderStore.getState().servers)[0].name).toBe("书房 Mac");
   });
 
   it("updates instead of duplicating a server already paired at the same host and port", async () => {
@@ -357,8 +370,8 @@ describe("connect", () => {
     await useReaderStore.getState().bootstrap();
     await useReaderStore.getState().connect({ ...CONN, token: OTHER_TOKEN }, "改了名");
     const s = useReaderStore.getState();
-    expect(s.servers).toHaveLength(1);
-    expect(s.servers[0]).toMatchObject({ id: PROFILE.id, name: "改了名", token: OTHER_TOKEN });
+    expect(macs(s.servers)).toHaveLength(1);
+    expect(macs(s.servers)[0]).toMatchObject({ id: PROFILE.id, name: "改了名", token: OTHER_TOKEN });
     expect(s.connection?.token).toBe(OTHER_TOKEN);
   });
 
@@ -366,14 +379,14 @@ describe("connect", () => {
     pairFirst();
     await useReaderStore.getState().bootstrap();
     await useReaderStore.getState().connect({ ...CONN, token: OTHER_TOKEN });
-    expect(useReaderStore.getState().servers[0]).toMatchObject({ name: "书房 Mac", token: OTHER_TOKEN });
+    expect(macs(useReaderStore.getState().servers)[0]).toMatchObject({ name: "书房 Mac", token: OTHER_TOKEN });
   });
 
   it("treats a host differing only in case as the same Mac", async () => {
     pairFirst();
     await useReaderStore.getState().bootstrap();
     await useReaderStore.getState().connect({ ...CONN, host: "M4.ts.net" });
-    expect(useReaderStore.getState().servers).toHaveLength(1);
+    expect(macs(useReaderStore.getState().servers)).toHaveLength(1);
   });
 });
 
@@ -533,7 +546,7 @@ describe("adding from settings", () => {
     const result = await useReaderStore.getState().connect(SECOND);
     const s = useReaderStore.getState();
     expect(result).toEqual({ status: "added", name: "m1" });
-    expect(s.servers.map((p) => p.name)).toEqual(["书房 Mac", "m1"]);
+    expect(macs(s.servers).map((p) => p.name)).toEqual(["书房 Mac", "m1"]);
     expect(s.activeServerId).toBe(PROFILE.id);
     expect(client.workspaces).not.toHaveBeenCalled();
   });
@@ -553,7 +566,7 @@ describe("adding from settings", () => {
     await useReaderStore.getState().bootstrap();
     const result = await useReaderStore.getState().connect({ ...CONN, token: OTHER_TOKEN }, "新名字");
     expect(result).toEqual({ status: "updated", name: "新名字" });
-    expect(useReaderStore.getState().servers).toHaveLength(1);
+    expect(macs(useReaderStore.getState().servers)).toHaveLength(1);
   });
 
   it("selecting a server from settings does not leave settings", async () => {
@@ -571,7 +584,7 @@ describe("adding from settings", () => {
     await useReaderStore.getState().bootstrap();
     vi.mocked(client.workspaces).mockClear();
     await useReaderStore.getState().updateServer(PROFILE.id, { name: "新名字" });
-    expect(useReaderStore.getState().servers[0].name).toBe("新名字");
+    expect(macs(useReaderStore.getState().servers)[0].name).toBe("新名字");
     expect(client.workspaces).not.toHaveBeenCalled();
   });
 });
@@ -582,16 +595,16 @@ describe("ordering servers", () => {
     await useReaderStore.getState().bootstrap();
     useReaderStore.getState().reorderServers([OTHER.id, PROFILE.id]);
     const s = useReaderStore.getState();
-    expect(s.servers.map((p) => p.id)).toEqual([OTHER.id, PROFILE.id]);
+    expect(macs(s.servers).map((p) => p.id)).toEqual([OTHER.id, PROFILE.id]);
     expect(s.activeServerId).toBe(OTHER.id);
-    expect(loadServers().servers.map((p) => p.id)).toEqual([OTHER.id, PROFILE.id]);
+    expect(macs(loadServers().servers).map((p) => p.id)).toEqual([OTHER.id, PROFILE.id]);
   });
 
   it("ignores unknown ids and keeps unmentioned servers at the end", async () => {
     pairBoth();
     await useReaderStore.getState().bootstrap();
     useReaderStore.getState().reorderServers(["nope", OTHER.id]);
-    expect(useReaderStore.getState().servers.map((p) => p.id)).toEqual([OTHER.id, PROFILE.id]);
+    expect(macs(useReaderStore.getState().servers).map((p) => p.id)).toEqual([OTHER.id, PROFILE.id]);
   });
 });
 

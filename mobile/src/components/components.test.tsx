@@ -3,9 +3,24 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 import { ApiError, type Client } from "../api/client";
 import { setLanguage } from "../i18n";
 import { useReaderStore } from "../state/readerStore";
+import { useLocalLibrary } from "../state/localLibrary";
 import { saveActiveServerId, saveServers } from "../state/storage";
 import { scanQrCode } from "../platform";
 import { App } from "../App";
+
+/** The paired Macs: the local `本机` row always heads the list and is not one. */
+const macs = () => useReaderStore.getState().servers.filter((p) => !p.local);
+
+/** The Mac rows only: the local `本机` row heads every list now. */
+const macRadios = () => screen.getAllByRole("radio").filter((r) => !r.closest("[data-local]"));
+
+/** Walks the add-a-server sheet to the camera: choose, then scan. */
+async function openAddScan() {
+  fireEvent.click(screen.getByText("Add a server"));
+  await flush();
+  fireEvent.click(screen.getByText("Scan a code"));
+  await flush();
+}
 
 vi.mock("../platform", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../platform")>()),
@@ -49,8 +64,16 @@ let client: Client;
 beforeEach(() => {
   setLanguage("en");
   localStorage.clear();
+  // The local library is a module singleton: clearing storage does not touch
+  // the groups it already holds in memory, so one test's folders would leak
+  // into the next test's list.
+  useLocalLibrary.getState().setGroups([]);
   client = fakeClient();
   useReaderStore.getState().reset(() => client);
+  // A queued `mockResolvedValueOnce` that a failing test never consumed is
+  // handed to the NEXT test's scan — the classic way a scan test passes alone
+  // and fails in a suite.
+  vi.mocked(scanQrCode).mockReset();
 });
 afterEach(() => {
   cleanup();
@@ -92,8 +115,12 @@ describe("App", () => {
     render(<App />);
     await flush();
     expect(useReaderStore.getState().view).toBe("reader");
-    expect(screen.getByText("No servers yet")).toBeTruthy();
-    fireEvent.click(screen.getByText("Add a server"));
+    // The local source heads the list, so there is no "add a server" prompt in
+    // the reader any more; settings still offers the control.
+    const all = useReaderStore.getState().servers;
+    expect(all).toHaveLength(1);
+    expect(all[0].local).toBe(true);
+    fireEvent.click(screen.getByLabelText("Settings"));
     expect(useReaderStore.getState().view).toBe("settings");
   });
 
@@ -101,10 +128,12 @@ describe("App", () => {
     render(<App />);
     await flush();
     fireEvent.click(screen.getByText("Add a server"));
-    scans(pairLink("m4.tailc8e51.ts.net"));
-    fireEvent.click(screen.getByText("Add a server"));
     await flush();
-    expect(useReaderStore.getState().servers.map((p) => p.name)).toEqual(["m4"]);
+    fireEvent.click(screen.getByText("Scan a code"));
+    await flush();
+    scans(pairLink("m4.tailc8e51.ts.net"));
+    await openAddScan();
+    expect(macs().map((p) => p.name)).toEqual(["m4"]);
     expect(useReaderStore.getState().view).toBe("reader");
     expect(client.health).toHaveBeenCalled();
   });
@@ -305,7 +334,7 @@ describe("server picker", () => {
     await flush();
     fireEvent.click(screen.getByLabelText("Open groups and files"));
     fireEvent.click(screen.getByRole("button", { name: "Switch server" }));
-    const options = screen.getAllByRole("radio");
+    const options = macRadios();
     expect(options.map((o) => o.querySelector(".sheet-option-name")?.textContent)).toEqual(["Study Mac", "客厅 Mac"]);
     expect(options[1].getAttribute("aria-checked")).toBe("true");
     fireEvent.click(options[0]);
@@ -373,7 +402,7 @@ describe("server picker", () => {
     await openSheet();
     await flush();
     vi.mocked(client.workspaces).mockClear();
-    fireEvent.click(screen.getAllByRole("radio")[0] as HTMLElement);
+    fireEvent.click(macRadios()[0] as HTMLElement);
     await flush();
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(useReaderStore.getState().activeServerId).toBe(PROFILE.id);
@@ -385,7 +414,7 @@ describe("server picker", () => {
     saveActiveServerId(PROFILE.id);
     lastDoc({ rootId: "r1", relPath: "a.md" }, OTHER.id);
     await openSheet();
-    fireEvent.click(screen.getAllByRole("radio")[1] as HTMLElement);
+    fireEvent.click(macRadios()[1] as HTMLElement);
     await flush();
     expect(screen.queryByRole("dialog")).toBeNull();
     const s = useReaderStore.getState();
@@ -415,7 +444,7 @@ describe("settings servers", () => {
     await openSettings();
     expect(screen.getByRole("heading", { name: "Settings" })).toBeTruthy();
     expect(screen.getByText("100.66.175.80:8740")).toBeTruthy();
-    const radios = screen.getAllByRole("radio");
+    const radios = macRadios();
     expect(radios.map((r) => r.getAttribute("aria-checked"))).toEqual(["false", "true"]);
   });
 
@@ -433,12 +462,12 @@ describe("settings servers", () => {
     saveServers([PROFILE, OTHER]);
     saveActiveServerId(OTHER.id);
     await openSettings();
-    fireEvent.click(screen.getAllByRole("radio")[0] as HTMLElement);
+    fireEvent.click(macRadios()[0] as HTMLElement);
     await flush();
     expect(useReaderStore.getState().activeServerId).toBe(PROFILE.id);
     expect(useReaderStore.getState().view).toBe("settings");
     expect(screen.getByRole("status").textContent).toBe("Switched");
-    expect(screen.getAllByRole("radio").map((r) => r.getAttribute("aria-checked"))).toEqual(["true", "false"]);
+    expect(macRadios().map((r) => r.getAttribute("aria-checked"))).toEqual(["true", "false"]);
   });
 
   it("says switched for half the usual time, and other messages keep theirs", async () => {
@@ -448,13 +477,16 @@ describe("settings servers", () => {
     // Real timers until the page is up; only the message clock is faked.
     vi.useFakeTimers();
     try {
-      fireEvent.click(screen.getAllByRole("radio")[0] as HTMLElement);
+      fireEvent.click(macRadios()[0] as HTMLElement);
       expect(screen.getByRole("status").textContent).toBe("Switched");
       act(() => vi.advanceTimersByTime(900));
       expect(screen.queryByRole("status")).toBeNull();
       // An ordinary success keeps 1800ms; adding a scanned server says so at once.
       scans(pairLink("100.66.175.80", `&name=${encodeURIComponent("客厅 Mac")}`));
       fireEvent.click(screen.getByText("Add a server"));
+      await flush();
+      fireEvent.click(screen.getByText("Scan a code"));
+      await flush();
       await act(async () => {
         await vi.advanceTimersByTimeAsync(0);
       });
@@ -475,7 +507,7 @@ describe("settings servers", () => {
     await flush();
     vi.mocked(client.workspaces).mockClear();
     vi.mocked(client.health).mockClear();
-    fireEvent.click(screen.getAllByRole("radio")[1] as HTMLElement);
+    fireEvent.click(macRadios()[1] as HTMLElement);
     await flush();
     expect(useReaderStore.getState().activeServerId).toBe(OTHER.id);
     expect(screen.queryByRole("status")).toBeNull();
@@ -508,7 +540,9 @@ describe("settings servers", () => {
     saveServers([PROFILE, OTHER]);
     saveActiveServerId(PROFILE.id);
     const { container } = await openSettings();
-    expect(container.querySelector(".server-address")?.textContent).toBe("m4.ts.net:8740");
+    // Rows carry the name and the status dot; the full address lives in the
+    // sheet the row opens, so the popover row itself has none.
+    expect(container.querySelector(".server-address")).toBeNull();
     expect(screen.queryByLabelText("Drag to reorder")).toBeNull();
     expect(container.querySelector(".grip")).toBeNull();
   });
@@ -517,10 +551,9 @@ describe("settings servers", () => {
     pair();
     await openSettings();
     scans(pairLink("100.66.175.80", `&name=${encodeURIComponent("客厅 Mac")}`));
-    fireEvent.click(screen.getByText("Add a server"));
-    await flush();
+    await openAddScan();
     const s = useReaderStore.getState();
-    expect(s.servers.map((p) => p.name)).toEqual(["Study Mac", "客厅 Mac"]);
+    expect(macs(s.servers).map((p) => p.name)).toEqual(["Study Mac", "客厅 Mac"]);
     expect(s.activeServerId).toBe(PROFILE.id);
     expect(s.view).toBe("settings");
     expect(screen.getByText("客厅 Mac")).toBeTruthy();
@@ -531,9 +564,8 @@ describe("settings servers", () => {
     pair();
     await openSettings();
     scans(pairLink("m1.tailc8e51.ts.net"));
-    fireEvent.click(screen.getByText("Add a server"));
-    await flush();
-    expect(useReaderStore.getState().servers.map((p) => p.name)).toEqual(["Study Mac", "m1"]);
+    await openAddScan();
+    expect(macs().map((p) => p.name)).toEqual(["Study Mac", "m1"]);
   });
 
   it("saves nothing when the scanned server does not answer, and says why", async () => {
@@ -542,9 +574,8 @@ describe("settings servers", () => {
     vi.mocked(client.health).mockRejectedValueOnce(new ApiError(401, "unauthorized"));
     // The probes on opening already ran; the next call is the check of the scan.
     scans(pairLink("m1.tailc8e51.ts.net"));
-    fireEvent.click(screen.getByText("Add a server"));
-    await flush();
-    expect(useReaderStore.getState().servers).toHaveLength(1);
+    await openAddScan();
+    expect(macs()).toHaveLength(1);
     expect(screen.getByRole("status").textContent).toContain("The token is not valid");
   });
 
@@ -552,22 +583,19 @@ describe("settings servers", () => {
     pair();
     await openSettings();
     scans("https://example.com");
-    fireEvent.click(screen.getByText("Add a server"));
-    await flush();
+    await openAddScan();
     expect(screen.getByRole("status").textContent).toContain("not an XMark pairing QR code");
     scans(null);
-    fireEvent.click(screen.getByText("Add a server"));
-    await flush();
-    expect(useReaderStore.getState().servers).toHaveLength(1);
+    await openAddScan();
+    expect(macs()).toHaveLength(1);
   });
 
   it("updates the server already paired at the same host and port instead of adding it twice", async () => {
     pair();
     await openSettings();
     scans(`xmark-mobile://pair?host=m4.ts.net&port=8740&token=${"d".repeat(64)}&name=${encodeURIComponent("书房")}`);
-    fireEvent.click(screen.getByText("Add a server"));
-    await flush();
-    const servers = useReaderStore.getState().servers;
+    await openAddScan();
+    const servers = macs();
     expect(servers).toHaveLength(1);
     expect(servers[0]).toMatchObject({ id: PROFILE.id, name: "书房", token: "d".repeat(64) });
     expect(screen.getByRole("status").textContent).toContain("Updated “书房”");
@@ -583,7 +611,7 @@ describe("settings servers", () => {
     fireEvent.change(input, { target: { value: "书房 Mac" } });
     fireEvent.click(screen.getByText("OK"));
     await flush();
-    expect(useReaderStore.getState().servers[0].name).toBe("书房 Mac");
+    expect(macs()[0].name).toBe("书房 Mac");
     expect(screen.getByText("书房 Mac")).toBeTruthy();
   });
 
@@ -595,7 +623,7 @@ describe("settings servers", () => {
     fireEvent.change(screen.getByLabelText("Rename"), { target: { value: "   " } });
     fireEvent.click(screen.getByText("OK"));
     await flush();
-    expect(useReaderStore.getState().servers[0].name).toBe("m4");
+    expect(macs()[0].name).toBe("m4");
   });
 
   it("asks before deleting, then selects the remaining server", async () => {
@@ -607,7 +635,7 @@ describe("settings servers", () => {
     expect(screen.getByText("Remove “客厅 Mac” from this phone?")).toBeTruthy();
     fireEvent.click(screen.getAllByText("Delete").at(-1) as HTMLElement);
     await flush();
-    expect(useReaderStore.getState().servers.map((p) => p.id)).toEqual([PROFILE.id]);
+    expect(macs().map((p) => p.id)).toEqual([PROFILE.id]);
     expect(useReaderStore.getState().activeServerId).toBe(PROFILE.id);
     expect(useReaderStore.getState().view).toBe("settings");
   });
@@ -616,14 +644,14 @@ describe("settings servers", () => {
     saveServers([PROFILE, OTHER]);
     saveActiveServerId(PROFILE.id);
     await openSettings();
-    fireEvent.keyDown(screen.getAllByRole("radio")[1] as HTMLElement, { key: "ArrowUp", altKey: true });
-    expect(useReaderStore.getState().servers.map((p) => p.id)).toEqual([OTHER.id, PROFILE.id]);
+    fireEvent.keyDown(macRadios()[1] as HTMLElement, { key: "ArrowUp", altKey: true });
+    expect(macs().map((p) => p.id)).toEqual([OTHER.id, PROFILE.id]);
     // The first row cannot go further up.
-    fireEvent.keyDown(screen.getAllByRole("radio")[0] as HTMLElement, { key: "ArrowUp", altKey: true });
-    expect(useReaderStore.getState().servers.map((p) => p.id)).toEqual([OTHER.id, PROFILE.id]);
+    fireEvent.keyDown(macRadios()[0] as HTMLElement, { key: "ArrowUp", altKey: true });
+    expect(macs().map((p) => p.id)).toEqual([OTHER.id, PROFILE.id]);
     // Down again, from the top row.
-    fireEvent.keyDown(screen.getAllByRole("radio")[0] as HTMLElement, { key: "ArrowDown", altKey: true });
-    expect(useReaderStore.getState().servers.map((p) => p.id)).toEqual([PROFILE.id, OTHER.id]);
+    fireEvent.keyDown(macRadios()[0] as HTMLElement, { key: "ArrowDown", altKey: true });
+    expect(macs().map((p) => p.id)).toEqual([PROFILE.id, OTHER.id]);
   });
 
   it("drags a row after a long press, and the click that follows does not select it", async () => {
@@ -633,14 +661,14 @@ describe("settings servers", () => {
     await openSettings();
     vi.useFakeTimers();
     try {
-      const first = screen.getAllByRole("radio")[0] as HTMLElement;
+      const first = macRadios()[0] as HTMLElement;
       fireEvent.pointerDown(first, { pointerId: 1, pointerType: "touch", clientX: 10, clientY: 100 });
       act(() => vi.advanceTimersByTime(400));
       expect(first.closest(".server")?.className).toContain("dragging");
       fireEvent.pointerMove(first, { pointerId: 1, pointerType: "touch", clientX: 10, clientY: 160 });
       fireEvent.pointerUp(first, { pointerId: 1, pointerType: "touch", clientX: 10, clientY: 160 });
       fireEvent.click(first);
-      expect(useReaderStore.getState().servers.map((p) => p.id)).toEqual([OTHER.id, PROFILE.id]);
+      expect(macs().map((p) => p.id)).toEqual([OTHER.id, PROFILE.id]);
       // The tap that ended the drag did not switch servers.
       expect(useReaderStore.getState().activeServerId).toBe(PROFILE.id);
       expect(screen.queryByRole("status")).toBeNull();
@@ -656,14 +684,14 @@ describe("settings servers", () => {
     await openSettings();
     vi.useFakeTimers();
     try {
-      const first = screen.getAllByRole("radio")[0] as HTMLElement;
+      const first = macRadios()[0] as HTMLElement;
       fireEvent.pointerDown(first, { pointerId: 1, pointerType: "touch", clientX: 10, clientY: 100 });
       fireEvent.pointerMove(first, { pointerId: 1, pointerType: "touch", clientX: 10, clientY: 160 });
       act(() => vi.advanceTimersByTime(400));
       expect(first.closest(".server")?.className).not.toContain("dragging");
       fireEvent.pointerUp(first, { pointerId: 1, pointerType: "touch", clientX: 10, clientY: 160 });
       fireEvent.click(first);
-      expect(useReaderStore.getState().servers.map((p) => p.id)).toEqual([PROFILE.id, OTHER.id]);
+      expect(macs().map((p) => p.id)).toEqual([PROFILE.id, OTHER.id]);
       // A press that never became a drag is still an ordinary tap.
       expect(useReaderStore.getState().activeServerId).toBe(PROFILE.id);
     } finally {
@@ -678,7 +706,7 @@ describe("settings servers", () => {
     vi.useFakeTimers();
     try {
       const list = container.querySelector(".servers") as HTMLElement;
-      const first = screen.getAllByRole("radio")[0] as HTMLElement;
+      const first = macRadios()[0] as HTMLElement;
       const before = fireEvent.touchMove(list, { touches: [{ clientX: 0, clientY: 0 }] });
       expect(before).toBe(true);
       fireEvent.pointerDown(first, { pointerId: 1, pointerType: "touch", clientX: 10, clientY: 100 });
@@ -697,9 +725,9 @@ describe("settings servers", () => {
     saveServers([PROFILE, OTHER]);
     saveActiveServerId(PROFILE.id);
     await openSettings();
-    fireEvent.keyDown(screen.getAllByRole("radio")[1] as HTMLElement, { key: "ArrowUp" });
-    fireEvent.keyDown(screen.getAllByRole("radio")[1] as HTMLElement, { key: "ArrowDown" });
-    expect(useReaderStore.getState().servers.map((p) => p.id)).toEqual([PROFILE.id, OTHER.id]);
+    fireEvent.keyDown(macRadios()[1] as HTMLElement, { key: "ArrowUp" });
+    fireEvent.keyDown(macRadios()[1] as HTMLElement, { key: "ArrowDown" });
+    expect(macs().map((p) => p.id)).toEqual([PROFILE.id, OTHER.id]);
   });
 
   it("shows the reading size on the document and moves it one px per tap", async () => {

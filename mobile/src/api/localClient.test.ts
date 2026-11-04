@@ -103,6 +103,8 @@ describe("createLocalClient", () => {
   it("reports offline when the folder no longer opens", async () => {
     fs.listLocalFolder.mockRejectedValue(new Error("not a folder"));
     const client = createLocalClient(library);
-    await expect(client.health()).rejects.toThrow("not a folder");
+    // The plugin's words are translated into a code the UI can explain, rather
+    // than surfacing as a bare message.
+    await expect(client.health()).rejects.toMatchObject({ code: "not_a_folder" });
   });
 });
