@@ -116,8 +116,25 @@
  * markdown editor is a single flat `--bg-color` surface — match it). The slot
  * owns scroll only; each adapter owns its own padding, so the slot adds none
  * (a slot padding here would double every adapter's inset). */
-.split-pane-editor__preview > :not(.preview-zoom) {
+/* Text content follows `zoom`. An IFRAME does not: its subdocument keeps the
+   page scale it was created with, so `zoom` on the ancestor changes the box and
+   paints nothing — measured on this WebKit build (the value reached the element,
+   the rect did not move, the picture did not change). `.html-preview` is
+   therefore excluded here and its frame is scaled below, where a compositor
+   transform needs no repaint of the subdocument at all. */
+.split-pane-editor__preview > :not(.preview-zoom):not(.html-preview) {
   zoom: var(--preview-zoom, 1);
+}
+
+/* The frame is scaled, so its layout box is divided first: scaled by z it lands
+   exactly on the pane (and its document reflows at the narrower width, which is
+   what "bigger text" means for a page). */
+.split-pane-editor__preview .html-preview__iframe {
+  flex: none;
+  width: calc(100% / var(--preview-zoom, 1));
+  height: calc(100% / var(--preview-zoom, 1));
+  transform: scale(var(--preview-zoom, 1));
+  transform-origin: top left;
 }
 
 .split-pane-editor__preview {
