@@ -205,11 +205,14 @@ function MainRegion({ serverId }: { serverId: string }) {
     <div className="remote-viewer">
       <RemoteBanner serverName={serverName} />
       <div className="remote-viewer__body vm-scroll--thin">
-        {doc && doc.kind !== "loading" ? (
+        {/* `doc` is enough: a document whose `kind` is still `"loading"` is
+            in flight, and the viewer paints that state itself. Gating on the
+            kind here unmounted the reader the moment it started reading. */}
+        {doc ? (
           <RemoteViewer rootId={doc.rootId} relPath={doc.relPath} />
         ) : (
           <p className="remote-viewer__empty">
-            <FolderOpen size={14} aria-hidden="true" /> {doc ? t("remote.loading") : t("remote.pickFile")}
+            <FolderOpen size={14} aria-hidden="true" /> {t("remote.pickFile")}
           </p>
         )}
       </div>

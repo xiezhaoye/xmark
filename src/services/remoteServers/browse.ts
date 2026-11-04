@@ -69,9 +69,14 @@ export async function loadLevel(rootId: string, path: string, force = false): Pr
 
 /** A document's text, or null when the load was superseded. */
 export async function loadDocument(rootId: string, relPath: string): Promise<RemoteFile | null> {
-  const { connection, serverId, openDoc } = useRemoteBrowserStore.getState();
+  const { connection, serverId } = useRemoteBrowserStore.getState();
   if (!connection || !serverId) return null;
-  const seq = openDoc({ rootId, relPath, kind: "loading" });
+  // Take a staleness token WITHOUT touching `doc`. Writing `kind: "loading"`
+  // here unmounts the very viewer that asked for the read (`MainRegion` gates
+  // on `doc.kind !== "loading"`), and its remount asks again — a read loop
+  // that never paints a document.
+  const seq = useRemoteBrowserStore.getState().seq + 1;
+  useRemoteBrowserStore.setState({ seq });
   try {
     const file = await remoteFile(connection, rootId, relPath);
     const now = useRemoteBrowserStore.getState();
