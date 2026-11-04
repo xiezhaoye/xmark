@@ -22,9 +22,9 @@ export function Drawer({ width, offset, dragging }: { width: number; offset: num
     >
       <div className="drawer-col drawer-groups">
         <ServerPicker />
-        <div className="scroll">
-          <GroupColumn />
-        </div>
+        {/* The column scrolls its own list and pins the two add buttons to its
+            bottom edge (components/GroupColumn). */}
+        <GroupColumn />
       </div>
       <div className="drawer-col drawer-tree">
         <TreeColumn />

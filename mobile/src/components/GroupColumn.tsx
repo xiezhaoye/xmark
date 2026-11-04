@@ -3,9 +3,14 @@
  *
  * Drawn like the Mac's workspace rail: a group is a larger, bold heading with
  * its folder count; each folder carries a coloured one-character glyph from
- * its name; the selected folder gets the accent fill and a coloured bar on
- * its left edge. A folder the Mac cannot serve shows an outlined glyph and,
- * when tapped, explains why. Long-pressing a name shows it in full.
+ * its name; the selected folder gets the accent fill and a coloured bar on its
+ * left edge. A folder the Mac cannot serve shows an outlined glyph and, when
+ * tapped, explains why.
+ *
+ * Groups the phone owns are prefixed `local:` (see `state/localLibrary`) and
+ * are the only ones this column can change: they get the two buttons at the
+ * bottom, a long-press menu (rename / delete), and drag-to-reorder. A Mac's
+ * groups are somebody else's arrangement — they are listed, never edited.
  *
  * @module components/GroupColumn
  */
@@ -14,10 +19,22 @@ import { useReaderStore } from "../state/readerStore";
 import { errorText, t } from "../i18n";
 import { Icon } from "./Icon";
 import { railColor, railGlyph } from "../render/railIdentity";
-import type { CSSProperties } from "react";
+import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import { StatusMessage } from "./StatusMessage";
+import { useLocalLibrary } from "../state/localLibrary";
+import { forgetLocalFolder, pickLocalFolder } from "../platformLocalFS";
 
 const LONG_PRESS_MS = 500;
+/** A drag starts only after the finger has travelled this far, so a tap stays a tap. */
+const DRAG_START_PX = 6;
+
+/** Which local entry a menu is open for. */
+type Menu =
+  | { kind: "folder"; path: string; name: string; groupId: string }
+  | { kind: "group"; id: string; name: string }
+  | null;
+
+const isLocalGroup = (id: string) => id.startsWith("local:");
 
 export function GroupColumn() {
   const groups = useReaderStore((s) => s.groups);
@@ -25,7 +42,11 @@ export function GroupColumn() {
   const collapsed = useReaderStore((s) => s.collapsedGroups);
   const selected = useReaderStore((s) => s.selectedRootId);
   const [hint, setHint] = useState<string | null>(null);
+  const [menu, setMenu] = useState<Menu>(null);
+  const [draft, setDraft] = useState<{ kind: "folder" | "group"; id: string; value: string } | null>(null);
+  const [drag, setDrag] = useState<{ path: string; overGroup: string; overIndex: number } | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pressOrigin = useRef<{ x: number; y: number; path: string; groupId: string } | null>(null);
 
   const pressStart = (full: string) => {
     timer.current = setTimeout(() => setHint(full), LONG_PRESS_MS);
@@ -34,53 +55,245 @@ export function GroupColumn() {
     if (timer.current) clearTimeout(timer.current);
   };
 
+  const library = () => useLocalLibrary.getState();
+
+  /* ---- actions ------------------------------------------------------- */
+
+  const addFolder = async () => {
+    try {
+      const folder = await pickLocalFolder();
+      // The picker's name is the folder's own; the library keeps it as the row.
+      library().addFolder({ path: folder.path, name: folder.name });
+      await useReaderStore.getState().connectLocal();
+      await useReaderStore.getState().refreshWorkspaces();
+    } catch (err) {
+      const code = err instanceof Error ? err.message : String(err);
+      if (!code.includes("cancelled")) setHint(errorText(code));
+    }
+  };
+
+  const addGroup = async () => {
+    library().addGroup(t("side.newGroup"));
+    // Groups are the phone's own, so a new one must be visible: switch to the
+    // local source first when a Mac is showing.
+    await useReaderStore.getState().connectLocal();
+    await useReaderStore.getState().refreshWorkspaces();
+  };
+
+  const removeFolder = (path: string) => {
+    library().removeFolder(path);
+    void forgetLocalFolder(path);
+    void useReaderStore.getState().refreshWorkspaces();
+  };
+
+  /* ---- drag to reorder ----------------------------------------------- */
+
+  const beginDrag = (e: ReactPointerEvent<HTMLButtonElement>, path: string, groupId: string) => {
+    pressOrigin.current = { x: e.clientX, y: e.clientY, path, groupId };
+  };
+
+  const moveDrag = (e: ReactPointerEvent<HTMLButtonElement>) => {
+    const origin = pressOrigin.current;
+    if (!origin) return;
+    if (!drag && Math.hypot(e.clientX - origin.x, e.clientY - origin.y) < DRAG_START_PX) return;
+    // The row under the finger decides the destination; any local folder row
+    // of any local group is a target, so moving between groups is the same
+    // gesture as reordering inside one.
+    const under = document.elementFromPoint(e.clientX, e.clientY)?.closest<HTMLElement>("[data-local-folder]");
+    const groupId = under?.dataset.groupId;
+    const index = under ? Number(under.dataset.index ?? 0) : 0;
+    setDrag({ path: origin.path, overGroup: groupId ?? origin.groupId, overIndex: index });
+    if (timer.current) clearTimeout(timer.current);
+  };
+
+  const endDrag = () => {
+    const origin = pressOrigin.current;
+    pressOrigin.current = null;
+    const target = drag;
+    setDrag(null);
+    if (!origin || !target) return;
+    library().moveFolder(origin.path, target.overGroup, target.overIndex);
+    void useReaderStore.getState().refreshWorkspaces();
+  };
+
+  /* ---- render --------------------------------------------------------- */
+
   if (groupsError) return <StatusMessage tone="error" text={errorText(groupsError)} onRetry={() => void useReaderStore.getState().refreshWorkspaces()} />;
-  if (!groups.length) return <StatusMessage text={t("drawer.noGroups")} />;
 
   return (
-    <nav className="groups" aria-label={t("drawer.groups")}>
-      {hint && (
-        <button type="button" className="hint" onClick={() => setHint(null)}>
-          {hint}
-        </button>
-      )}
-      {groups.map((g) => (
-        <section key={g.id} className="group">
-          <button type="button" className="group-title" aria-expanded={!collapsed[g.id]} onClick={() => useReaderStore.getState().toggleGroup(g.id)} onTouchStart={() => pressStart(g.name)} onTouchEnd={pressEnd} onTouchMove={pressEnd}>
-            <span className={`chevron ${collapsed[g.id] ? "" : "open"}`}>
-              <Icon name="chevron" size={14} />
-            </span>
-            <span className="label">{g.name}</span>
-            <span className="group-count">{g.folders.length}</span>
+    <div className="groups-pane">
+      <nav className="groups" aria-label={t("drawer.groups")}>
+        {hint && (
+          <button type="button" className="hint" onClick={() => setHint(null)}>
+            {hint}
           </button>
-          {!collapsed[g.id] &&
-            (g.folders.length ? (
-              g.folders.map((f) => (
-                <button
-                  type="button"
-                  key={f.rootId}
-                  className={`folder ${selected === f.rootId ? "selected" : ""} ${f.available ? "" : "unavailable"}`}
-                  aria-current={selected === f.rootId}
-                  onClick={() => {
-                    if (!f.available) setHint(t("drawer.unavailable"));
-                    void useReaderStore.getState().selectRoot(f.rootId);
-                  }}
-                  onTouchStart={() => pressStart(f.name)}
-                  onTouchEnd={pressEnd}
-                  onTouchMove={pressEnd}
-                  style={{ "--rail-color": railColor(f.rootId) } as CSSProperties}
-                >
-                  <span className="glyph" aria-hidden="true">
-                    {railGlyph(f.name)}
+        )}
+        {!groups.length && <StatusMessage text={t("drawer.noGroups")} />}
+        {groups.map((g) => {
+          const local = isLocalGroup(g.id);
+          return (
+            <section key={g.id} className="group">
+              <button
+                type="button"
+                className="group-title"
+                aria-expanded={!collapsed[g.id]}
+                onClick={() => useReaderStore.getState().toggleGroup(g.id)}
+                onTouchStart={() => (local ? undefined : pressStart(g.name))}
+                onTouchEnd={pressEnd}
+                onTouchMove={pressEnd}
+                onContextMenu={(e) => {
+                  if (!local) return;
+                  e.preventDefault();
+                  setMenu({ kind: "group", id: g.id, name: g.name });
+                }}
+              >
+                <span className={`chevron ${collapsed[g.id] ? "" : "open"}`}>
+                  <Icon name="chevron" size={14} />
+                </span>
+                <span className="label">{g.name}</span>
+                <span className="group-count">{g.folders.length}</span>
+                {local && (
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    className="group-more"
+                    aria-label={t("side.actions", { name: g.name })}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMenu({ kind: "group", id: g.id, name: g.name });
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key !== "Enter" && e.key !== " ") return;
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setMenu({ kind: "group", id: g.id, name: g.name });
+                    }}
+                  >
+                    <Icon name="more" size={16} />
                   </span>
-                  <span className="label">{f.name}</span>
-                </button>
-              ))
-            ) : (
-              <p className="empty">{t("drawer.emptyGroup")}</p>
-            ))}
-        </section>
-      ))}
-    </nav>
+                )}
+              </button>
+              {!collapsed[g.id] &&
+                (g.folders.length ? (
+                  g.folders.map((f, i) => (
+                    <button
+                      type="button"
+                      key={f.rootId}
+                      data-local-folder={local ? f.rootId : undefined}
+                      data-group-id={local ? g.id : undefined}
+                      data-index={local ? i : undefined}
+                      className={`folder ${selected === f.rootId ? "selected" : ""} ${f.available ? "" : "unavailable"} ${drag?.path === f.rootId ? "dragging" : ""}`}
+                      aria-current={selected === f.rootId}
+                      onClick={() => {
+                        if (!f.available) setHint(t("drawer.unavailable"));
+                        void useReaderStore.getState().selectRoot(f.rootId);
+                      }}
+                      onContextMenu={(e) => {
+                        if (!local) return;
+                        e.preventDefault();
+                        setMenu({ kind: "folder", path: f.rootId, name: f.name, groupId: g.id });
+                      }}
+                      onTouchStart={() => (local ? undefined : pressStart(f.name))}
+                      onTouchEnd={pressEnd}
+                      onTouchMove={pressEnd}
+                      onPointerDown={local ? (e) => beginDrag(e, f.rootId, g.id) : undefined}
+                      onPointerMove={local ? moveDrag : undefined}
+                      onPointerUp={local ? endDrag : undefined}
+                      onPointerCancel={local ? endDrag : undefined}
+                      style={{ "--rail-color": railColor(f.rootId) } as CSSProperties}
+                    >
+                      <span className="glyph" aria-hidden="true">
+                        {railGlyph(f.name)}
+                      </span>
+                      <span className="label">{f.name}</span>
+                    </button>
+                  ))
+                ) : (
+                  <p className="empty">{t("drawer.emptyGroup")}</p>
+                ))}
+            </section>
+          );
+        })}
+        {menu && <LocalMenu menu={menu} onClose={() => setMenu(null)} onRename={setDraft} onDeleteFolder={removeFolder} onDeleteGroup={(id) => { library().removeGroup(id); void useReaderStore.getState().refreshWorkspaces(); }} />}
+      </nav>
+
+      {/* The two ways to add live with the thing they add to. Both act on the
+          phone's own library; a Mac's groups are not ours to extend. */}
+      <div className="groups-add">
+        <button type="button" className="groups-add-button" onClick={() => void addFolder()}>
+          <Icon name="folder" size={16} /> {t("side.addFolder")}
+        </button>
+        <button type="button" className="groups-add-button" onClick={() => void addGroup()}>
+          ＋ {t("side.addGroup")}
+        </button>
+      </div>
+
+      {draft && (
+        <form
+          className="local-draft"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (draft.kind === "folder") library().renameFolder(draft.id, draft.value);
+            else library().renameGroup(draft.id, draft.value);
+            setDraft(null);
+            void useReaderStore.getState().refreshWorkspaces();
+          }}
+        >
+          <input autoFocus value={draft.value} onChange={(e) => setDraft({ ...draft, value: e.target.value })} aria-label={draft.kind === "folder" ? t("side.rename") : t("side.renameGroup")} />
+          <button type="submit" className="button small">{t("settings.renameSave")}</button>
+          <button type="button" className="button small" onClick={() => setDraft(null)}>{t("settings.cancel")}</button>
+        </form>
+      )}
+      {drag && <div className="drag-marker" aria-hidden="true" />}
+    </div>
+  );
+}
+
+/** The long-press menu for a local folder or group. */
+function LocalMenu({
+  menu,
+  onClose,
+  onRename,
+  onDeleteFolder,
+  onDeleteGroup,
+}: {
+  menu: Exclude<Menu, null>;
+  onClose: () => void;
+  onRename: (draft: { kind: "folder" | "group"; id: string; value: string }) => void;
+  onDeleteFolder: (path: string) => void;
+  onDeleteGroup: (id: string) => void;
+}) {
+  const name = menu.name;
+  return (
+    <div className="local-menu" role="dialog" aria-label={t("side.actions", { name })}>
+      <button
+        type="button"
+        className="local-menu-item"
+        onClick={() => {
+          onClose();
+          onRename(
+            menu.kind === "folder"
+              ? { kind: "folder", id: menu.path, value: name }
+              : { kind: "group", id: menu.id, value: name },
+          );
+        }}
+      >
+        {menu.kind === "folder" ? t("side.rename") : t("side.renameGroup")}
+      </button>
+      <button
+        type="button"
+        className="local-menu-item danger"
+        onClick={() => {
+          onClose();
+          if (menu.kind === "folder") onDeleteFolder(menu.path);
+          else onDeleteGroup(menu.id);
+        }}
+      >
+        {menu.kind === "folder" ? t("side.delete") : t("side.deleteGroup")}
+      </button>
+      <button type="button" className="local-menu-item" onClick={onClose}>
+        {t("settings.cancel")}
+      </button>
+    </div>
   );
 }

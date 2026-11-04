@@ -451,3 +451,20 @@ input { font: inherit; color: inherit; }
   -webkit-backdrop-filter: blur(6px);
 }
 .to-top:active { background: color-mix(in srgb, var(--bg-tertiary) 90%, transparent); color: var(--text-color); }
+
+/* ---- Drawer group column: adding, managing, dragging ------------------ */
+.groups-pane { display: flex; flex: 1; flex-direction: column; min-height: 0; height: 100%; }
+.groups-pane .groups { flex: 1; min-height: 0; overflow-y: auto; }
+.groups-add { flex: none; display: flex; flex-direction: column; gap: 6px; padding: 10px 12px calc(env(safe-area-inset-bottom) + 10px); border-top: 1px solid var(--border-color); }
+.groups-add-button { display: flex; align-items: center; gap: 8px; padding: 9px 10px; border: 1px solid var(--border-color); border-radius: var(--radius); background: var(--bg-secondary); font-size: 14px; color: var(--text-color); text-align: left; }
+.groups-add-button:active { background: var(--bg-tertiary); }
+/* The row's own menu affordance: only local rows and groups have one. */
+.group-more { flex: none; display: grid; place-items: center; width: 26px; height: 26px; margin-left: auto; border-radius: 6px; color: var(--text-secondary); }
+.group-more:active { background: var(--bg-tertiary); }
+.folder.dragging { opacity: 0.5; }
+.local-menu { margin: 6px 12px; padding: 4px; border: 1px solid var(--border-color); border-radius: var(--radius); background: var(--bg-secondary); display: flex; flex-direction: column; }
+.local-menu-item { padding: 10px; text-align: left; font-size: 14px; color: var(--text-color); border-radius: 6px; }
+.local-menu-item:active { background: var(--bg-tertiary); }
+.local-menu-item.danger { color: var(--danger); }
+.local-draft { display: flex; gap: 6px; align-items: center; padding: 8px 12px calc(env(safe-area-inset-bottom) + 8px); border-top: 1px solid var(--border-color); }
+.local-draft input { flex: 1; min-width: 0; }

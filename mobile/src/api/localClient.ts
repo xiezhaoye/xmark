@@ -17,6 +17,7 @@
  * @module api/localClient
  */
 import { ApiError, type Client } from "./client";
+import { folderLabel, type LocalGroup } from "../state/localLibrary";
 import type { FileContent, TreeEntry, WorkspaceGroup } from "./types";
 import {
   listLocalFolder,
@@ -78,29 +79,33 @@ function mimeOf(name: string): string {
 }
 
 /**
- * A client over one local folder. `rootId` is the folder's absolute path, so
- * every tree/document request carries the root it belongs to and nothing has
- * to be remembered here.
+ * A client over the local library. Groups and folders come from
+ * `state/localLibrary` (contacted through `read` on every call, so a rename or a
+ * reorder shows up without rebuilding the client); `rootId` stays the folder's
+ * absolute path, so a tree/document request carries the root it belongs to and
+ * nothing has to be remembered here.
  */
-export function createLocalClient(folder: { path: string; name: string }): Client {
+export function createLocalClient(read: () => LocalGroup[]): Client {
   return {
     async health() {
-      // A green dot must mean "this folder still opens", so ask the file
+      // A green dot must mean "these folders still open", so ask the file
       // system rather than answering from faith: a folder deleted or moved in
-      // Files.app should read as offline before the tree fails.
-      await listLocalFolder(folder.path);
+      // Files.app reads as offline before the tree fails.
+      const paths = read().flatMap((g) => g.folders.map((f) => f.path));
+      if (!paths.length) throw new ApiError(0, "no_folders");
+      await Promise.all(paths.map((p) => listLocalFolder(p)));
       return { ok: true, version: "local" };
     },
 
     async workspaces(): Promise<{ groups: WorkspaceGroup[] }> {
+      // One group per local group; the folder's own name (or its rename) — not
+      // the group's — is what the tree row shows.
       return {
-        groups: [
-          {
-            id: "local",
-            name: folder.name,
-            folders: [{ rootId: folder.path, name: folder.name, available: true }],
-          },
-        ],
+        groups: read().map((g) => ({
+          id: g.id,
+          name: g.name,
+          folders: g.folders.map((f) => ({ rootId: f.path, name: folderLabel(f), available: true })),
+        })),
       };
     },
 

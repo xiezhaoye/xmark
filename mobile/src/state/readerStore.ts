@@ -21,6 +21,7 @@ import { create } from "zustand";
 import { ApiError, type Client } from "../api/client";
 import { connectionOf, defaultServerName, newServerId, sameServer, type Connection, type FileContent, type ServerProfile, type TreeEntry, type WorkspaceGroup } from "../api/types";
 import { forgetLocalFolder, restoreLocalFolders } from "../platformLocalFS";
+import { useLocalLibrary } from "./localLibrary";
 import {
   DEFAULT_READING_SIZE,
   MAX_READING_SIZE,
@@ -94,11 +95,11 @@ interface ReaderActions {
   /** Adds a Mac; `activate: false` lists it without switching to it. */
   addServer(input: { name: string; connection: Connection; activate?: boolean }): Promise<void>;
   /**
-   * Opens a folder on this phone as the current source. The native side has
-   * already granted access and remembered the bookmark; this records the
-   * profile the reader switches to, adding one the first time.
+   * Makes the phone's own folder library the current source, creating its one
+   * profile the first time. The folders themselves live in `state/localLibrary`;
+   * this only decides which source the reader is reading.
    */
-  connectLocalFolder(folder: { path: string; name: string; activate?: boolean }): Promise<void>;
+  connectLocal(opts?: { activate?: boolean }): Promise<void>;
   /** Puts the Macs in the given order; ids it does not mention keep their place at the end. */
   reorderServers(ids: string[]): void;
   updateServer(id: string, patch: Partial<Pick<ServerProfile, "name" | "host" | "port" | "token">>): Promise<void>;
@@ -197,6 +198,12 @@ function profilesPatch(servers: ServerProfile[], activeServerId: string | null):
   return { servers, activeServerId: active ? active.id : null, connection: active ? connectionOf(active) : null };
 }
 
+/** The local source is a single row named "本机"; its folders live in the library. */
+export const LOCAL_SOURCE_NAME = "本机";
+/** One row, stable id: it is the phone itself, not a picked folder. */
+export const LOCAL_SOURCE_ID = "local";
+const LOCAL_CONNECTION: Connection = { host: "local", port: 0, token: "", local: true };
+
 export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) => {
   const client = (): Client | null => {
     const { connection, makeClient } = get();
@@ -266,18 +273,44 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
       // sure each still-readable one has a profile to switch to. The bookmark
       // is the source of truth; the profile is only how the reader addresses it.
       const folders = await restoreLocalFolders().catch(() => []);
-      const known = new Set(servers.map((p) => p.localPath).filter(Boolean));
-      const added = folders
-        .filter((f) => f.ok && !known.has(f.path))
-        .map<ServerProfile>((f) => ({
-          id: newServerId(),
-          name: f.name,
-          host: "local",
-          port: 0,
-          token: "",
-          localPath: f.path,
-        }));
-      const restored = added.length ? [...servers, ...added] : servers;
+      // The bookmarks are the grants; the library is what the user arranged.
+      // A bookmark that no longer resolves is dropped from the arrangement, so
+      // a deleted folder cannot linger as a row that opens nothing.
+      if (folders.length) {
+        const readable = folders.filter((f) => f.ok);
+        const library = useLocalLibrary.getState();
+        const knownPaths = new Set(library.groups.flatMap((g) => g.folders.map((f) => f.path)));
+        for (const f of readable) {
+          if (!knownPaths.has(f.path)) library.addFolder({ path: f.path, name: f.name });
+        }
+        for (const g of library.groups) {
+          for (const f of g.folders) {
+            if (!readable.some((r) => r.path === f.path)) library.removeFolder(f.path);
+          }
+        }
+      }
+      // One row for the library, always first, and only while it holds folders.
+      const hasLocal = useLocalLibrary.getState().groups.some((g) => g.folders.length);
+      // A folder picked by the previous build was stored as its own server
+      // profile (`localPath`, named after the folder). Those rows are gone:
+      // one `本机` row replaced them, and the folders now live in the library —
+      // which the bookmark restore above has already refilled.
+      const isLegacyLocalRow = (p: ServerProfile) => Boolean((p as ServerProfile & { localPath?: string }).localPath);
+      const existingLocal = servers.find((p) => p.local);
+      const macs = servers.filter((p) => !p.local && !isLegacyLocalRow(p));
+      const restored = hasLocal
+        ? [
+            existingLocal ?? {
+              id: LOCAL_SOURCE_ID,
+              name: LOCAL_SOURCE_NAME,
+              host: "local",
+              port: 0,
+              token: "",
+              local: true,
+            },
+            ...macs,
+          ]
+        : macs;
       set({ ...profilesPatch(restored, activeServerId), readingSize: loadReadingSize() });
       if (!activeServerId || !restored.length) {
         docSeq += 1;
@@ -311,7 +344,7 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
         host: connection.host,
         port: connection.port,
         token: connection.token,
-        ...(connection.localPath ? { localPath: connection.localPath } : {}),
+        ...(connection.local ? { local: true } : {}),
       };
       if (!makeCurrent) {
         set((s) => profilesPatch([...s.servers, profile], s.activeServerId));
@@ -321,16 +354,14 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
       await activate(profile.id);
     },
 
-    async connectLocalFolder({ path, name, activate: makeCurrent = true }) {
-      const connection: Connection = { host: "local", port: 0, token: "", localPath: path };
-      const known = get().servers.find((p) => p.localPath === path);
+    async connectLocal({ activate: makeCurrent = true } = {}) {
+      const known = get().servers.find((p) => p.local);
       if (known) {
-        if (known.name !== name) await get().updateServer(known.id, { name });
         if (makeCurrent) await get().switchServer(known.id);
         return;
       }
       const first = !get().activeServerId;
-      await get().addServer({ name, connection, activate: makeCurrent || first });
+      await get().addServer({ name: LOCAL_SOURCE_NAME, connection: LOCAL_CONNECTION, activate: makeCurrent || first });
       if (first) set({ view: "reader" });
     },
 
@@ -372,8 +403,14 @@ export const useReaderStore = create<ReaderState & ReaderActions>()((set, get) =
       const { servers, activeServerId } = get();
       const removing = servers.find((p) => p.id === id);
       if (!removing) return;
-      // A local folder's grant belongs to the bookmark store, not to this list.
-      if (removing.localPath) void forgetLocalFolder(removing.localPath);
+      // Leaving the local source drops every bookmark it holds: the row and the
+      // grants are one thing from the user's side.
+      if (removing.local) {
+        for (const g of useLocalLibrary.getState().groups) {
+          for (const f of g.folders) void forgetLocalFolder(f.path);
+        }
+        useLocalLibrary.getState().setGroups([]);
+      }
       saveLastDoc(id, null);
       const rest = servers.filter((p) => p.id !== id);
       const nextId = activeServerId === id ? (rest[0]?.id ?? null) : activeServerId;
