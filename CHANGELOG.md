@@ -11,6 +11,52 @@ section as part of the version bump (`.claude/rules/40-version-bump.md`).
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-11-04
+
+### Added
+
+- A zoom control at the top centre of every preview — markdown, HTML, and the
+  split-pane viewers — with smaller/larger buttons, the current percentage as a
+  reset to 100%, and ← / → on the keyboard. The value is remembered across
+  documents and windows.
+- ⌘+ / ⌘− / ⌘0 zoom the whole window through the platform's own page zoom, the
+  same mechanism the browser uses, so it needs no reflow and answers instantly.
+- Settings → Formats has a "offer trusted HTML preview" switch. Turned off, an
+  HTML preview is always the sandboxed frame and the trust control never
+  appears. A document trusted earlier in the session stops executing at once.
+
+### Fixed
+
+- Switching a window to a paired remote server never loaded its groups: `open()`
+  seeded the status with `loading`, while the loader only runs on `idle`, so
+  every column spun forever.
+- A remote document stayed on "loading" after being clicked. The reader wrote
+  the status back to `loading` on the way in, which unmounted the view that had
+  asked for the read, whose remount asked again — a read loop that never painted.
+  Markdown links inside a document were caught by the same loop.
+- Remote previews now dispatch on what the server can actually serve: an image
+  is fetched from the asset route instead of being read as text (every image
+  previously failed with a 415 behind an error card), every image type the
+  server supports is recognised, and a kind with no route (PDF, DOCX, ZIP) says
+  so instead of spending a request.
+- An HTML preview showed only its first few lines. The frame's height resolved
+  against an auto-height ancestor and collapsed to the browser's 150px default.
+- The status-bar "opening large file" indicator stayed for the rest of the
+  session after a large non-markdown file (an HTML page, a PDF), because only
+  the markdown editor ever cleared it.
+- An empty placeholder instance no longer reads as a phantom
+  "Ungrouped → Untitled" row in the workspace rail; it earns its row only once
+  it holds a tab.
+- Zooming an HTML preview now also works on this WebKit build, where a
+  subframe's rendering does not follow a CSS `zoom` on its ancestor: the frame is
+  scaled by a compositor transform with its layout box divided first, so the
+  document still reflows at the narrower width.
+
+### Removed
+
+- The "HTML preview is sandboxed, its security review is in progress" notice
+  above every HTML preview. The sandbox is already the frame's own attribute.
+
 ## [0.1.5] - 2026-10-19
 
 ### Added
