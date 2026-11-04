@@ -728,3 +728,20 @@
   display: none;
 }
 
+
+/* The markdown surface's view-mode control: top-right of the editor, where the
+   split-pane formats put theirs. Translucent so it never competes with the
+   first line of the document, and it stays out of the way while typing. */
+.editor-view-mode {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-3);
+  z-index: 5;
+  opacity: 0.72;
+  transition: opacity var(--duration-fast, 120ms) ease-out;
+}
+
+.editor-view-mode:hover,
+.editor-view-mode:focus-within {
+  opacity: 1;
+}

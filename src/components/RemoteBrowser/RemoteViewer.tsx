@@ -170,6 +170,8 @@ function LoadedText({ rootId, relPath, ext }: RemoteViewerProps & { ext: string 
   // first attempt. A new document is a new mount (see `RemoteViewer`).
   const [state, setState] = useState<DocState>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
+  // Per document (the viewer is keyed by path, so this resets on a switch).
+  const [raw, setRaw] = useState(false);
 
   useEffect(() => {
     // Only the async callbacks below set state: the reset is the remount.
@@ -205,7 +207,25 @@ function LoadedText({ rootId, relPath, ext }: RemoteViewerProps & { ext: string 
 
   if (ext === "html" || ext === "htm") return <HtmlView text={file.text} />;
   if (file.kind === "markdown" || ext === "md" || ext === "markdown") {
-    return <RemoteMarkdown rootId={rootId} relPath={relPath} text={file.text} onOpenDoc={openDoc} />;
+    // Read-only does not mean "no source": the rendered page and its text are
+    // the same document, and sometimes the text is what you came for.
+    return (
+      <div className="remote-md">
+        <button
+          type="button"
+          className="remote-md__mode"
+          aria-pressed={raw}
+          onClick={() => setRaw((value) => !value)}
+        >
+          {raw ? t("remote.previewMode") : t("remote.sourceMode")}
+        </button>
+        {raw ? (
+          <SourceView text={file.text} ext={ext} />
+        ) : (
+          <RemoteMarkdown rootId={rootId} relPath={relPath} text={file.text} onOpenDoc={openDoc} />
+        )}
+      </div>
+    );
   }
   return <SourceView text={file.text} ext={ext} />;
 }

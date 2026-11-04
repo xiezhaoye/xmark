@@ -322,3 +322,22 @@
   border: 0;
   background: var(--bg-color);
 }
+
+/* Markdown read-only view: the source toggle sits in the corner, out of the
+   text column, and the text is the same document rendered. */
+.remote-md { position: relative; }
+.remote-md__mode {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-3);
+  z-index: 5;
+  padding: 3px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-primary) 88%, transparent);
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-sm);
+  opacity: 0.8;
+}
+.remote-md__mode:hover { opacity: 1; color: var(--text-primary); }

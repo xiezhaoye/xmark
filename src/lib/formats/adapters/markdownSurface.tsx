@@ -35,6 +35,8 @@ import { useDocumentStore } from "@/stores/documentStore";
 import { useDocumentId } from "@/hooks/useDocumentState";
 import { TiptapEditorInner } from "@/components/Editor/TiptapEditor";
 import { PreviewZoomBar, usePreviewZoom } from "@/components/PreviewZoom/PreviewZoom";
+import { ViewModeToggle } from "@/components/Editor/SplitPaneEditor/ViewModeToggle";
+import type { SplitViewMode } from "@/lib/formats/types";
 import { MarkdownSplitView } from "@/components/Editor/MarkdownSplitView";
 import { HeadingPicker } from "@/components/Editor/HeadingPicker";
 import { DropZoneIndicator } from "@/components/Editor/DropZoneIndicator";
@@ -74,6 +76,16 @@ export function MarkdownEditorSurface({ tabId }: { tabId: string }) {
   // events reach both markdown and non-markdown surfaces.
 
   const { scale: previewZoom } = usePreviewZoom();
+  // Markdown's mode has always been the two global flags, not a per-tab value:
+  // WYSIWYG (neither), source, or the split. This control is the visible entry
+  // point the split-pane formats have had all along.
+  const viewMode: SplitViewMode = sourceMode ? "source" : splitView ? "split" : "preview";
+  const changeViewMode = (next: SplitViewMode) => {
+    const ui = useUIStore.getState();
+    if (next === "source") ui.setSourceMode(true);
+    else if (next === "split") ui.setMarkdownSplitView(true);
+    else ui.setSourceMode(false);
+  };
   const editorKey = `${tabId}-doc-${documentId}`;
   /* v8 ignore next -- @preserve tableFitToWidth conditional class appended at runtime */
   const containerClass = `editor-container media-border-${mediaBorderStyle} media-align-${mediaAlignment} heading-align-${headingAlignment}${tableFitToWidth ? " table-fit-to-width" : ""}`;
@@ -111,6 +123,11 @@ export function MarkdownEditorSurface({ tabId }: { tabId: string }) {
   return (
     <div className={containerClass} data-html-rendering-mode={htmlRenderingMode}>
       <PreviewZoomBar />
+      {!forcedSource && (
+        <div className="editor-view-mode">
+          <ViewModeToggle mode={viewMode} onChange={changeViewMode} />
+        </div>
+      )}
       <div className="editor-content" data-active-editor={activeEditor} style={{ zoom: previewZoom }}>
         {editorContent}
       </div>

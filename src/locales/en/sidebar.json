@@ -72,6 +72,8 @@
   "remote.noGroups": "This server shares no workspace groups",
   "remote.emptyFolder": "Empty folder",
   "remote.unavailableFolder": "This folder is not available on the server right now",
+  "remote.sourceMode": "Source",
+  "remote.previewMode": "Preview",
   "remote.unknownKind": "This file type cannot be previewed",
   "remote.folderCount_one": "{{count}} folder",
   "remote.folderCount_other": "{{count}} folders",

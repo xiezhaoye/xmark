@@ -8,3 +8,41 @@
   min-height: 0;
   background: var(--bg-color);
 }
+
+/* Arrows over the image and the keyboard hint under it: only for a folder with
+   more than one picture (MediaViewer renders them conditionally). */
+.media-viewer { position: relative; }
+.media-viewer__arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--bg-primary) 82%, transparent);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+  opacity: 0.75;
+}
+.media-viewer__arrow:hover { opacity: 1; }
+.media-viewer__arrow--prev { left: 14px; }
+.media-viewer__arrow--next { right: 14px; }
+.media-viewer__hint {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-primary) 82%, transparent);
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+  pointer-events: none;
+}
