@@ -30,6 +30,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { useTranslation } from "react-i18next";
 import { SourcePane } from "./SourcePane";
 import { usePreviewModel } from "./usePreviewModel";
+import { PreviewZoomBar, usePreviewZoom } from "@/components/PreviewZoom/PreviewZoom";
 import { ReadOnlyBanner } from "./ReadOnlyBanner";
 import { ValidationGutter } from "./ValidationGutter";
 import { ViewModeToggle } from "./ViewModeToggle";
@@ -125,6 +126,7 @@ export function SplitPaneEditor({ tabId, formatConfig }: SplitPaneEditorProps) {
     activeSchemaId,
   });
   const { Preview, hasPreview } = preview;
+  const { scale: previewZoom } = usePreviewZoom();
 
   // Per-tab view mode (Source/Split/Preview), falling back to the global
   // default setting, then "split". Clamped to "source" for formats without a
@@ -266,13 +268,18 @@ export function SplitPaneEditor({ tabId, formatConfig }: SplitPaneEditorProps) {
       }
       preview={
         showPreview && Preview ? (
-          <Preview
-            content={preview.content}
-            liveContent={preview.liveContent}
-            path={filePath}
-            diagnostics={preview.diagnostics}
-            tabId={tabId}
-          />
+          <>
+            <PreviewZoomBar />
+            <div className="preview-zoom-content" style={{ zoom: previewZoom }}>
+              <Preview
+                content={preview.content}
+                liveContent={preview.liveContent}
+                path={filePath}
+                diagnostics={preview.diagnostics}
+                tabId={tabId}
+              />
+            </div>
+          </>
         ) : undefined
       }
     />

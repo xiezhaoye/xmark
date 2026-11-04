@@ -117,6 +117,8 @@
  * owns scroll only; each adapter owns its own padding, so the slot adds none
  * (a slot padding here would double every adapter's inset). */
 .split-pane-editor__preview {
+  /* The zoom control is positioned against this column (PreviewZoom.tsx). */
+  position: relative;
   flex-grow: calc(1 - var(--split-pane-source-fraction, 0.5));
   flex-shrink: 0;
   flex-basis: 0%;

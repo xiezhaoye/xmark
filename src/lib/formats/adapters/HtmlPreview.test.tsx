@@ -140,9 +140,11 @@ describe("safe mode (the default)", () => {
 
   /// WI-3.4's notice predates this feature and is about the sandboxed path.
   /// Adding trusted mode must not quietly retire it.
-  it("keeps the pending sign-off notice", () => {
+  it("carries no security-review notice above the frame", () => {
+    // Removed on request: the notice restated the sandbox on every open, and
+    // the sandbox is already visible as the frame's own attribute.
     renderPreview();
-    expect(screen.getByTestId("html-preview-sign-off-pending")).toBeInTheDocument();
+    expect(screen.queryByTestId("html-preview-sign-off-pending")).toBeNull();
   });
 });
 

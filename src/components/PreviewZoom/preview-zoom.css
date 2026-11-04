@@ -1,0 +1,92 @@
+/* The zoom control: top centre of a preview surface, never part of the zoomed
+   node (see PreviewZoom.tsx — CSS `zoom` scales the content, the control stays
+   constant so the hit target does not shrink at 50%). */
+.preview-zoom-host {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.preview-zoom-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  /* `zoom` is set inline: it is the reader's per-app choice, not a theme value */
+}
+
+.preview-zoom {
+  position: absolute;
+  top: var(--space-2);
+  left: 50%;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  transform: translateX(-50%);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 12%);
+  opacity: 0.72;
+  transition: opacity 120ms ease;
+}
+
+/* Reading first: the control recedes until the pointer is near it. */
+.preview-zoom:hover,
+.preview-zoom:focus-within {
+  opacity: 1;
+}
+
+.preview-zoom__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  color: var(--text-secondary);
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: 999px;
+}
+
+.preview-zoom__btn:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: var(--hover-bg);
+}
+
+.preview-zoom__btn:disabled {
+  cursor: default;
+  opacity: 0.35;
+}
+
+.preview-zoom__value {
+  min-width: 44px;
+  padding: 0 var(--space-1);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: 999px;
+}
+
+.preview-zoom__value:hover {
+  color: var(--text-primary);
+  background: var(--hover-bg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preview-zoom {
+    transition: none;
+  }
+}

@@ -46,6 +46,13 @@ export interface AppearanceSettings {
   cjkFont: string;
   monoFont: string;
   fontSize: number;
+  /**
+   * Reading zoom for preview surfaces, in percent (50–300, step 10).
+   * Multiplies `fontSize` for the previewed content only — see
+   * components/PreviewZoom. Optional because state persisted before it existed
+   * has no key; every read treats absent as 100.
+   */
+  previewZoom?: number;
   lineHeight: number;
   blockSpacing: number; // Visual gap between blocks in "lines" (1 = one line-height)
   cjkLetterSpacing: CJKLetterSpacingValue; // Letter spacing for CJK characters (em)

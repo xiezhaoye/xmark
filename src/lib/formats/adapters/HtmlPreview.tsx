@@ -123,19 +123,6 @@ export function HtmlPreview({
 
   return (
     <div className="html-preview">
-      {/* The security review's pending-sign-off notice, unchanged. It is a statement about
-          the SANDBOXED path, so it stays with that path rather than following
-          the user into trusted mode, which is a different mechanism with its
-          own reasoning recorded in src-tauri/src/trusted_html/. */}
-      {!trusted && !empty && (
-        <div
-          className="html-preview__sign-off-pending"
-          role="status"
-          data-testid="html-preview-sign-off-pending"
-        >
-          {t("preview.signOffPending")}
-        </div>
-      )}
       {allowTrustedPreview && (
         <HtmlTrustBar
         documentKey={path}

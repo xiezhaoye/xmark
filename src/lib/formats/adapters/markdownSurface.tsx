@@ -34,6 +34,7 @@ import { useSettingsStore } from "@/stores/settingsStore";
 import { useDocumentStore } from "@/stores/documentStore";
 import { useDocumentId } from "@/hooks/useDocumentState";
 import { TiptapEditorInner } from "@/components/Editor/TiptapEditor";
+import { PreviewZoomBar, usePreviewZoom } from "@/components/PreviewZoom/PreviewZoom";
 import { MarkdownSplitView } from "@/components/Editor/MarkdownSplitView";
 import { HeadingPicker } from "@/components/Editor/HeadingPicker";
 import { DropZoneIndicator } from "@/components/Editor/DropZoneIndicator";
@@ -72,6 +73,7 @@ export function MarkdownEditorSurface({ tabId }: { tabId: string }) {
   // useUnifiedMenuCommands mounts in Editor.tsx (dispatcher) so menu
   // events reach both markdown and non-markdown surfaces.
 
+  const { scale: previewZoom } = usePreviewZoom();
   const editorKey = `${tabId}-doc-${documentId}`;
   /* v8 ignore next -- @preserve tableFitToWidth conditional class appended at runtime */
   const containerClass = `editor-container media-border-${mediaBorderStyle} media-align-${mediaAlignment} heading-align-${headingAlignment}${tableFitToWidth ? " table-fit-to-width" : ""}`;
@@ -108,7 +110,8 @@ export function MarkdownEditorSurface({ tabId }: { tabId: string }) {
 
   return (
     <div className={containerClass} data-html-rendering-mode={htmlRenderingMode}>
-      <div className="editor-content" data-active-editor={activeEditor}>
+      <PreviewZoomBar />
+      <div className="editor-content" data-active-editor={activeEditor} style={{ zoom: previewZoom }}>
         {editorContent}
       </div>
       <WorkflowEngineSlot tabId={tabId} />

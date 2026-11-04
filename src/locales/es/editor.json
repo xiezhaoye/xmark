@@ -25,7 +25,6 @@
   "preview.cannotRender": "No se puede renderizar la vista previa — corrige los errores de sintaxis",
   "preview.errorAt": "({{line}}:{{column}})",
   "preview.workflowParseFailed": "Error al analizar el flujo de trabajo — corrige los errores de sintaxis",
-  "preview.signOffPending": "La vista previa HTML está aislada. Su revisión de seguridad aún está en curso.",
   "preview.htmlIframeTitle": "Vista previa HTML",
   "preview.htmlTrustSafe": "Vista previa segura — los scripts están bloqueados",
   "preview.htmlTrustEnable": "Activar vista previa de confianza…",
