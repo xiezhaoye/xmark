@@ -121,14 +121,27 @@ pub fn list_dir(dir: &str) -> Result<Vec<DirEntry>> {
     Ok(out)
 }
 
-/// Reads a UTF-8 file the user granted.
+/// Reads a text file the user granted.
+///
+/// Plain `.txt` files on a phone are frequently NOT UTF-8 — Chinese ones are
+/// often GBK. Refusing them would read as "the app cannot open my notes", so
+/// the fallback chain is: UTF-8 exactly, then GB18030 (a superset of GBK), then
+/// a lossy UTF-8 decode so something always renders.
 pub fn read_text_impl(path: &str) -> Result<String> {
     let p = check_path(path)?;
     let size = std::fs::metadata(&p).map_err(|_| Error::Unreadable)?.len();
     if size > MAX_TEXT_BYTES {
         return Err(Error::TooLarge);
     }
-    std::fs::read_to_string(&p).map_err(|_| Error::Unreadable)
+    let bytes = std::fs::read(&p).map_err(|_| Error::Unreadable)?;
+    if let Ok(text) = std::str::from_utf8(&bytes) {
+        return Ok(text.to_string());
+    }
+    let (decoded, _, had_errors) = encoding_rs::GB18030.decode(&bytes);
+    if !had_errors {
+        return Ok(decoded.into_owned());
+    }
+    Ok(String::from_utf8_lossy(&bytes).into_owned())
 }
 
 /// Reads a file the user granted, base64-encoded for the webview.

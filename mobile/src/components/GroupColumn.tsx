@@ -14,7 +14,7 @@
  *
  * @module components/GroupColumn
  */
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useReaderStore } from "../state/readerStore";
 import { errorText, t } from "../i18n";
 import { Icon } from "./Icon";
@@ -60,6 +60,19 @@ export function GroupColumn() {
   };
 
   const library = () => useLocalLibrary.getState();
+
+  // A tap anywhere else closes the ⋯ sheet. The trigger itself is excluded: its
+  // own click toggles, and closing on pointerdown first would fight that.
+  useEffect(() => {
+    if (!menu) return;
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as Element | null;
+      if (target?.closest(".local-menu, .group-more")) return;
+      setMenu(null);
+    };
+    document.addEventListener("pointerdown", onPointerDown, true);
+    return () => document.removeEventListener("pointerdown", onPointerDown, true);
+  }, [menu]);
 
   /* ---- actions ------------------------------------------------------- */
 

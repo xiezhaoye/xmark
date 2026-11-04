@@ -61,6 +61,31 @@ function toEntry(e: LocalEntry): TreeEntry {
 
 /** Bytes with an `ArrayBuffer` (not `SharedArrayBuffer`) behind them, which is
  * what `Blob` and the download type require. */
+/**
+ * A plugin rejection arrives as a plain string ("cannot read file", "too large",
+ * "not a folder"). Without this, every local failure surfaced as `network` —
+ * which is what a file that could not be READ was being reported as, complete
+ * with "cannot reach the Mac", a Mac that is not in this path at all.
+ */
+function localError(err: unknown): ApiError {
+  const text = err instanceof Error ? err.message : String(err);
+  if (/too large/i.test(text)) return new ApiError(0, "too_large");
+  if (/not a folder/i.test(text)) return new ApiError(0, "not_a_folder");
+  if (/invalid path/i.test(text)) return new ApiError(0, "bad_path");
+  if (/unsupported/i.test(text)) return new ApiError(0, "unsupported");
+  if (/cancelled/i.test(text)) return new ApiError(0, "cancelled");
+  return new ApiError(0, "unreadable");
+}
+
+/** Run a plugin read, translating its rejection into an ApiError code. */
+async function guarded<T>(run: () => Promise<T>): Promise<T> {
+  try {
+    return await run();
+  } catch (err) {
+    throw localError(err);
+  }
+}
+
 function bytesFromBase64(base64: string): Uint8Array<ArrayBuffer> {
   const binary = atob(base64);
   const buffer = new ArrayBuffer(binary.length);
@@ -93,7 +118,7 @@ export function createLocalClient(read: () => LocalGroup[]): Client {
       // Files.app reads as offline before the tree fails.
       const paths = read().flatMap((g) => g.folders.map((f) => f.path));
       if (!paths.length) throw new ApiError(0, "no_folders");
-      await Promise.all(paths.map((p) => listLocalFolder(p)));
+      await Promise.all(paths.map((p) => guarded(() => listLocalFolder(p))));
       return { ok: true, version: "local" };
     },
 
@@ -112,18 +137,18 @@ export function createLocalClient(read: () => LocalGroup[]): Client {
     async tree(rootId, path) {
       // `path` is "" for the root level, an absolute path for anything below.
       const dir = path || rootId;
-      const entries = await listLocalFolder(dir);
+      const entries = await guarded(() => listLocalFolder(dir));
       return { path, entries: entries.map(toEntry) };
     },
 
     async file(_rootId, path): Promise<FileContent> {
-      const text = await readLocalText(path);
+      const text = await guarded(() => readLocalText(path));
       const name = path.slice(path.lastIndexOf("/") + 1);
       return { text, kind: MARKDOWN.has(extensionOf(name)) ? "markdown" : "text", size: text.length, mtime: 0 };
     },
 
     async asset(_rootId, path) {
-      const bytes = bytesFromBase64(await readLocalBytesBase64(path));
+      const bytes = bytesFromBase64(await guarded(() => readLocalBytesBase64(path)));
       return new Blob([bytes], { type: mimeOf(path) });
     },
 
@@ -132,7 +157,7 @@ export function createLocalClient(read: () => LocalGroup[]): Client {
     },
 
     async download(_rootId, path) {
-      const bytes = bytesFromBase64(await readLocalBytesBase64(path));
+      const bytes = bytesFromBase64(await guarded(() => readLocalBytesBase64(path)));
       const name = path.slice(path.lastIndexOf("/") + 1);
       return { bytes, name, mimeType: mimeOf(name) };
     },

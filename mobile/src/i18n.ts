@@ -101,6 +101,8 @@ const zh = {
   "error.not_utf8": "文件不是 UTF-8 编码，无法显示",
   "error.unsupported_kind": "手机上不支持这种文件",
   "error.bad_query": "搜索词为空或太长",
+  "error.unreadable": "读不到这个文件。若是 iCloud 里的文件，请先在「文件」App 里打开一次，让它下载到本机。",
+  "error.not_a_folder": "这个文件夹现在打不开，可能已被移动或删除。",
   "error.generic": "出错了（{code}）",
   "error.retry": "重试",
   "alert.note": "注意",
@@ -223,6 +225,8 @@ const en: Record<Key, string> = {
   "error.not_utf8": "Not UTF-8 text; cannot show it",
   "error.unsupported_kind": "This kind of file is not supported on the phone",
   "error.bad_query": "The search is empty or too long",
+  "error.unreadable": "This file could not be read. For an iCloud file, open it once in Files so it downloads to this iPhone.",
+  "error.not_a_folder": "This folder cannot be opened now — it may have been moved or deleted.",
   "error.generic": "Something went wrong ({code})",
   "error.retry": "Retry",
   "alert.note": "Note",
@@ -260,7 +264,7 @@ export function t(key: Key, vars: Record<string, string> = {}): string {
   return table[key].replace(/\{(\w+)\}/g, (_m, name: string) => vars[name] ?? "");
 }
 
-const ERROR_KEYS = new Set<string>(["network", "timeout", "unauthorized", "unknown_root", "not_found", "bad_path", "too_large", "not_utf8", "unsupported_kind", "bad_query", "sharing_unavailable", "share_failed", "file_changed"]);
+const ERROR_KEYS = new Set<string>(["network", "timeout", "unauthorized", "unknown_root", "not_found", "bad_path", "too_large", "not_utf8", "unsupported_kind", "bad_query", "sharing_unavailable", "share_failed", "file_changed", "unreadable", "not_a_folder"]);
 
 /** User-facing text for an API error code. */
 export function errorText(code: string): string {
